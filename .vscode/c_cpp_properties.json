@@ -2,18 +2,12 @@
     "configurations": [
         {
             "name": "Linux",
-            "includePath": [
-                "/home/hamshik/Documents/Hamshik/cProjects/MyComplier/src/ast/**",
-                "/home/hamshik/Documents/Hamshik/cProjects/MyComplier/src/lexer/**",
-                "/home/hamshik/Documents/Hamshik/cProjects/MyComplier/src/parser/**",
-                "/home/hamshik/Documents/Hamshik/cProjects/MyComplier/src/utils/**"
-            ],
+            "includePath": ["${workspace}/src/**/*"],
             "defines": [],
-            "compilerPath": "/usr/bin/clang",
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c89",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64",
-            "compilerPathInCppPropertiesJson": "/usr/bin/clang",
             "mergeConfigurations": false,
             "recursiveIncludes": {},
             "browse": {
