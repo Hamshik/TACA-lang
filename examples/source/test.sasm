@@ -1,0 +1,11 @@
+enum Color {
+   RED,
+   GREEN,
+   BLUE
+};
+
+for (x in arr) {
+   print(x > 10 ? x : 0);
+}
+
+sum(10, arr[2]);

@@ -1,0 +1,8 @@
+{
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/src/**/*"
+    ],
+    "makefile.buildLog": "log",
+    "makefile.makefilePath": "build/Makefile"
+}
