@@ -4,18 +4,18 @@
 #include "semantic.h"
 #include <stdbool.h>
 #include "../utils/uhash.h"
-Symboltable_t *env = NULL;
+Symboltable_t *envs = NULL;
 
 DataTypes_t lookup(const char* name){
     Symboltable_t *v;
-    HASH_FIND_STR(env, name, v);
+    HASH_FIND_STR(envs, name, v);
     if (v != NULL) return v->type; 
     return UNKNOWN;
 }
 
 exitcode_t exists(const char *name, DataTypes_t type) {
 	Symboltable_t *v;
-    HASH_FIND_STR(env, name, v);
+    HASH_FIND_STR(envs, name, v);
     if (v == NULL) return NOT_DECLARED;
     if (v->type != type) return TYPE_MISMATCH;
     return SUCCESS;
@@ -23,20 +23,20 @@ exitcode_t exists(const char *name, DataTypes_t type) {
 
 bool declare(const char* name, DataTypes_t type){
     Symboltable_t *v;
-    HASH_FIND_STR(env, name, v);
+    HASH_FIND_STR(envs, name, v);
     if (v != NULL) return false;
     else {
         v = malloc(sizeof(*v));
         v->name = strdup(name);
         v->type = type;
-        HASH_ADD_KEYPTR(hh, env, v->name, strlen(v->name), v);
+        HASH_ADD_KEYPTR(hh, envs, v->name, strlen(v->name), v);
         return true;
     }
 }
 
 exitcode_t assign_check(const char* name, DataTypes_t rhs_t){
     Symboltable_t *v;
-    HASH_FIND_STR(env, name, v);
+    HASH_FIND_STR(envs, name, v);
     if(v == NULL) return NOT_DECLARED;
     if(v->type != rhs_t) return TYPE_MISMATCH;
     return SUCCESS;

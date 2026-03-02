@@ -25,6 +25,7 @@ gcc -Wall -Wextra -g -Isrc \
     $AST_DIR/assigner.c \
     $AST_DIR/env.c \
     $SEMAN/semanic.c \
+    $SEMAN/symbol_table.c \
     $UTILS/token_printer.c \
     src/main.c \
     -o "$BIN_DIR/Complier" -lm || exit 1
