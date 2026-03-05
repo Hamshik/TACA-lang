@@ -36,7 +36,7 @@
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE LET
+%token IF ELSE
 
 %type <node> program stmt_list stmt block if_stmt expr assignment
 %token <datatype> DATATYPES
@@ -134,13 +134,10 @@ expr
     ;
  
 assignment
-    : LET IDENTIFIER COLON DATATYPES ASSIGN expr
+    : IDENTIFIER COLON DATATYPES ASSIGN expr
         {
-            $6->datatype = $4;
-            if ($6->kind == AST_NUM && $6->datatype == UNKNOWN) {
-                $6->datatype = $4;
-        }
-            $$ = new_assign($2, $6, $4, @$.first_line, @$.first_column, OP_ASSIGN);
+            if ($5->datatype == UNKNOWN)  $5->datatype = $3;
+            $$ = new_assign($1, $5, $3, @$.first_line, @$.first_column, OP_ASSIGN);
         }
 
     | IDENTIFIER ASSIGN expr

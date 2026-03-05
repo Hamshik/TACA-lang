@@ -94,11 +94,7 @@ typedef struct ASTNode {
 
 typedef struct {
     DataTypes_t type;
-    union {
-        int i;
-        float f;
-        double d;
-    };
+    Value val;
 } TypedValue;
 
 /* Constructors */

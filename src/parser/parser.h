@@ -109,12 +109,11 @@ extern int yydebug;
     GE = 300,                      /* GE  */
     IF = 301,                      /* IF  */
     ELSE = 302,                    /* ELSE  */
-    LET = 303,                     /* LET  */
-    DATATYPES = 304,               /* DATATYPES  */
-    UPLUS = 305,                   /* UPLUS  */
-    UMINUS = 306,                  /* UMINUS  */
-    POSTFIX = 307,                 /* POSTFIX  */
-    LOWER_THAN_ELSE = 308          /* LOWER_THAN_ELSE  */
+    DATATYPES = 303,               /* DATATYPES  */
+    UPLUS = 304,                   /* UPLUS  */
+    UMINUS = 305,                  /* UMINUS  */
+    POSTFIX = 306,                 /* POSTFIX  */
+    LOWER_THAN_ELSE = 307          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -128,7 +127,7 @@ union YYSTYPE
     ASTNode_t *node;
     DataTypes_t datatype;
 
-#line 132 "src/parser/parser.h"
+#line 131 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

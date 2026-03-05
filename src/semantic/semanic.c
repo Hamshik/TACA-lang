@@ -61,10 +61,6 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     case AST_STR:
         return STRINGS;
-    
-    case AST_BOOL:
-        n->datatype = BOOL;
-        return BOOL;
 
     case AST_VAR:
         if(n->datatype == UNKNOWN) n->datatype = lookup(n->var);
@@ -85,8 +81,14 @@ DataTypes_t check_expr(ASTNode_t *n) {
         DataTypes_t lt = check_expr(n->bin.left);
         DataTypes_t rt = check_expr(n->bin.right);
 
-        if(n->bin.left->datatype == UNKNOWN && rt != UNKNOWN && n->bin.left->kind == AST_NUM)lt = rt;
-        if(n->bin.right->datatype == UNKNOWN && lt != UNKNOWN && n->bin.left->kind == AST_NUM)rt = lt;
+        if (n->bin.left->kind == AST_NUM && n->bin.left->datatype == UNKNOWN && is_numeric(rt)) {
+            n->bin.left->datatype = rt;
+            lt = rt;
+        }
+        else if (n->bin.right->kind == AST_NUM && n->bin.right->datatype == UNKNOWN && is_numeric(lt)) {
+            n->bin.right->datatype = lt;
+            rt = lt;
+        }
 
         /* string ops */
         if (lt == STRINGS || rt == STRINGS) {
@@ -97,10 +99,32 @@ DataTypes_t check_expr(ASTNode_t *n) {
             return STRINGS;
         }
 
+        /* BIN OPS*/
+        switch (n->bin.op) {
+            case OP_LT: case OP_LE: case OP_GT: case OP_GE:
+            case OP_EQ: case OP_NEQ:
+                if (!is_numeric(lt) || !is_numeric(rt)) type_error(n, "comparison needs numeric operands");
+                n->datatype = BOOL;
+                return BOOL;
+
+            case OP_AND: case OP_OR:
+                if (lt != BOOL || rt != BOOL) type_error(n, "logical ops need bool operands");
+                n->datatype = BOOL;
+                return BOOL;
+
+            default:
+                // arithmetic/bitwise path
+                if (!is_numeric(lt) || !is_numeric(rt)) type_error(n, "numeric op needs numeric operands");
+                n->datatype = promote(lt, rt);
+                return n->datatype;
+        }
+
         /* numeric ops */
+
         if (!is_numeric(lt) || !is_numeric(rt)) {
             type_error(n, "Invalid operands for binary operator");
         }
+
         n->datatype = promote(lt, rt);
         return n->datatype;
     }
@@ -118,7 +142,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
             type_error(n, "Unary operator requires numeric type");
         }
 
-        n->datatype = t;
+        if(n->datatype == UNKNOWN) n->datatype = t;
         return t;
     }
 
@@ -156,8 +180,8 @@ DataTypes_t check_expr(ASTNode_t *n) {
         return check_expr(n->seq.b);
 
     case NODE_IF: {
-        DataTypes_t ct = check_expr(n->ifnode.cond);
-        if (ct != BOOL &&n->ifnode.cond->kind != AST_BOOL) type_error(n, "if condition must be boolean");
+        DataTypes_t ct =  check_expr(n->ifnode.cond);
+        if (ct != BOOL) type_error(n, "if condition must be boolean");
 
         check_expr(n->ifnode.then_branch);
         if (n->ifnode.else_branch)

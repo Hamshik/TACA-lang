@@ -29,8 +29,6 @@
 
 if                  { return IF; }
 else                { return ELSE; }
-let                 {return LET;}
-
 int                 { yylval->datatype = INT; return DATATYPES; }
 short               { yylval->datatype = SHORT; return DATATYPES; }
 real32              { yylval->datatype = FLOAT; return DATATYPES; }

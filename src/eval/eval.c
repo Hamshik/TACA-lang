@@ -47,6 +47,8 @@ Value eval_binop_double(OP_kind_t op, double a, double b) {
 bool isBoolOP(OP_kind_t op){
     switch (op)
     {
+    case OP_AND:
+    case OP_OR:
     case OP_EQ:
     case OP_NEQ:
     case OP_GT:
@@ -57,6 +59,7 @@ bool isBoolOP(OP_kind_t op){
     default: return false;
     }
 }
+
 void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kind_t op) {
     
     switch (datatype)
@@ -122,14 +125,13 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
     print_value(*result, datatype);
 }
 
-Value eval_bool(OP_kind_t op, bool a, bool b) {
+Value eval_bool(OP_kind_t op,bool a, bool b) {
     switch (op) {
         case OP_AND: return (Value){.bval = a && b};
         case OP_OR:  return (Value){.bval = a || b};
-        default:
-            fprintf(stderr, "Invalid boolean operator\n");
-            exit(EXIT_FAILURE);
+        default: break;
     }
+    
 }
 
 char* do_operation_str(const char* a, const char* b, OP_kind_t op) {
@@ -148,63 +150,67 @@ char* do_operation_str(const char* a, const char* b, OP_kind_t op) {
     return result;
 }
 
-Value ast_eval(ASTNode_t *node) {
-    if (!node) return (Value){0};
-    Value v = {0};
+TypedValue ast_eval(ASTNode_t *node) {
+    if (!node) return (TypedValue){0};
+    TypedValue v = {0};
 
     switch (node->kind) {
 
     case AST_NUM:
         switch (node->datatype) {
             case INT:
-                v.inum = (int)strtol(node->literal.raw, NULL, 10); break;
+                v.val.inum = (int)strtol(node->literal.raw, NULL, 10); break;
             case SHORT:
-                v.shnum = (short)strtol(node->literal.raw, NULL, 10); break;
+                v.val.shnum = (short)strtol(node->literal.raw, NULL, 10); break;
             case FLOAT:
-                v.fnum = strtof(node->literal.raw, NULL); break;
+                v.val.fnum = strtof(node->literal.raw, NULL); break;
             case DOUBLE:
-                v.lfnum = strtod(node->literal.raw, NULL); break;
+                v.val.lfnum = strtod(node->literal.raw, NULL); break;
             default:
                 fprintf(stderr, "Error: unsupported numeric literal type\n");
                 exit(EXIT_FAILURE);
         }
+        v.type = node->datatype;
         return v;
 
     case AST_STR:
-        v.str = node->literal.raw;
-        print_value(v, node->datatype);
+        v.val.str = node->literal.raw;
+        print_value(v.val, node->datatype);
         return v;
 
     case AST_CHAR:
-        v.characters = node->literal.raw ? node->literal.raw[0] : '\0';
-        print_value(v, node->datatype);
+        v.val.characters = node->literal.raw ? node->literal.raw[0] : '\0';
+        print_value(v.val, node->datatype);
         return v;
 
-    case AST_VAR: return getvar(node->var, node->datatype, node->line, node->col);
+    case AST_VAR: return (TypedValue){
+        .type = node->datatype,
+        .val = getvar(node->var, node->datatype, node->line, node->col)
+    };
 
     case AST_BINOP: {
-        Value l = ast_eval(node->bin.left);
-        Value r = ast_eval(node->bin.right);
+        TypedValue l = ast_eval(node->bin.left);
+        TypedValue r = ast_eval(node->bin.right);
 
         switch (node->datatype) {
             case INT:
-                v = eval_binop_int(node->bin.op, false, l.inum, r.inum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
+                v.val = eval_binop_int(node->bin.op, false, l.inum, r.inum);
+                if(node->kind == AST_BOOL) node->datatype = BOOL;
                 break;
             case FLOAT:
-                v = eval_binop_float(node->bin.op, l.fnum, r.fnum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
+                v.val = eval_binop_float(node->bin.op, l.fnum, r.fnum);
+                if(node->kind == AST_BOOL) node->datatype = BOOL;
                 break;
             case DOUBLE:
                 v = eval_binop_double(node->bin.op, l.lfnum, r.lfnum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
+                if(node->kind == AST_BOOL) node->datatype = BOOL;
                 break;
             case SHORT:
                 v = eval_binop_int(node->bin.op, true, l.shnum, r.shnum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
+                if(node->kind == AST_BOOL) node->datatype = BOOL;
                 break;
             case STRINGS: v = (Value){.str = do_operation_str(l.str, r.str, node->bin.op)}; break;
-            case BOOL: v = eval_bool(node->bin.op, l.bval, r.bval); break;
+            case BOOL: v = eval_bool(node->bin.op ,l.bval, r.bval); break;
             default:
                 fprintf(stderr, "Error: unsupported data type for binary Datatypes\n");
                 exit(EXIT_FAILURE);
