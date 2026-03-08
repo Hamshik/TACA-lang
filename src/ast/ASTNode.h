@@ -15,7 +15,7 @@ typedef enum ASTKind {
     NODE_FOR,
     AST_STR,
     AST_CHAR,
-    AST_BOOL
+    AST_WHILE
 } ASTKind_t;
 
 typedef enum DataTypes{
@@ -98,6 +98,11 @@ typedef struct ASTNode {
         struct {
             struct ASTNode *init, *end, *step, *body;
         } fornode;
+        struct
+        {
+            struct ASTNode *cond, *body;
+        } whilenode;
+        
     };
 } ASTNode_t;
 
@@ -111,6 +116,7 @@ ASTNode_t *new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int 
 ASTNode_t *new_if(ASTNode_t *cond, ASTNode_t *thenB, ASTNode_t *elseB, int line, int col);
 ASTNode_t *new_for(ASTNode_t *init, ASTNode_t *end, ASTNode_t *step, ASTNode_t *body, int line, int col);
 ASTNode_t *new_seq(ASTNode_t *a, ASTNode_t *b);
+ASTNode_t *new_while(ASTNode_t *cond, ASTNode_t *body, int line, int col);
 
 /* Eval + memory */
 void ast_free(ASTNode_t *n);

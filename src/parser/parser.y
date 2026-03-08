@@ -36,9 +36,9 @@
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR LOOP
+%token IF ELSE FOR LOOP UNTIL
 
-%type <node> program stmt_list stmt block if_stmt for_stmt expr assignment
+%type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
 %token <datatype> DATATYPES
 
 %right ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN LSHIFT_ASSIGN RSHIFT_ASSIGN
@@ -76,6 +76,7 @@ stmt
     | if_stmt                   { $$ = $1; }
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
+    | while_stmt                { $$ = $1; }
     ;
 
 block
@@ -90,12 +91,16 @@ if_stmt
     ;
 
 for_stmt
-    : LOOP FOR LPAREN assignment COLON expr RPAREN stmt
+    : LOOP FOR LPAREN assignment SEMICOLON expr RPAREN stmt
         { $$ = new_for($4, $6, NULL, $8, @1.first_line, @1.first_column); }
-    | LOOP FOR LPAREN assignment COLON expr COLON expr RPAREN stmt
+    | LOOP FOR LPAREN assignment SEMICOLON expr SEMICOLON expr RPAREN stmt
         { $$ = new_for($4, $6, $8, $10, @1.first_line, @1.first_column); }
     ;
 
+while_stmt
+    : LOOP UNTIL LPAREN expr RPAREN stmt
+        { $$ = new_while($4, $6, @1.first_line, @1.first_column);}
+    ;
 expr
     : NUMBER                    {$$ = $1;}
 	| IDENTIFIER				{$$ = $1;}
@@ -111,9 +116,9 @@ expr
     | expr LSHIFT expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LSHIFT); }
     | expr RSHIFT expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_RSHIFT); }
 
-    | expr AMP expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITAND); }
+    | expr AMP expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITAND); }
     | expr BITXOR expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITXOR); }
-    | expr PIPE expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITOR); }
+    | expr PIPE expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITOR); }
 
     | expr AND expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_AND); }
     | expr OR expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_OR); }

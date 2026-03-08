@@ -80,6 +80,16 @@ ASTNode_t* new_seq(ASTNode_t *a, ASTNode_t *b) {
     return node;
 }
 
+ASTNode_t *new_while(ASTNode_t *cond, ASTNode_t *body, int line, int col){
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_WHILE;
+    node->whilenode.cond = cond;
+    node->whilenode.body = body;
+    node->line = line;
+    node->col = col;
+    return node;
+}
+
 ASTNode_t* new_if(ASTNode_t *cond, ASTNode_t *thenB, ASTNode_t *elseB, int line, int col) {
     ASTNode_t *node = ast_alloc();
     node->kind = NODE_IF;
