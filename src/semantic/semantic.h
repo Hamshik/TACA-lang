@@ -8,12 +8,14 @@ typedef struct symboltable{
     DataTypes_t type;
     const char* name;
     UT_hash_handle hh;
+    bool is_mutable;
 }Symboltable_t;
 
 typedef enum exitcode{
     NOT_DECLARED,
     SUCCESS,
-    TYPE_MISMATCH
+    TYPE_MISMATCH,
+    IMMUTABLE_TYPING
 }exitcode_t;
 
 void semantic_check(ASTNode_t *root);
@@ -23,7 +25,7 @@ int is_numeric(DataTypes_t t);
 DataTypes_t promote(DataTypes_t a, DataTypes_t b);
 
 DataTypes_t lookup(const char* name);
-bool declare(const char* name,DataTypes_t type);
+bool declare(const char* name, DataTypes_t type, const bool is_mutable);
 exitcode_t exists(const char* name, DataTypes_t type);
 exitcode_t assign_check(const char* name, DataTypes_t rhs_type);
 void clear_symbols(void);

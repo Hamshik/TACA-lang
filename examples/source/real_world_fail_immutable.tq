@@ -1,0 +1,5 @@
+// Real-world negative test (should FAIL): immutable variable reassignment
+
+let int32 c = 1;
+c = 2;     // ERROR: Cannot assign to immutable variable
+

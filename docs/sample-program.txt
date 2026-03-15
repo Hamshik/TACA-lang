@@ -1,8 +1,10 @@
-x = 3;
-if (x > 5)
+// Sample program (matches current parser)
+
+var int32 x = 3;
+if { x > 5 } {
     x = 100;
-else if (x > 2)
-    x = 200;
-else
-    x = 300;
+} else {
+    if { x > 2 } x = 200;
+    else x = 300;
+}
 x;

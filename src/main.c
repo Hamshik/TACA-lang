@@ -9,6 +9,7 @@ int main() {
     if (root != NULL) {
         semantic_check(root);
         ast_eval(root);
+        ast_free(root);
     }
     return 0;
 }

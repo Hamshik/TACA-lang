@@ -57,6 +57,15 @@ DataTypes_t check_expr(ASTNode_t *n) {
             lt = rt = INT;
         }
 
+        /* string ops */
+        if (lt == STRINGS || rt == STRINGS) {
+            if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
+                type_error(n, "Only string + string is allowed");
+            }
+            n->datatype = STRINGS;
+            return STRINGS;
+        }
+
         /* BIN OPS*/
         switch (n->bin.op) {
             case OP_LT: case OP_LE: case OP_GT: case OP_GE:
@@ -76,15 +85,6 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 n->datatype = promote(lt, rt);
                 return n->datatype;
         }
-
-        /* string ops */
-        if (lt == STRINGS || rt == STRINGS) {
-            if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
-                type_error(n, "Only string + string is allowed");
-            }
-            n->datatype = STRINGS;
-            return STRINGS;
-        }
         /* numeric ops */
         if (!is_numeric(lt) || !is_numeric(rt)) {
             type_error(n, "Invalid operands for binary operator");
@@ -101,6 +101,14 @@ DataTypes_t check_expr(ASTNode_t *n) {
             if (t != BOOL) type_error(n, "Operator ! expects bool");
             n->datatype = BOOL;
             return BOOL;
+        }
+
+        /* If a numeric literal has no type yet, default it for unary numeric ops. */
+        if (n->unop.operand &&
+            n->unop.operand->kind == AST_NUM &&
+            n->unop.operand->datatype == UNKNOWN) {
+            n->unop.operand->datatype = INT;
+            t = INT;
         }
 
         if (!is_numeric(t)) {
@@ -121,13 +129,26 @@ DataTypes_t check_expr(ASTNode_t *n) {
             lhs_t = n->datatype;
             n->assign.lhs->datatype = lhs_t;
 
-            if (!declare(n->assign.lhs->var, lhs_t))
+            if (!declare(n->assign.lhs->var, lhs_t, n->assign.is_mutable))
                 type_error(n, "Redeclaration of variable");
         } else {
             // reassignment: i = ...
             lhs_t = lookup(n->assign.lhs->var);
-            if (lhs_t == UNKNOWN)
+            switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype))
+            {
+            case NOT_DECLARED:
                 type_error(n, "Variable not declared");
+                break;
+            case TYPE_MISMATCH:
+                type_error(n, "Type mismatch in assignment");
+                break;
+            case IMMUTABLE_TYPING:
+                type_error(n, "Cannot assign to immutable variable");
+                break;
+            case SUCCESS:
+            default:
+                break;
+            }
 
             n->assign.lhs->datatype = lhs_t;
             n->datatype = lhs_t;

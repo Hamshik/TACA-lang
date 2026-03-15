@@ -20,6 +20,10 @@ void ast_free(ASTNode_t *n) {
             free(n->literal.raw);   // free raw literal for ALL literals
             break;
 
+        case AST_STR:
+            free(n->literal.raw);
+            break;
+
         case AST_BINOP:
             ast_free(n->bin.left);
             ast_free(n->bin.right);

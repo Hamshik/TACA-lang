@@ -36,7 +36,7 @@
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR LOOP UNTIL
+%token IF ELSE FOR LOOP UNTIL VAR LET
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
 %token <datatype> DATATYPES
@@ -91,9 +91,9 @@ if_stmt
     ;
 
 for_stmt
-    : LOOP FOR LPAREN assignment SEMICOLON expr RPAREN stmt
+    : LOOP FOR LPAREN assignment COLON expr RPAREN stmt
         { $$ = new_for($4, $6, NULL, $8, @1.first_line, @1.first_column); }
-    | LOOP FOR LPAREN assignment SEMICOLON expr SEMICOLON expr RPAREN stmt
+    | LOOP FOR LPAREN assignment COLON expr COLON expr RPAREN stmt
         { $$ = new_for($4, $6, $8, $10, @1.first_line, @1.first_column); }
     ;
 
@@ -143,24 +143,32 @@ expr
 
     | LPAREN expr RPAREN         { $$ = $2; }
     | LBRACE expr RBRACE         { $$ = $2; }
-    | LSQUARE expr RSQUARE     { $$ = $2; }
+    | LSQUARE expr RSQUARE       { $$ = $2; }
     | assignment                 {$$ = $1;}
     ;
  
 assignment
-    : IDENTIFIER COLON DATATYPES ASSIGN expr
+    : VAR DATATYPES IDENTIFIER ASSIGN expr
         {
-            if ($5->datatype == UNKNOWN)  $5->datatype = $3;
-            $$ = new_assign($1, $5, $3, @$.first_line, @$.first_column, OP_ASSIGN);
+            if ($5->datatype == UNKNOWN)  $5->datatype = $2;
+            $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$->assign.is_mutable = true; // Mark as mutable
         }
-
+    | LET DATATYPES IDENTIFIER ASSIGN expr
+        {
+            if ($5->datatype == UNKNOWN)  $5->datatype = $2;
+            $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$->assign.is_mutable = false; // Mark as immutable
+        }
     | IDENTIFIER ASSIGN expr
         {
             $$ = new_assign($1, $3, $1->datatype, @$.first_line, @$.first_column, OP_ASSIGN);
         }
 
     | IDENTIFIER PLUS_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_PLUS_ASSIGN); }
+        {
+            $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_PLUS_ASSIGN); 
+        }
     | IDENTIFIER MINUS_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MINUS_ASSIGN); }
 
@@ -180,7 +188,7 @@ assignment
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_RSHIFT_ASSIGN); }
     
     | IDENTIFIER POWER_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN , @$.first_line, @$.first_column, OP_POW_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_POW_ASSIGN); }
     ;
 %%
 

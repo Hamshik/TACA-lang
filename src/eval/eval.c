@@ -77,7 +77,11 @@ TypedValue ast_eval(ASTNode_t *node) {
     case AST_UNOP: {
         TypedValue r = ast_eval(node->unop.operand);
         do_unop_operation(&v.val, &r.val , node->datatype, node->unop.op);
-        set_var(node->unop.operand->var, &v.val, node->datatype);
+        /* Only ++/-- mutate variables; other unary ops are pure. */
+        if ((node->unop.op == OP_INC || node->unop.op == OP_DEC) &&
+            node->unop.operand && node->unop.operand->kind == AST_VAR) {
+            set_var(node->unop.operand->var, &v.val, node->datatype);
+        }
         return v;
     }
 

@@ -1,11 +1,51 @@
-enum Color {
-   RED,
-   GREEN,
-   BLUE
-};
+// Real-world sample program (should PASS)
+// Matches current syntax in src/lexer/lexer.l and src/parser/parser.y
 
-for (x in arr) {
-   print(x > 10 ? x : 0);
+// arithmetic
+var int32 a = 10;
+var int32 b = 3;
+a + b;
+a - b;
+a * b;
+a / b;
+a % b;
+2 + 3 * 4;
+(2 + 3) * 4;
+2 ** 3;
+
+// strings
+var str hello = "Hello";
+var str who = "World";
+hello + ", " + who + "!";
+
+// if / else
+var int32 x = 0;
+if { a > b } {
+    "a is greater";
+    x = 1;
+} else {
+    "a is not greater";
+    x = 2;
 }
+x;
 
-sum(10, arr[2]);
+// for loop (end exclusive)
+var int32 sum = 0;
+loop for(var int32 i = 0 : 11) {
+    sum += i;
+}
+sum; // 55
+
+// for loop with step
+var int32 evens_sum = 0;
+loop for(var int32 j = 0 : 20 : 2) {
+    evens_sum += j;
+}
+evens_sum; // 90
+
+// while loop (runs while condition is true)
+var int32 w = 0;
+loop until (w < 5) {
+    w++;
+}
+w; // 5

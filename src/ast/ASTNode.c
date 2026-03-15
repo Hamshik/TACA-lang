@@ -12,7 +12,6 @@ ASTNode_t* new_num(char *rawval, DataTypes_t datatype, int line, int col) {
     node->line = line;
     node->col = col;
     node->literal.raw = strdup(rawval);   // copy value
-
     return node;
 }
 
@@ -60,13 +59,14 @@ ASTNode_t* new_binop(ASTNode_t *left, ASTNode_t *right, int line, int col, OP_ki
     return node;
 }
 
-ASTNode_t* new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int line, int col,OP_kind_t op) {
+ASTNode_t* new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int line, int col, OP_kind_t op) {
     ASTNode_t *node = ast_alloc();
     node->kind = AST_ASSIGN;
     node->assign.op = op;
     node->assign.lhs = lhs;
     node->assign.rhs = rhs;
     node->datatype = datatype;
+    node->assign.is_mutable = NULL;
     node->line = line;
     node->col = col;
     return node;

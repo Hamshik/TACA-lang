@@ -22,7 +22,7 @@ exitcode_t exists(const char *name, DataTypes_t type) {
     return SUCCESS;
 }
 
-bool declare(const char* name, DataTypes_t type){
+bool declare(const char* name, DataTypes_t type, const bool is_mutable){
     Symboltable_t *v;
     HASH_FIND_STR(envs, name, v);
     if (v != NULL) return false;
@@ -30,6 +30,7 @@ bool declare(const char* name, DataTypes_t type){
         v = malloc(sizeof(*v));
         v->name = strdup(name);
         v->type = type;
+        v->is_mutable = is_mutable;
         HASH_ADD_KEYPTR(hh, envs, v->name, strlen(v->name), v);
         return true;
     }
@@ -39,7 +40,8 @@ exitcode_t assign_check(const char* name, DataTypes_t rhs_t){
     Symboltable_t *v;
     HASH_FIND_STR(envs, name, v);
     if(v == NULL) return NOT_DECLARED;
-    if(v->type != rhs_t) return TYPE_MISMATCH;
+    if(rhs_t != UNKNOWN) if(v->type != rhs_t) return TYPE_MISMATCH;
+    if(!v->is_mutable) return IMMUTABLE_TYPING;
     return SUCCESS;
 }
 

@@ -85,6 +85,7 @@ typedef struct ASTNode {
 
         struct {
             struct ASTNode *lhs, *rhs;
+            bool is_mutable;
             OP_kind_t op;
         } assign;
 
@@ -113,7 +114,7 @@ ASTNode_t *new_str(char *rawval, int line, int col);
 ASTNode_t *new_var(const char *name, DataTypes_t datatype, int line, int col);
 ASTNode_t *new_binop(ASTNode_t *l, ASTNode_t *r, int line, int col, OP_kind_t op);
 ASTNode_t *new_unop(ASTNode_t *e, int line, int col, OP_kind_t op);
-ASTNode_t *new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int line, int col,OP_kind_t op);
+ASTNode_t *new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int line, int col, OP_kind_t op);
 ASTNode_t *new_if(ASTNode_t *cond, ASTNode_t *thenB, ASTNode_t *elseB, int line, int col);
 ASTNode_t *new_for(ASTNode_t *init, ASTNode_t *end, ASTNode_t *step, ASTNode_t *body, int line, int col);
 ASTNode_t *new_seq(ASTNode_t *a, ASTNode_t *b);
