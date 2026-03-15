@@ -159,6 +159,31 @@ return_stmt
   | RETURN       { $$ = new_return(NULL, @1.first_line, @1.first_column); }
   ;
 
+opt_args
+    : /* empty */ { $$ = NULL; }
+    | args        { $$ = $1; }
+    ;
+         
+args
+    : expr              { $$ = $1; }
+    | expr COMMA args   { $$ = new_seq($1, $3); }        /* list */
+    ;
+
+declarations
+    : /* empty */ { $$ = NULL; }
+    | VAR DATATYPES IDENTIFIER
+        {
+            $$ = new_assign($3, NULL, $2, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$->assign.is_mutable = true; // Mark as mutable
+        }
+    | LET DATATYPES IDENTIFIER
+        {
+            $$ = new_assign($3, NULL, $2, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$->assign.is_mutable = false; // Mark as immutable
+        }
+    | declarations SEMICOLON
+    ;
+
 expr
     : NUMBER                    {$$ = $1;}
 	| IDENTIFIER				{$$ = $1;}
@@ -210,15 +235,6 @@ expr
       }
     ;
 
- opt_args
-  : /* empty */ { $$ = NULL; }
-  | args        { $$ = $1; }
-  ;
-
-args
-  : expr              { $$ = $1; }
-  | expr COMMA args   { $$ = new_seq($1, $3); }        /* list */
-  ;
 
 assignment
     : VAR DATATYPES IDENTIFIER ASSIGN expr
@@ -229,6 +245,13 @@ assignment
             $$->assign.is_declaration = true;
         }
     | LET DATATYPES IDENTIFIER ASSIGN expr
+        {
+            if ($5->datatype == UNKNOWN)  $5->datatype = $2;
+            $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$->assign.is_mutable = false; // Mark as immutable
+            $$->assign.is_declaration = true;
+        }
+    | DATATYPES IDENTIFIER ASSIGN expr // Type inference declaration, (default: immutable)
         {
             if ($5->datatype == UNKNOWN)  $5->datatype = $2;
             $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
