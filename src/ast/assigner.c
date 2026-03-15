@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "ASTNode.h"
 #include "../eval/eval.h"
-#include "../utils/value_printer.h"
+#include "../utils/printers/value_printer.h"
 
 void assign_value(DataTypes_t dt, Value *dst, Value src) {
     switch (dt) {

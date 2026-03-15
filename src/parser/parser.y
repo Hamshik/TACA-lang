@@ -1,7 +1,7 @@
 %code requires {
     #include <stdio.h>
     #include <stdlib.h>
-    #include "../utils/token_printer.h"
+    #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
     extern ASTNode_t *root;
 }

@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include "../ast/ASTNode.h"
-#include "../utils/value_printer.h"
+#include "../utils/printers/value_printer.h"
 #include "eval.h"
 
 OP_kind_t get_assign_op(OP_kind_t op) {
