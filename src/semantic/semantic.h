@@ -28,4 +28,9 @@ exitcode_t exists(const char* name, DataTypes_t type);
 exitcode_t assign_check(const char* name, DataTypes_t rhs_type);
 void clear_symbols(void);
 
+void type_error(ASTNode_t *n,const char* msg);
+int is_numeric(DataTypes_t t);
+DataTypes_t promote(DataTypes_t a, DataTypes_t b);
+void force_numeric_type(ASTNode_t *n, DataTypes_t t);
+
 #endif

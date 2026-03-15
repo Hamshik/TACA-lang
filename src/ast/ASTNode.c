@@ -112,3 +112,13 @@ ASTNode_t* new_for(ASTNode_t *init, ASTNode_t *end, ASTNode_t *step, ASTNode_t *
     node->col = col;
     return node;
 }
+
+ASTNode_t* new_bool(bool val, int line, int col) {
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_BOOL;
+    node->datatype = BOOL;
+    node->line = line;
+    node->col = col;
+    node->literal.raw = strdup(val ? "true" : "false");
+    return node;
+}

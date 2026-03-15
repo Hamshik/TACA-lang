@@ -40,13 +40,18 @@
     case OP_GE: return (Value){.bval = (a) >= (b)};\
     case OP_LE: return (Value){.bval = (a) <= (b)}
 
-
+#define UNOP_CASES(field, operand)\
+    case OP_NEG: result->field = -operand->field; break; \
+    case OP_POS: result->field = operand->field; break;\
+    case OP_INC: result->field = ((int)operand->field)+1; break;\
+    case OP_DEC: result->field = ((int)operand->field)-1; break
 #ifndef EVAL_H
 #define EVAL_H
 #include "../ast/ASTNode.h"
 
 
 TypedValue ast_eval(ASTNode_t *node);
+
 char* do_operation_str(const char* a, const char* b, OP_kind_t op);
 Value eval_bool(OP_kind_t op, DataTypes_t type ,Value a, Value b);
 void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kind_t op);
@@ -55,5 +60,11 @@ Value eval_binop_float(OP_kind_t op, float a, float b);
 Value eval_binop_int(OP_kind_t op, bool isShort, int a, int b);
 OP_kind_t get_assign_op(OP_kind_t op);
 bool isBoolOP(OP_kind_t op);
+
+Value default_step(DataTypes_t type);
+int step_is_positive(DataTypes_t type, Value step);
+int step_is_zero(DataTypes_t type, Value step);
+int should_continue_for(DataTypes_t type, Value cur, Value end, Value step);
+Value add_step_for(DataTypes_t type, Value cur, Value step);
 
 #endif

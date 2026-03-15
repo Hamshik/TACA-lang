@@ -31,13 +31,16 @@ if                  { return IF; }
 else                { return ELSE; }
 for                 { return FOR; }
 loop                { return LOOP; }
-int                 { yylval->datatype = INT; return DATATYPES; }
-short               { yylval->datatype = SHORT; return DATATYPES; }
+int32               { yylval->datatype = INT; return DATATYPES; }
+int16               { yylval->datatype = SHORT; return DATATYPES; }
 real32              { yylval->datatype = FLOAT; return DATATYPES; }
 real64              { yylval->datatype = DOUBLE; return DATATYPES; }
 str                 { yylval->datatype = STRINGS; return DATATYPES; }
 char                { yylval->datatype = CHARACTER; return DATATYPES;}
-logic               { yylval->datatype = BOOL; return DATATYPES;}
+bool                { yylval->datatype = BOOL; return DATATYPES;}
+until               { return UNTIL; }
+true                { yylval->node = new_bool(1, yylloc->first_line, yylloc->first_column); return BOOL_LITERAL; }
+false               { yylval->node = new_bool(0, yylloc->first_line, yylloc->first_column); return BOOL_LITERAL; }
 [0-9]+(\.[0-9]+)? {
     yylval->node = new_num(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
     return NUMBER;

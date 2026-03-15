@@ -9,6 +9,7 @@ typedef enum ASTKind {
     AST_BINOP,
     AST_UNOP,
     AST_VAR,
+    AST_BOOL,
     AST_ASSIGN,
     AST_SEQ,
     NODE_IF,
@@ -117,6 +118,7 @@ ASTNode_t *new_if(ASTNode_t *cond, ASTNode_t *thenB, ASTNode_t *elseB, int line,
 ASTNode_t *new_for(ASTNode_t *init, ASTNode_t *end, ASTNode_t *step, ASTNode_t *body, int line, int col);
 ASTNode_t *new_seq(ASTNode_t *a, ASTNode_t *b);
 ASTNode_t *new_while(ASTNode_t *cond, ASTNode_t *body, int line, int col);
+ASTNode_t* new_bool(bool val, int line, int col);
 
 /* Eval + memory */
 void ast_free(ASTNode_t *n);

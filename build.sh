@@ -28,6 +28,9 @@ gcc -Wall -Wextra -g -Isrc \
     $SEMAN/symbol_table.c \
     $UTILS/printers/token_printer.c \
     $UTILS/printers/value_printer.c \
+    $EVAL_DIR/stepper.c \
+    $EVAL_DIR/eval_helper.c \
+    $SEMAN/semantic_helper.c \
     src/main.c \
     -o "$BIN_DIR/Complier" -lm || exit 1
 

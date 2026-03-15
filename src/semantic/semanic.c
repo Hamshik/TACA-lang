@@ -3,50 +3,12 @@
 #include "../ast/ASTNode.h"
 #include "semantic.h"
 #include "../eval/eval.h"
-
-static void force_numeric_type(ASTNode_t *n, DataTypes_t t) {
-    if (!n || t == UNKNOWN) return;
-
-    switch (n->kind) {
-    case AST_NUM:
-        if (n->datatype == UNKNOWN) n->datatype = t;
-        break;
-    case AST_UNOP:
-        force_numeric_type(n->unop.operand, t);
-        if (n->datatype == UNKNOWN) n->datatype = t;
-        break;
-    case AST_BINOP:
-        force_numeric_type(n->bin.left, t);
-        force_numeric_type(n->bin.right, t);
-        if (n->datatype == UNKNOWN) n->datatype = t;
-        break;
-    default:
-        break;
-    }
-}
+#include <limits.h>
 
 void semantic_check(ASTNode_t *root) {
     if (!root) return;
     check_expr(root);
     printf("Test is passes!\n");
-}
-
-/* Helpers */
-void type_error(ASTNode_t *n,const char* msg) {
-    fprintf(stderr, "Error: %s\n\n", msg);
-    n->datatype = UNKNOWN;
-    exit(1);
-}
-
-int is_numeric(DataTypes_t t) {
-    return t == INT || t == FLOAT || t == DOUBLE || t == SHORT;
-}
-
-DataTypes_t promote(DataTypes_t a, DataTypes_t b) {
-    if (a == DOUBLE || b == DOUBLE) return DOUBLE;
-    if (a == FLOAT  || b == FLOAT)  return FLOAT;
-    if (a == INT    || b == INT)    return INT;
-    return SHORT;
 }
 
 /* Main recursive checker */
@@ -55,7 +17,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
     exitcode_t exit_code;
 
     switch (n->kind) {
-
+    case AST_BOOL:
     case AST_NUM:
         return n->datatype;
 
@@ -89,14 +51,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
             n->bin.right->datatype = lt;
             rt = lt;
         }
-
-        /* string ops */
-        if (lt == STRINGS || rt == STRINGS) {
-            if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
-                type_error(n, "Only string + string is allowed");
-            }
-            n->datatype = STRINGS;
-            return STRINGS;
+        else if (n->bin.left->kind == AST_NUM && n->bin.left->datatype == UNKNOWN && n->bin.right->kind == AST_NUM && n->bin.right->datatype == UNKNOWN) {
+            n->bin.left->datatype = INT;
+            n->bin.right->datatype = INT;
+            lt = rt = INT;
         }
 
         /* BIN OPS*/
@@ -119,8 +77,15 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 return n->datatype;
         }
 
+        /* string ops */
+        if (lt == STRINGS || rt == STRINGS) {
+            if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
+                type_error(n, "Only string + string is allowed");
+            }
+            n->datatype = STRINGS;
+            return STRINGS;
+        }
         /* numeric ops */
-
         if (!is_numeric(lt) || !is_numeric(rt)) {
             type_error(n, "Invalid operands for binary operator");
         }
@@ -219,6 +184,13 @@ DataTypes_t check_expr(ASTNode_t *n) {
         return UNKNOWN;
     }
 
+    case AST_WHILE: {
+        DataTypes_t ct =  check_expr(n->whilenode.cond);
+        if (ct != BOOL) type_error(n, "while condition must be boolean");
+
+        check_expr(n->whilenode.body);
+        return UNKNOWN;
+    }
     default:
         type_error(n, "Unknown AST node in semantic analysis");
         return UNKNOWN;
