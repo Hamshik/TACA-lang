@@ -24,7 +24,6 @@ gcc -Wall -Wextra -g -Isrc \
     $AST_DIR/ASTHelper.c \
     $AST_DIR/assigner.c \
     $AST_DIR/env.c \
-    src/codegen/scm_codegen.c \
     $SEMAN/semanic.c \
     $SEMAN/symbol_table.c \
     $UTILS/printers/token_printer.c \
