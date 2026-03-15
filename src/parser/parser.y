@@ -9,6 +9,36 @@
 %{
     #include "../ast/ASTNode.h"
     ASTNode_t *root = NULL;
+
+    /* Parser sugar:
+       - Allow multi-declarations like:
+         `var int32 a = 1, b = 2;`
+         `let int32 a = 1, str s = "hi";`
+         `let { int32 a = 1; str s = "hi"; }`
+       We expand them into a chain of `AST_SEQ` containing normal `AST_ASSIGN` declarations,
+       so evaluator/semantic logic does not change.
+    */
+    static void annotate_decl_list(ASTNode_t *n, DataTypes_t default_t, bool is_mutable) {
+        if (!n) return;
+        if (n->kind == AST_SEQ) {
+            annotate_decl_list(n->seq.a, default_t, is_mutable);
+            annotate_decl_list(n->seq.b, default_t, is_mutable);
+            return;
+        }
+        if (n->kind != AST_ASSIGN) return;
+
+        n->assign.is_declaration = true;
+        n->assign.is_mutable = is_mutable;
+
+        /* Untyped items inherit the "default" type (the one after var/let). */
+        if (n->datatype == UNKNOWN) n->datatype = default_t;
+
+        /* Keep LHS and RHS types consistent for semantic/eval. */
+        if (n->assign.lhs && n->assign.lhs->kind == AST_VAR && n->assign.lhs->datatype == UNKNOWN)
+            n->assign.lhs->datatype = n->datatype;
+        if (n->assign.rhs && n->assign.rhs->datatype == UNKNOWN)
+            n->assign.rhs->datatype = n->datatype;
+    }
 %}
 
 %define api.pure full
@@ -43,7 +73,11 @@
 %token IF ELSE FOR LOOP UNTIL VAR LET FN RETURN
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
-%type <node> fn_def param return_stmt opt_args args declarations
+%type <node> fn_def param return_stmt opt_args args
+%type <node> let_block decl_block_items decl_item_untyped decl_item_typed
+%type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more
+%type <node> typed_decl_stmt
+%type <node> decl decl_stmt for_init
 %type <paramlist> opt_params params
 %token <datatype> DATATYPES
 
@@ -83,6 +117,9 @@ stmt
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
     | while_stmt                { $$ = $1; }
+    | let_block                 { $$ = $1; }
+    | decl_stmt                 { $$ = $1; }
+    | typed_decl_stmt           { $$ = $1; }
     | fn_def                    { $$ = $1; }
     | return_stmt SEMICOLON     { $$ = $1; }
     ;
@@ -99,9 +136,9 @@ if_stmt
     ;
 
 for_stmt
-    : LOOP FOR LPAREN assignment COLON expr RPAREN stmt
+    : LOOP FOR LPAREN for_init COLON expr RPAREN stmt
         { $$ = new_for($4, $6, NULL, $8, @1.first_line, @1.first_column); }
-    | LOOP FOR LPAREN assignment COLON expr COLON expr RPAREN stmt
+    | LOOP FOR LPAREN for_init COLON expr COLON expr RPAREN stmt
         { $$ = new_for($4, $6, $8, $10, @1.first_line, @1.first_column); }
     ;
 
@@ -169,19 +206,81 @@ args
     | expr COMMA args   { $$ = new_seq($1, $3); }        /* list */
     ;
 
-declarations
+/* `let { ... }` / `var { ... }` declaration blocks (statement form). */
+let_block
+    : LET LBRACE decl_block_items RBRACE
+        { annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
+    | VAR LBRACE decl_block_items RBRACE
+        { annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
+    ;
+
+decl_block_items
+    : decl_item_typed SEMICOLON
+       { $$ = $1; }
+    | decl_item_typed SEMICOLON decl_block_items
+        { $$ = new_seq($1, $3); }
+    ;
+
+/* Item without explicit type (inherits the "default" type after var/let). */
+decl_item_untyped
+    : IDENTIFIER ASSIGN expr
+        { $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN); }
+    ;
+
+/* Item with explicit type. */
+decl_item_typed
+    : DATATYPES IDENTIFIER ASSIGN expr
+        {
+            if ($4->datatype == UNKNOWN) $4->datatype = $1;
+            $$ = new_assign($2, $4, $1, @$.first_line, @$.first_column, OP_ASSIGN);
+        }
+    ;
+
+/* After the initial `var/let <type>`, allow:
+   - zero or more `, <name> = <expr>` (same type),
+   - then optionally switch to typed items `, <type> <name> = <expr>` (each typed item explicit). */
+decl_items_after_type
+    : decl_item_untyped decl_items_after_type_more
+        { $$ = $2 ? new_seq($1, $2) : $1; }
+    ;
+
+decl_items_after_type_more
     : /* empty */ { $$ = NULL; }
-    | VAR DATATYPES IDENTIFIER
-        {
-            $$ = new_assign($3, NULL, $2, @$.first_line, @$.first_column, OP_ASSIGN);
-            $$->assign.is_mutable = true; // Mark as mutable
-        }
-    | LET DATATYPES IDENTIFIER
-        {
-            $$ = new_assign($3, NULL, $2, @$.first_line, @$.first_column, OP_ASSIGN);
-            $$->assign.is_mutable = false; // Mark as immutable
-        }
-    | declarations SEMICOLON
+    | COMMA decl_item_untyped decl_items_after_type_more
+        { $$ = $3 ? new_seq($2, $3) : $2; }
+    | COMMA decl_item_typed decl_items_typed_more
+        { $$ = $3 ? new_seq($2, $3) : $2; }
+    ;
+
+    decl_items_typed_more
+        : /* empty */ { $$ = NULL; }
+        | COMMA decl_item_typed decl_items_typed_more
+            { $$ = $3 ? new_seq($2, $3) : $2; }
+        ;
+
+    /* Declarations are statement-only (and allowed in `for` init) to avoid
+       ambiguity with function-call argument lists (both use commas). */
+    decl
+        : VAR DATATYPES decl_items_after_type
+            { annotate_decl_list($3, $2, true); $$ = $3; }
+        | LET DATATYPES decl_items_after_type
+            { annotate_decl_list($3, $2, false); $$ = $3; }
+        ;
+
+    decl_stmt
+        : decl SEMICOLON { $$ = $1; }
+        ;
+
+    for_init
+        : decl       { $$ = $1; }
+        | assignment { $$ = $1; }
+        ;
+    
+/* Typed declarations without `let/var` are statement-only (immutable by default),
+   to avoid ambiguity with function-call arguments (both use commas). */
+typed_decl_stmt
+    : DATATYPES decl_items_after_type SEMICOLON
+        { annotate_decl_list($2, $1, false); $$ = $2; }
     ;
 
 expr
@@ -237,28 +336,7 @@ expr
 
 
 assignment
-    : VAR DATATYPES IDENTIFIER ASSIGN expr
-        {
-            if ($5->datatype == UNKNOWN)  $5->datatype = $2;
-            $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
-            $$->assign.is_mutable = true; // Mark as mutable
-            $$->assign.is_declaration = true;
-        }
-    | LET DATATYPES IDENTIFIER ASSIGN expr
-        {
-            if ($5->datatype == UNKNOWN)  $5->datatype = $2;
-            $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
-            $$->assign.is_mutable = false; // Mark as immutable
-            $$->assign.is_declaration = true;
-        }
-    | DATATYPES IDENTIFIER ASSIGN expr // Type inference declaration, (default: immutable)
-        {
-            if ($5->datatype == UNKNOWN)  $5->datatype = $2;
-            $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
-            $$->assign.is_mutable = false; // Mark as immutable
-            $$->assign.is_declaration = true;
-        }
-    | IDENTIFIER ASSIGN expr
+    : IDENTIFIER ASSIGN expr
         {
             $$ = new_assign($1, $3, $1->datatype, @$.first_line, @$.first_column, OP_ASSIGN);
         }

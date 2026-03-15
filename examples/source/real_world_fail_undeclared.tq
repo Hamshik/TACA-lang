@@ -1,0 +1,4 @@
+// Real-world negative test (should FAIL): use of undeclared variable
+
+z = 1;
+

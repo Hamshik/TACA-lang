@@ -1,0 +1,7 @@
+// Real-world negative test (should FAIL): return type mismatch
+
+fn bad(int32 a) : int32 {
+    return true;
+}
+bad(1);
+
