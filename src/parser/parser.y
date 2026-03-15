@@ -219,6 +219,7 @@ args
   : expr              { $$ = $1; }
   | expr COMMA args   { $$ = new_seq($1, $3); }        /* list */
   ;
+
 assignment
     : VAR DATATYPES IDENTIFIER ASSIGN expr
         {

@@ -587,8 +587,8 @@ static const yytype_int16 yyrline[] =
      165,   166,   168,   169,   170,   171,   172,   173,   175,   176,
      178,   179,   180,   182,   183,   185,   186,   187,   188,   189,
      190,   192,   193,   194,   195,   197,   199,   202,   203,   204,
-     205,   206,   214,   215,   219,   220,   223,   230,   237,   242,
-     246,   249,   252,   255,   258,   261,   264
+     205,   206,   214,   215,   219,   220,   224,   231,   238,   243,
+     247,   250,   253,   256,   259,   262,   265
 };
 #endif
 
@@ -2140,7 +2140,7 @@ yyreduce:
     break;
 
   case 66: /* assignment: VAR DATATYPES IDENTIFIER ASSIGN expr  */
-#line 224 "src/parser/parser.y"
+#line 225 "src/parser/parser.y"
         {
             if ((yyvsp[0].node)->datatype == UNKNOWN)  (yyvsp[0].node)->datatype = (yyvsp[-3].datatype);
             (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node), (yyvsp[-3].datatype), (yyloc).first_line, (yyloc).first_column, OP_ASSIGN);
@@ -2151,7 +2151,7 @@ yyreduce:
     break;
 
   case 67: /* assignment: LET DATATYPES IDENTIFIER ASSIGN expr  */
-#line 231 "src/parser/parser.y"
+#line 232 "src/parser/parser.y"
         {
             if ((yyvsp[0].node)->datatype == UNKNOWN)  (yyvsp[0].node)->datatype = (yyvsp[-3].datatype);
             (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node), (yyvsp[-3].datatype), (yyloc).first_line, (yyloc).first_column, OP_ASSIGN);
@@ -2162,7 +2162,7 @@ yyreduce:
     break;
 
   case 68: /* assignment: IDENTIFIER ASSIGN expr  */
-#line 238 "src/parser/parser.y"
+#line 239 "src/parser/parser.y"
         {
             (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node), (yyvsp[-2].node)->datatype, (yyloc).first_line, (yyloc).first_column, OP_ASSIGN);
         }
@@ -2170,7 +2170,7 @@ yyreduce:
     break;
 
   case 69: /* assignment: IDENTIFIER PLUS_ASSIGN expr  */
-#line 243 "src/parser/parser.y"
+#line 244 "src/parser/parser.y"
         {
             (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_PLUS_ASSIGN); 
         }
@@ -2178,43 +2178,43 @@ yyreduce:
     break;
 
   case 70: /* assignment: IDENTIFIER MINUS_ASSIGN expr  */
-#line 247 "src/parser/parser.y"
+#line 248 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_MINUS_ASSIGN); }
 #line 2184 "src/parser/parser.c"
     break;
 
   case 71: /* assignment: IDENTIFIER STAR_ASSIGN expr  */
-#line 250 "src/parser/parser.y"
+#line 251 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_MUL_ASSIGN); }
 #line 2190 "src/parser/parser.c"
     break;
 
   case 72: /* assignment: IDENTIFIER SLASH_ASSIGN expr  */
-#line 253 "src/parser/parser.y"
+#line 254 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_DIV_ASSIGN); }
 #line 2196 "src/parser/parser.c"
     break;
 
   case 73: /* assignment: IDENTIFIER MOD_ASSIGN expr  */
-#line 256 "src/parser/parser.y"
+#line 257 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_MOD_ASSIGN); }
 #line 2202 "src/parser/parser.c"
     break;
 
   case 74: /* assignment: IDENTIFIER LSHIFT_ASSIGN expr  */
-#line 259 "src/parser/parser.y"
+#line 260 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_LSHIFT_ASSIGN); }
 #line 2208 "src/parser/parser.c"
     break;
 
   case 75: /* assignment: IDENTIFIER RSHIFT_ASSIGN expr  */
-#line 262 "src/parser/parser.y"
+#line 263 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_RSHIFT_ASSIGN); }
 #line 2214 "src/parser/parser.c"
     break;
 
   case 76: /* assignment: IDENTIFIER POWER_ASSIGN expr  */
-#line 265 "src/parser/parser.y"
+#line 266 "src/parser/parser.y"
         { (yyval.node) = new_assign((yyvsp[-2].node), (yyvsp[0].node),UNKNOWN, (yyloc).first_line, (yyloc).first_column, OP_POW_ASSIGN); }
 #line 2220 "src/parser/parser.c"
     break;
@@ -2449,7 +2449,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 267 "src/parser/parser.y"
+#line 268 "src/parser/parser.y"
 
 
 void yyerror(YYLTYPE *loc, const char *s) {
