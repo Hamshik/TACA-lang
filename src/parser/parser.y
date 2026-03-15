@@ -43,7 +43,7 @@
 %token IF ELSE FOR LOOP UNTIL VAR LET FN RETURN
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
-%type <node> fn_def param return_stmt opt_args args
+%type <node> fn_def param return_stmt opt_args args declarations
 %type <paramlist> opt_params params
 %token <datatype> DATATYPES
 
