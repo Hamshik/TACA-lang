@@ -803,7 +803,19 @@ do {                                                                            
  * Since the ideal chain length is an integer, we want to calculate
  * ceil(n/b). We don't depend on floating point arithmetic in this
  * hash, so to calculate ceil(n/b) with integers we could write
+ *//*
+ * uHash - a type-safe, generic C hash table.
  *
+ * @see test.c for usage examples.
+ * @author Attractive Chaos (khash)
+ * @author Ivano Bilenchi (uHash)
+ *
+ * @copyright Copyright (c) 2008, 2009, 2011 Attractive Chaos <attractor@live.co.uk>
+ * @copyright Copyright (c) 2019-2020 Ivano Bilenchi <https://ivanobilenchi.com>
+ * @copyright SPDX-License-Identifier: MIT
+ *
+ * @file
+ */ /*
  *      ceil(n/b) = (n/b) + ((n%b)?1:0)
  *
  * and in fact a previous version of this hash did just that.
@@ -824,7 +836,19 @@ do {                                                                            
            sizeof(struct UT_hash_bucket) * (tbl)->num_buckets * 2U);             \
   if (!_he_new_buckets) {                                                        \
     HASH_RECORD_OOM(oomed);                                                      \
-  } else {                                                                       \
+  } else {          /**
+ * uHash - a type-safe, generic C hash table.
+ *
+ * @see test.c for usage examples.
+ * @author Attractive Chaos (khash)
+ * @author Ivano Bilenchi (uHash)
+ *
+ * @copyright Copyright (c) 2008, 2009, 2011 Attractive Chaos <attractor@live.co.uk>
+ * @copyright Copyright (c) 2019-2020 Ivano Bilenchi <https://ivanobilenchi.com>
+ * @copyright SPDX-License-Identifier: MIT
+ *
+ * @file
+ */                                                             \
     uthash_bzero(_he_new_buckets,                                                \
         sizeof(struct UT_hash_bucket) * (tbl)->num_buckets * 2U);                \
     (tbl)->ideal_chain_maxlen =                                                  \
@@ -884,9 +908,33 @@ do {                                                                            
       _hs_p = _hs_list;                                                          \
       _hs_list = NULL;                                                           \
       _hs_tail = NULL;                                                           \
-      _hs_nmerges = 0;                                                           \
+      _hs_nmerges = /**
+ * uHash - a type-safe, generic C hash table.
+ *
+ * @see test.c for usage examples.
+ * @author Attractive Chaos (khash)
+ * @author Ivano Bilenchi (uHash)
+ *
+ * @copyright Copyright (c) 2008, 2009, 2011 Attractive Chaos <attractor@live.co.uk>
+ * @copyright Copyright (c) 2019-2020 Ivano Bilenchi <https://ivanobilenchi.com>
+ * @copyright SPDX-License-Identifier: MIT
+ *
+ * @file
+ */0;                                                           \
       while (_hs_p != NULL) {                                                    \
-        _hs_nmerges++;                                                           \
+        _hs_nmerges+/**
+ * uHash - a type-safe, generic C hash table.
+ *
+ * @see test.c for usage examples.
+ * @author Attractive Chaos (khash)
+ * @author Ivano Bilenchi (uHash)
+ *
+ * @copyright Copyright (c) 2008, 2009, 2011 Attractive Chaos <attractor@live.co.uk>
+ * @copyright Copyright (c) 2019-2020 Ivano Bilenchi <https://ivanobilenchi.com>
+ * @copyright SPDX-License-Identifier: MIT
+ *
+ * @file
+ */+;                                                           \
         _hs_q = _hs_p;                                                           \
         _hs_psize = 0;                                                           \
         for (_hs_i = 0; _hs_i < _hs_insize; ++_hs_i) {                           \
@@ -1020,7 +1068,19 @@ do {                                                                            
 
 #define HASH_CLEAR(hh,head)                                                      \
 do {                                                                             \
-  if ((head) != NULL) {                                                          \
+  if ((head) != NULL/**
+ * uHash - a type-safe, generic C hash table.
+ *
+ * @see test.c for usage examples.
+ * @author Attractive Chaos (khash)
+ * @author Ivano Bilenchi (uHash)
+ *
+ * @copyright Copyright (c) 2008, 2009, 2011 Attractive Chaos <attractor@live.co.uk>
+ * @copyright Copyright (c) 2019-2020 Ivano Bilenchi <https://ivanobilenchi.com>
+ * @copyright SPDX-License-Identifier: MIT
+ *
+ * @file
+ */) {                                                          \
     HASH_BLOOM_FREE((head)->hh.tbl);                                             \
     uthash_free((head)->hh.tbl->buckets,                                         \
                 (head)->hh.tbl->num_buckets*sizeof(struct UT_hash_bucket));      \
@@ -1080,7 +1140,19 @@ typedef struct UT_hash_table {
    unsigned num_items;
    struct UT_hash_handle *tail; /* tail hh in app order, for fast append    */
    ptrdiff_t hho; /* hash handle offset (byte pos of hash handle in element */
-
+/**
+ * uHash - a type-safe, generic C hash table.
+ *
+ * @see test.c for usage examples.
+ * @author Attractive Chaos (khash)
+ * @author Ivano Bilenchi (uHash)
+ *
+ * @copyright Copyright (c) 2008, 2009, 2011 Attractive Chaos <attractor@live.co.uk>
+ * @copyright Copyright (c) 2019-2020 Ivano Bilenchi <https://ivanobilenchi.com>
+ * @copyright SPDX-License-Identifier: MIT
+ *
+ * @file
+ */
    /* in an ideal situation (all buckets used equally), no bucket would have
     * more than ceil(#items/#buckets) items. that's the ideal chain length. */
    unsigned ideal_chain_maxlen;
