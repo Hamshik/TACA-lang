@@ -11,6 +11,14 @@ typedef struct symboltable{
     bool is_mutable;
 }Symboltable_t;
 
+typedef struct fnsymbol{
+    const char *name;
+    Param_t *params;
+    int param_count;
+    DataTypes_t ret;
+    UT_hash_handle hh;
+}FnSymbol_t;
+
 typedef enum exitcode{
     NOT_DECLARED,
     SUCCESS,
@@ -29,6 +37,13 @@ bool declare(const char* name, DataTypes_t type, const bool is_mutable);
 exitcode_t exists(const char* name, DataTypes_t type);
 exitcode_t assign_check(const char* name, DataTypes_t rhs_type);
 void clear_symbols(void);
+
+void scope_push(void);
+void scope_pop(void);
+
+bool fn_declare(const char *name, Param_t *params, int param_count, DataTypes_t ret);
+FnSymbol_t *fn_lookup(const char *name);
+void clear_fns(void);
 
 void type_error(ASTNode_t *n,const char* msg);
 int is_numeric(DataTypes_t t);

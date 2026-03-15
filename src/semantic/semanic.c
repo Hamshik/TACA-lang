@@ -5,10 +5,16 @@
 #include "../eval/eval.h"
 #include <limits.h>
 
+static DataTypes_t g_fn_ret = UNKNOWN;
+static int g_in_fn = 0;
+
 void semantic_check(ASTNode_t *root) {
     if (!root) return;
+    scope_push(); // global scope
     check_expr(root);
     printf("Test is passes!\n");
+    scope_pop();
+    clear_fns();
 }
 
 /* Main recursive checker */
@@ -124,15 +130,13 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
         DataTypes_t lhs_t;
 
-        if (n->datatype != UNKNOWN) {
-            // declaration: int i = ...
+        if (n->assign.is_declaration) {
             lhs_t = n->datatype;
             n->assign.lhs->datatype = lhs_t;
 
             if (!declare(n->assign.lhs->var, lhs_t, n->assign.is_mutable))
                 type_error(n, "Redeclaration of variable");
         } else {
-            // reassignment: i = ...
             lhs_t = lookup(n->assign.lhs->var);
             switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype))
             {
@@ -212,6 +216,71 @@ DataTypes_t check_expr(ASTNode_t *n) {
         check_expr(n->whilenode.body);
         return UNKNOWN;
     }
+
+    case AST_FN: {
+        if (!fn_declare(n->fn_def.name, n->fn_def.params, n->fn_def.param_count, n->fn_def.ret)) {
+            type_error(n, "Redeclaration of function");
+        }
+
+        scope_push();
+        for (int i = 0; i < n->fn_def.param_count; i++) {
+            // params are mutable locals
+            if (!declare(n->fn_def.params[i].name, n->fn_def.params[i].type, true)) {
+                type_error(n, "Duplicate parameter name");
+            }
+        }
+
+        DataTypes_t saved_ret = g_fn_ret;
+        int saved_in_fn = g_in_fn;
+        g_fn_ret = n->fn_def.ret;
+        g_in_fn = 1;
+        check_expr(n->fn_def.body);
+        g_fn_ret = saved_ret;
+        g_in_fn = saved_in_fn;
+
+        scope_pop();
+        return UNKNOWN;
+    }
+
+    case AST_CALL: {
+        FnSymbol_t *f = fn_lookup(n->call.name);
+        if (!f) type_error(n, "Call to undefined function");
+
+        // count args and check types (args are stored as a left-associated AST_SEQ list)
+        int argc = 0;
+        for (ASTNode_t *it = n->call.args; it; ) {
+            argc++;
+            if (it->kind == AST_SEQ) it = it->seq.b;
+            else it = NULL;
+        }
+        if (argc != f->param_count) type_error(n, "Argument count mismatch");
+
+        // walk args in the same order as we built them (left then seq.b chain)
+        ASTNode_t *arg = n->call.args;
+        for (int i = 0; i < f->param_count; i++) {
+            ASTNode_t *cur = arg ? (arg->kind == AST_SEQ ? arg->seq.a : arg) : NULL;
+
+            force_numeric_type(cur, f->params[i].type);
+            DataTypes_t at = check_expr(cur);
+            if (at != f->params[i].type) type_error(n, "Argument type mismatch");
+
+            if (arg && arg->kind == AST_SEQ) arg = arg->seq.b;
+            else arg = NULL;
+        }
+
+        n->datatype = f->ret;
+        return f->ret;
+    }
+
+    case AST_RETURN:
+        if (!g_in_fn) type_error(n, "return outside of function");
+        if (n->ret_stmt.value) {
+            force_numeric_type(n->ret_stmt.value, g_fn_ret);
+            DataTypes_t rt = check_expr(n->ret_stmt.value);
+            if (g_fn_ret != UNKNOWN && rt != g_fn_ret) type_error(n, "Return type mismatch");
+            return rt;
+        }
+        return UNKNOWN;
     default:
         type_error(n, "Unknown AST node in semantic analysis");
         return UNKNOWN;

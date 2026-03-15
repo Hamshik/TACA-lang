@@ -1,0 +1,18 @@
+// Function demo (should PASS)
+
+fn add(int32 a, int32 b) : int32 {
+    return a + b;
+}
+
+fn fact(int32 n) : int32 {
+    if { n <= 1 } {
+        return 1;
+    } else {
+        return n * fact(n - 1);
+    }
+}
+
+var int32 x = add(10, 20);
+x;
+
+fact(5);

@@ -18,6 +18,10 @@
 %union {
     ASTNode_t *node;
     DataTypes_t datatype;
+    struct {
+        Param_t *params;
+        int count;
+    } paramlist;
 }
 
 %code {
@@ -34,11 +38,13 @@
 %token AMP PIPE BITXOR BITNOT
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON LSQUARE RSQUARE
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
-%token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON
+%token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON COMMA
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR LOOP UNTIL VAR LET
+%token IF ELSE FOR LOOP UNTIL VAR LET FN RETURN
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
+%type <node> fn_def param return_stmt opt_args args
+%type <paramlist> opt_params params
 %token <datatype> DATATYPES
 
 %right ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN LSHIFT_ASSIGN RSHIFT_ASSIGN
@@ -77,6 +83,8 @@ stmt
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
     | while_stmt                { $$ = $1; }
+    | fn_def                    { $$ = $1; }
+    | return_stmt SEMICOLON     { $$ = $1; }
     ;
 
 block
@@ -101,6 +109,56 @@ while_stmt
     : LOOP UNTIL LPAREN expr RPAREN stmt
         { $$ = new_while($4, $6, @1.first_line, @1.first_column);}
     ;
+
+fn_def
+  : FN IDENTIFIER LPAREN opt_params RPAREN COLON DATATYPES block
+      {
+          $$ = new_fn_def($2->var, $4.params, $4.count, $7, $8, @1.first_line, @1.first_column);
+          ast_free($2);
+      }
+  | FN IDENTIFIER LPAREN opt_params RPAREN block
+      {
+          $$ = new_fn_def($2->var, $4.params, $4.count, UNKNOWN, $6, @1.first_line, @1.first_column);
+          ast_free($2);
+      }
+  ;
+
+opt_params
+  : /* empty */ { $$.params = NULL; $$.count = 0; }
+  | params      { $$ = $1; }
+  ;
+
+params
+  : param {
+        $$.count = 1;
+        $$.params = malloc(sizeof(Param_t));
+        if (!$$.params) { perror("malloc"); exit(1); }
+        $$.params[0].name = strdup($1->var);
+        $$.params[0].type = $1->datatype;
+        ast_free($1);
+    }
+  | param COMMA params {
+        $$.count = $3.count + 1;
+        $$.params = malloc(sizeof(Param_t) * (size_t)$$.count);
+        if (!$$.params) { perror("malloc"); exit(1); }
+        $$.params[0].name = strdup($1->var);
+        $$.params[0].type = $1->datatype;
+        ast_free($1);
+        for (int i = 0; i < $3.count; i++) $$.params[i + 1] = $3.params[i];
+        free($3.params);
+    }
+  ;
+
+param
+  : DATATYPES IDENTIFIER
+      { $2->datatype = $1; $$ = $2; }  /* AST_VAR node typed as param */
+  ;
+
+return_stmt
+  : RETURN expr  { $$ = new_return($2, @1.first_line, @1.first_column); }
+  | RETURN       { $$ = new_return(NULL, @1.first_line, @1.first_column); }
+  ;
+
 expr
     : NUMBER                    {$$ = $1;}
 	| IDENTIFIER				{$$ = $1;}
@@ -137,28 +195,44 @@ expr
     | BITNOT expr               { $$ = new_unop($2, @$.first_line, @$.first_column, OP_BITNOT); }
 
     | IDENTIFIER INC %prec POSTFIX
-                                { $$ = new_unop($1, @$.first_line, @$.first_column, OP_INC); }
+        { $$ = new_unop($1, @$.first_line, @$.first_column, OP_INC); }
     | IDENTIFIER DEC %prec POSTFIX
-                                { $$ = new_unop($1, @$.first_line, @$.first_column, OP_DEC); }
+        { $$ = new_unop($1, @$.first_line, @$.first_column, OP_DEC); }
 
     | LPAREN expr RPAREN         { $$ = $2; }
     | LBRACE expr RBRACE         { $$ = $2; }
     | LSQUARE expr RSQUARE       { $$ = $2; }
-    | assignment                 {$$ = $1;}
+    | assignment                 { $$ = $1; }
+    | IDENTIFIER LPAREN opt_args RPAREN
+      {
+          $$ = new_fn_call($1->var, $3, @1.first_line, @1.first_column);
+          ast_free($1);
+      }
     ;
- 
+
+ opt_args
+  : /* empty */ { $$ = NULL; }
+  | args        { $$ = $1; }
+  ;
+
+args
+  : expr              { $$ = $1; }
+  | expr COMMA args   { $$ = new_seq($1, $3); }        /* list */
+  ;
 assignment
     : VAR DATATYPES IDENTIFIER ASSIGN expr
         {
             if ($5->datatype == UNKNOWN)  $5->datatype = $2;
             $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
             $$->assign.is_mutable = true; // Mark as mutable
+            $$->assign.is_declaration = true;
         }
     | LET DATATYPES IDENTIFIER ASSIGN expr
         {
             if ($5->datatype == UNKNOWN)  $5->datatype = $2;
             $$ = new_assign($3, $5, $2, @$.first_line, @$.first_column, OP_ASSIGN);
             $$->assign.is_mutable = false; // Mark as immutable
+            $$->assign.is_declaration = true;
         }
     | IDENTIFIER ASSIGN expr
         {

@@ -10,6 +10,7 @@ int main() {
         semantic_check(root);
         ast_eval(root);
         ast_free(root);
+        env_clear_all();
     }
     return 0;
 }

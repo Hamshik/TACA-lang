@@ -16,7 +16,10 @@ typedef enum ASTKind {
     NODE_FOR,
     AST_STR,
     AST_CHAR,
-    AST_WHILE
+    AST_WHILE,
+    AST_FN,
+    AST_CALL,
+    AST_RETURN
 } ASTKind_t;
 
 typedef enum DataTypes{
@@ -57,11 +60,17 @@ typedef struct {
     DataTypes_t type;
     Value val;
 } TypedValue;
+
 typedef struct {
     char *name;
     TypedValue typedval;
     UT_hash_handle hh;
 } VarEntry;
+
+typedef struct Param {
+  char *name;
+  DataTypes_t type;
+} Param_t;
 
 typedef struct ASTNode {
     ASTKind_t kind;
@@ -69,41 +78,40 @@ typedef struct ASTNode {
     int line, col;
 
     union {
+        // variables
         char *var;
+        // literals
         struct {
             char *raw;     // e.g. "123", "3.14", "true", "hello"
         } literal;
+        // binary operations
         struct {
             OP_kind_t op;
             struct ASTNode *left, *right;
         } bin;
-
+        // unary operations
         struct {
             OP_kind_t op;
             struct ASTNode *operand;
         } unop;
-
+        // assignment
         struct {
             struct ASTNode *lhs, *rhs;
             bool is_mutable;
+            bool is_declaration;
             OP_kind_t op;
         } assign;
-
-        struct {
-            struct ASTNode *a, *b;
-        } seq;
-
-        struct {
-            struct ASTNode *cond, *then_branch, *else_branch;
-        } ifnode;
-
-        struct {
-            struct ASTNode *init, *end, *step, *body;
-        } fornode;
-        struct
-        {
-            struct ASTNode *cond, *body;
-        } whilenode;
+        // sequence of statements
+        struct { struct ASTNode *a, *b; } seq;
+        // conditionals
+        struct { struct ASTNode *cond, *then_branch, *else_branch; } ifnode;
+        //loops
+        struct { struct ASTNode *init, *end, *step, *body; } fornode;
+        struct { struct ASTNode *cond, *body; } whilenode;
+        // function definition and call
+        struct { char *name; Param_t *params; int param_count; DataTypes_t ret; struct ASTNode *body; } fn_def;
+        struct { char *name; struct ASTNode *args; } call;
+        struct { struct ASTNode *value; } ret_stmt;
         
     };
 } ASTNode_t;
@@ -120,14 +128,20 @@ ASTNode_t *new_for(ASTNode_t *init, ASTNode_t *end, ASTNode_t *step, ASTNode_t *
 ASTNode_t *new_seq(ASTNode_t *a, ASTNode_t *b);
 ASTNode_t *new_while(ASTNode_t *cond, ASTNode_t *body, int line, int col);
 ASTNode_t* new_bool(bool val, int line, int col);
-
+ASTNode_t* new_fn_def(const char *name, Param_t *params, int param_count, DataTypes_t ret_type, ASTNode_t *body, int line, int col);
+ASTNode_t* new_fn_call(const char *name, ASTNode_t *args, int line, int col);
+ASTNode_t* new_return(ASTNode_t *value, int line, int col);
 /* Eval + memory */
 void ast_free(ASTNode_t *n);
 ASTNode_t *ast_alloc(void);
 
 /* Env */
 void set_var(const char *name, Value *val, DataTypes_t datatype);
+void set_var_current(const char *name, Value *val, DataTypes_t datatype);
 Value getvar(const char *name, DataTypes_t datatype, int line, int col);
+void env_push(void);
+void env_pop(void);
+void env_clear_all(void);
 void assign_value(DataTypes_t datatype, Value *dest, Value src);
 Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col);
 

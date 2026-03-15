@@ -66,7 +66,8 @@ ASTNode_t* new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int 
     node->assign.lhs = lhs;
     node->assign.rhs = rhs;
     node->datatype = datatype;
-    node->assign.is_mutable = NULL;
+    node->assign.is_mutable = true;
+    node->assign.is_declaration = false;
     node->line = line;
     node->col = col;
     return node;
@@ -120,5 +121,39 @@ ASTNode_t* new_bool(bool val, int line, int col) {
     node->line = line;
     node->col = col;
     node->literal.raw = strdup(val ? "true" : "false");
+    return node;
+}
+
+ASTNode_t *new_fn_def(
+    const char *name, Param_t *params, int param_count, DataTypes_t ret_type, ASTNode_t *body, int line, int col
+){
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_FN;
+    node->fn_def.name = strdup(name);
+    node->fn_def.params = params;
+    node->fn_def.param_count = param_count;
+    node->fn_def.ret = ret_type;
+    node->fn_def.body = body;
+    node->line = line;
+    node->col = col;
+    return node;
+}
+
+ASTNode_t *new_fn_call(const char *name, ASTNode_t *args, int line, int col){
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_CALL;
+    node->call.name = strdup(name);
+    node->call.args = args;
+    node->line = line;
+    node->col = col;
+    return node;
+}
+
+ASTNode_t *new_return(ASTNode_t *value, int line, int col){
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_RETURN;
+    node->ret_stmt.value = value;
+    node->line = line;
+    node->col = col;
     return node;
 }

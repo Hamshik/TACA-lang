@@ -99,27 +99,30 @@ extern int yydebug;
     LSHIFT_ASSIGN = 290,           /* LSHIFT_ASSIGN  */
     RSHIFT_ASSIGN = 291,           /* RSHIFT_ASSIGN  */
     COLON = 292,                   /* COLON  */
-    AND = 293,                     /* AND  */
-    OR = 294,                      /* OR  */
-    NOT = 295,                     /* NOT  */
-    EQ = 296,                      /* EQ  */
-    NEQ = 297,                     /* NEQ  */
-    LT = 298,                      /* LT  */
-    LE = 299,                      /* LE  */
-    GT = 300,                      /* GT  */
-    GE = 301,                      /* GE  */
-    IF = 302,                      /* IF  */
-    ELSE = 303,                    /* ELSE  */
-    FOR = 304,                     /* FOR  */
-    LOOP = 305,                    /* LOOP  */
-    UNTIL = 306,                   /* UNTIL  */
-    VAR = 307,                     /* VAR  */
-    LET = 308,                     /* LET  */
-    DATATYPES = 309,               /* DATATYPES  */
-    UPLUS = 310,                   /* UPLUS  */
-    UMINUS = 311,                  /* UMINUS  */
-    POSTFIX = 312,                 /* POSTFIX  */
-    LOWER_THAN_ELSE = 313          /* LOWER_THAN_ELSE  */
+    COMMA = 293,                   /* COMMA  */
+    AND = 294,                     /* AND  */
+    OR = 295,                      /* OR  */
+    NOT = 296,                     /* NOT  */
+    EQ = 297,                      /* EQ  */
+    NEQ = 298,                     /* NEQ  */
+    LT = 299,                      /* LT  */
+    LE = 300,                      /* LE  */
+    GT = 301,                      /* GT  */
+    GE = 302,                      /* GE  */
+    IF = 303,                      /* IF  */
+    ELSE = 304,                    /* ELSE  */
+    FOR = 305,                     /* FOR  */
+    LOOP = 306,                    /* LOOP  */
+    UNTIL = 307,                   /* UNTIL  */
+    VAR = 308,                     /* VAR  */
+    LET = 309,                     /* LET  */
+    FN = 310,                      /* FN  */
+    RETURN = 311,                  /* RETURN  */
+    DATATYPES = 312,               /* DATATYPES  */
+    UPLUS = 313,                   /* UPLUS  */
+    UMINUS = 314,                  /* UMINUS  */
+    POSTFIX = 315,                 /* POSTFIX  */
+    LOWER_THAN_ELSE = 316          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -132,8 +135,12 @@ union YYSTYPE
 
     ASTNode_t *node;
     DataTypes_t datatype;
+    struct {
+        Param_t *params;
+        int count;
+    } paramlist;
 
-#line 137 "src/parser/parser.h"
+#line 144 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

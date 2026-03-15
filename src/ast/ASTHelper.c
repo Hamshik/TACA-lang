@@ -56,6 +56,28 @@ void ast_free(ASTNode_t *n) {
             ast_free(n->fornode.body);
             break;
 
+        case AST_FN:
+            free(n->fn_def.name);
+            for (int i = 0; i < n->fn_def.param_count; i++) {
+                free(n->fn_def.params[i].name);
+            }
+            free(n->fn_def.params);
+            ast_free(n->fn_def.body);
+            break;
+
+        case AST_CALL:
+            free(n->call.name);
+            ast_free(n->call.args);
+            break;
+
+        case AST_RETURN:
+            ast_free(n->ret_stmt.value);
+            break;
+
+        case AST_BOOL:
+            free(n->literal.raw);
+            break;
+
         default:
             break;
     }

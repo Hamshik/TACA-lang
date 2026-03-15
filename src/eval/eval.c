@@ -1,8 +1,39 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../ast/ASTNode.h"
 #include "../utils/printers/value_printer.h"
 #include "eval.h"
+
+typedef struct FnEntry {
+    char *name;
+    ASTNode_t *def;
+    UT_hash_handle hh;
+} FnEntry_t;
+
+static FnEntry_t *g_fns = NULL;
+static int g_returning = 0;
+static TypedValue g_return_value = (TypedValue){0};
+
+static FnEntry_t *fn_lookup_runtime(const char *name) {
+    FnEntry_t *e = NULL;
+    HASH_FIND_STR(g_fns, name, e);
+    return e;
+}
+
+static void fn_register_runtime(ASTNode_t *fn) {
+    if (!fn || fn->kind != AST_FN) return;
+    if (fn_lookup_runtime(fn->fn_def.name)) {
+        fprintf(stderr, "Error: redeclaration of function '%s'\n", fn->fn_def.name);
+        exit(EXIT_FAILURE);
+    }
+    FnEntry_t *e = calloc(1, sizeof(*e));
+    if (!e) { perror("calloc"); exit(1); }
+    e->name = strdup(fn->fn_def.name);
+    e->def = fn;
+    HASH_ADD_KEYPTR(hh, g_fns, e->name, strlen(e->name), e);
+}
 
 TypedValue ast_eval(ASTNode_t *node) {
     if (!node) return (TypedValue){0};
@@ -86,6 +117,12 @@ TypedValue ast_eval(ASTNode_t *node) {
     }
 
     case AST_ASSIGN: {
+        if (node->assign.op == OP_ASSIGN && node->assign.is_declaration) {
+            Value r = ast_eval(node->assign.rhs).val;
+            set_var_current(node->assign.lhs->var, &r, node->datatype);
+            return (TypedValue){.val = r, .type = node->datatype};
+        }
+
         Value val = eval_assign(node->assign.lhs,
                                 node->assign.rhs,
                                 node->assign.op,
@@ -97,14 +134,21 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_SEQ: {
         ast_eval(node->seq.a);
+        if (g_returning) return g_return_value;
         return ast_eval(node->seq.b);
     }
 
     case NODE_IF:
-        if (ast_eval(node->ifnode.cond).val.bval)
-            return ast_eval(node->ifnode.then_branch);
-        if (node->ifnode.else_branch)
-            return ast_eval(node->ifnode.else_branch);
+        if (ast_eval(node->ifnode.cond).val.bval) {
+            TypedValue r = ast_eval(node->ifnode.then_branch);
+            if (g_returning) return g_return_value;
+            return r;
+        }
+        if (node->ifnode.else_branch) {
+            TypedValue r = ast_eval(node->ifnode.else_branch);
+            if (g_returning) return g_return_value;
+            return r;
+        }
         return (TypedValue){0};
 
     case NODE_FOR: {
@@ -130,6 +174,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         
         while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col), endv, stepv)) {
             last = ast_eval(node->fornode.body);
+            if (g_returning) return g_return_value;
             Value cur = getvar(loop_name, loop_type, node->line, node->col);
             Value next = add_step_for(loop_type, cur, stepv);
             set_var(loop_name, &next, loop_type);
@@ -141,13 +186,83 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_WHILE: {
         TypedValue last = {0};
-        while (ast_eval(node->whilenode.cond).val.bval)
+        while (ast_eval(node->whilenode.cond).val.bval) {
             last = ast_eval(node->whilenode.body);
+            if (g_returning) return g_return_value;
+        }
         return last;
     }
 
     case AST_BOOL:
         return (TypedValue){.type = BOOL, .val = node->literal.raw[0] == 't' ? (Value){.bval = true} : (Value){.bval = false}};
+
+    case AST_FN:
+        fn_register_runtime(node);
+        return (TypedValue){0};
+
+    case AST_CALL: {
+        FnEntry_t *e = fn_lookup_runtime(node->call.name);
+        if (!e) {
+            fprintf(stderr, "Error: call to undefined function '%s'\n", node->call.name);
+            exit(EXIT_FAILURE);
+        }
+        ASTNode_t *fn = e->def;
+
+        // Evaluate args left-to-right into a small array.
+        int argc = 0;
+        for (ASTNode_t *it = node->call.args; it; ) {
+            argc++;
+            if (it->kind == AST_SEQ) it = it->seq.b;
+            else it = NULL;
+        }
+        if (argc != fn->fn_def.param_count) {
+            fprintf(stderr, "Error: argument count mismatch in call to '%s'\n", node->call.name);
+            exit(EXIT_FAILURE);
+        }
+
+        TypedValue *argv = argc ? calloc((size_t)argc, sizeof(TypedValue)) : NULL;
+        if (argc && !argv) { perror("calloc"); exit(1); }
+
+        ASTNode_t *arg = node->call.args;
+        for (int i = 0; i < argc; i++) {
+            ASTNode_t *cur = arg ? (arg->kind == AST_SEQ ? arg->seq.a : arg) : NULL;
+            argv[i] = ast_eval(cur);
+            if (arg && arg->kind == AST_SEQ) arg = arg->seq.b;
+            else arg = NULL;
+        }
+
+        // New call frame.
+        env_push();
+        for (int i = 0; i < fn->fn_def.param_count; i++) {
+            Value vv = argv[i].val;
+            set_var_current(fn->fn_def.params[i].name, &vv, fn->fn_def.params[i].type);
+        }
+
+        int saved_returning = g_returning;
+        TypedValue saved_return_value = g_return_value;
+        g_returning = 0;
+        g_return_value = (TypedValue){0};
+
+        TypedValue last = ast_eval(fn->fn_def.body);
+        TypedValue ret = g_returning ? g_return_value : last;
+
+        g_returning = saved_returning;
+        g_return_value = saved_return_value;
+
+        env_pop();
+        free(argv);
+
+        print_value(ret.val, ret.type);
+        return ret;
+    }
+
+    case AST_RETURN: {
+        TypedValue r = {0};
+        if (node->ret_stmt.value) r = ast_eval(node->ret_stmt.value);
+        g_return_value = r;
+        g_returning = 1;
+        return r;
+    }
     default:
         fprintf(stderr, "Error: unknown AST node\n");
         exit(-1);

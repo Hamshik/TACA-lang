@@ -43,11 +43,14 @@ true                { yylval->node = new_bool(1, yylloc->first_line, yylloc->fir
 false               { yylval->node = new_bool(0, yylloc->first_line, yylloc->first_column); return BOOL_LITERAL; }
 let                 { return LET; }
 var                 { return VAR; }
+fn                  { return FN; }
+return              { return RETURN; }
 
 [0-9]+(\.[0-9]+)? {
     yylval->node = new_num(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
     return NUMBER;
 }
+","                 { return COMMA; }
 "++"                { return INC; }
 "--"                { return DEC; }
 ":"                 { return COLON;}
