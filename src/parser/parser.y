@@ -4,6 +4,16 @@
     #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
     extern ASTNode_t *root;
+
+    /* Extended source location that includes absolute byte offsets. */
+    typedef struct TQLocation {
+        int first_line;
+        int first_column;
+        int last_line;
+        int last_column;
+        int first_pos;   /* 0-based byte offset */
+        int last_pos;    /* 0-based byte offset */
+    } TQLocation;
 }
 
 %{
@@ -39,10 +49,33 @@
         if (n->assign.rhs && n->assign.rhs->datatype == UNKNOWN)
             n->assign.rhs->datatype = n->datatype;
     }
+
+    /* Tell Bison how to propagate our extra location fields. */
+    #ifndef YYLLOC_DEFAULT
+    #define YYLLOC_DEFAULT(Current, Rhs, N)                              \
+        do {                                                             \
+            if (N) {                                                     \
+                (Current).first_line = YYRHSLOC(Rhs, 1).first_line;      \
+                (Current).first_column = YYRHSLOC(Rhs, 1).first_column;  \
+                (Current).first_pos = YYRHSLOC(Rhs, 1).first_pos;        \
+                (Current).last_line = YYRHSLOC(Rhs, N).last_line;        \
+                (Current).last_column = YYRHSLOC(Rhs, N).last_column;    \
+                (Current).last_pos = YYRHSLOC(Rhs, N).last_pos;          \
+            } else {                                                     \
+                (Current).first_line = (Current).last_line =             \
+                    YYRHSLOC(Rhs, 0).last_line;                          \
+                (Current).first_column = (Current).last_column =         \
+                    YYRHSLOC(Rhs, 0).last_column;                        \
+                (Current).first_pos = (Current).last_pos =               \
+                    YYRHSLOC(Rhs, 0).last_pos;                           \
+            }                                                            \
+        } while (0)
+    #endif
 %}
 
 %define api.pure full
 %define parse.error verbose
+%define api.location.type {TQLocation}
 %locations
 
 %union {
@@ -369,6 +402,6 @@ assignment
 %%
 
 void yyerror(YYLTYPE *loc, const char *s) {
-    fprintf(stderr, "Error at %d:%d: %s\n",
-            loc->first_line, loc->first_column, s);
+    fprintf(stderr, "Error at %d:%d (pos %d): %s\n",
+            loc->first_line, loc->first_column, loc->first_pos, s);
 }

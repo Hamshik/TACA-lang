@@ -5,9 +5,53 @@
 %option nounput
 
 %{
+    #include <stddef.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+
     #include "../parser/parser.h"
-#include "../ast/ASTNode.h"
-#define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
+    #include "../ast/ASTNode.h"
+    #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
+
+    /* Bison %locations: Flex does not maintain columns for you.
+       Track (line, column) ourselves and update it for every match,
+       including skipped whitespace/comments. Columns/pos are byte-based. */
+    static int tq_lex_line = 1;
+    static int tq_lex_col = 1;
+    static int tq_lex_pos = 0; /* 0-based byte offset */
+
+    static void tq_update_loc(YYLTYPE *loc, const char *text, int len) {
+        if (!loc) return;
+
+        loc->first_line = tq_lex_line;
+        loc->first_column = tq_lex_col;
+        loc->first_pos = tq_lex_pos;
+
+        int line = tq_lex_line;
+        int col = tq_lex_col;
+        int pos = tq_lex_pos;
+
+        for (int i = 0; i < len; i++) {
+            if (text[i] == '\n') {
+                line += 1;
+                col = 1;
+            } else {
+                col += 1;
+            }
+            pos += 1;
+        }
+
+        loc->last_line = line;
+        loc->last_column = (col > 1) ? (col - 1) : 1;
+        loc->last_pos = (pos > 0) ? (pos - 1) : 0;
+
+        tq_lex_line = line;
+        tq_lex_col = col;
+        tq_lex_pos = pos;
+    }
+
+    #define YY_USER_ACTION tq_update_loc(yylloc, yytext, (int)yyleng);
 %}
 
 %%
@@ -31,10 +75,10 @@ if                  { return IF; }
 else                { return ELSE; }
 for                 { return FOR; }
 loop                { return LOOP; }
-int32               { yylval->datatype = INT; return DATATYPES; }
-int16               { yylval->datatype = SHORT; return DATATYPES; }
-real32              { yylval->datatype = FLOAT; return DATATYPES; }
-real64              { yylval->datatype = DOUBLE; return DATATYPES; }
+i32                 { yylval->datatype = INT; return DATATYPES; }
+i16                 { yylval->datatype = SHORT; return DATATYPES; }
+f32                 { yylval->datatype = FLOAT; return DATATYPES; }
+f64                 { yylval->datatype = DOUBLE; return DATATYPES; }
 str                 { yylval->datatype = STRINGS; return DATATYPES; }
 char                { yylval->datatype = CHARACTER; return DATATYPES;}
 bool                { yylval->datatype = BOOL; return DATATYPES;}

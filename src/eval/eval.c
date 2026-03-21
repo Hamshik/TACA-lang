@@ -29,7 +29,7 @@ static void fn_register_runtime(ASTNode_t *fn) {
         exit(EXIT_FAILURE);
     }
     FnEntry_t *e = calloc(1, sizeof(*e));
-    if (!e) { perror("calloc"); exit(1); }
+    if (!e) { perror("memory error: failed to allocate the memory"); exit(1); }
     e->name = strdup(fn->fn_def.name);
     e->def = fn;
     HASH_ADD_KEYPTR(hh, g_fns, e->name, strlen(e->name), e);

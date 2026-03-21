@@ -51,7 +51,6 @@ DataTypes_t lookup(const char* name){
         HASH_FIND_STR(it->symbols, name, v);
         if (v) return v->type;
     }
-    printf("Warning: in func lookup the dataype of var %s is UNKNOWN\n", name);
     return UNKNOWN;
 }
 
@@ -107,7 +106,7 @@ void clear_symbols(void) {
 bool fn_declare(const char *name, Param_t *params, int param_count, DataTypes_t ret) {
     FnSymbol_t *f = NULL;
     HASH_FIND_STR(g_fns, name, f);
-    if (f) return false;
+    if (f != NULL) return false;
 
     f = malloc(sizeof(*f));
     if (!f) { perror("malloc"); exit(1); }

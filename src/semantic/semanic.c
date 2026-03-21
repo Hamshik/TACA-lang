@@ -248,7 +248,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
         // count args and check types (args are stored as a left-associated AST_SEQ list)
         int argc = 0;
-        for (ASTNode_t *it = n->call.args; it; ) {
+        for (ASTNode_t *it = n->call.args; it != NULL; ) {
             argc++;
             if (it->kind == AST_SEQ) it = it->seq.b;
             else it = NULL;

@@ -53,7 +53,17 @@ extern int yydebug;
     #include "../ast/ASTNode.h"
     extern ASTNode_t *root;
 
-#line 57 "src/parser/parser.h"
+    /* Extended source location that includes absolute byte offsets. */
+    typedef struct TQLocation {
+        int first_line;
+        int first_column;
+        int last_line;
+        int last_column;
+        int first_pos;   /* 0-based byte offset */
+        int last_pos;    /* 0-based byte offset */
+    } TQLocation;
+
+#line 67 "src/parser/parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -131,7 +141,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 48 "src/parser/parser.y"
+#line 81 "src/parser/parser.y"
 
     ASTNode_t *node;
     DataTypes_t datatype;
@@ -140,7 +150,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 144 "src/parser/parser.h"
+#line 154 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -149,18 +159,7 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 /* Location type.  */
-#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
-typedef struct YYLTYPE YYLTYPE;
-struct YYLTYPE
-{
-  int first_line;
-  int first_column;
-  int last_line;
-  int last_column;
-};
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
-#endif
+typedef TQLocation YYLTYPE;
 
 
 
