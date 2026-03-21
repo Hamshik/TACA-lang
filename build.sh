@@ -26,6 +26,8 @@ gcc -Wall -Wextra -g -Isrc \
     $AST_DIR/env.c \
     $SEMAN/semanic.c \
     $SEMAN/symbol_table.c \
+    $UTILS/error_handler/error.c \
+    $UTILS/error_handler/error_msg.c \
     $UTILS/printers/token_printer.c \
     $UTILS/printers/value_printer.c \
     $EVAL_DIR/stepper.c \

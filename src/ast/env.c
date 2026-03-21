@@ -1,6 +1,9 @@
 #include "ASTNode.h"
 #include <stdio.h>
 #include "../utils/uhash.h"
+#include "../utils/error_handler/error_msg.h"
+
+extern file_t file;
 
 typedef struct EnvFrame {
     VarEntry *vars;            // uthash table for this scope
@@ -94,18 +97,18 @@ void set_var_current(const char *name, Value *val, DataTypes_t datatype) {
     HASH_ADD_KEYPTR(hh, f->vars, v->name, strlen(v->name), v);
 }
 
-Value getvar(const char *name, DataTypes_t datatype, int line, int col) {
+Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos) {
     for (EnvFrame_t *it = env_top(); it; it = it->parent) {
         VarEntry *v = NULL;
         HASH_FIND_STR(it->vars, name, v);
         if (!v) continue;
         if (v->typedval.type != datatype) {
-            printf("Error [%d:%d]: type mismatch for variable '%s'\n", line, col, name);
-            exit(-1);
+            panic(&file, line, col, pos, logf_msg("Type mismatch for variable '%s'", name));
+            exit(EXIT_FAILURE);
         }
         return v->typedval.val;
     }
 
-    printf("Error [%d:%d]: variable '%s' not defined\n", line, col, name);
-    exit(-1);
+    panic(&file, line, col, pos, logf_msg("Variable '%s' not defined", name));
+    exit(EXIT_FAILURE);
 }

@@ -3,7 +3,9 @@
     #include <stdlib.h>
     #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
+    #include "../utils/error_handler/error_msg.h"
     extern ASTNode_t *root;
+    extern file_t file;
 
     /* Extended source location that includes absolute byte offsets. */
     typedef struct TQLocation {
@@ -71,6 +73,16 @@
             }                                                            \
         } while (0)
     #endif
+
+    #define TQ_SET_NODE_LOC(node, loc)               \
+        do {                                         \
+            if ((node) != NULL) {                    \
+                (node)->line = (loc).first_line;     \
+                (node)->col = (loc).first_column;    \
+                (node)->pos = (loc).first_pos;       \
+                (node)->end_pos = (loc).last_pos;    \
+            }                                        \
+        } while (0)
 %}
 
 %define api.pure full
@@ -141,7 +153,7 @@ program
 
 stmt_list
     : stmt                      { $$ = $1; }
-    | stmt stmt_list            { $$ = new_seq($1, $2); }
+    | stmt stmt_list            { $$ = new_seq($1, $2); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 stmt
@@ -163,32 +175,34 @@ block
 
 if_stmt
     : IF LBRACE expr RBRACE stmt %prec LOWER_THAN_ELSE
-        { $$ = new_if($3, $5, NULL, @1.first_line, @1.first_column); }
+        { $$ = new_if($3, $5, NULL, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     | IF LBRACE expr RBRACE stmt ELSE stmt
-        { $$ = new_if($3, $5, $7, @1.first_line, @1.first_column); }
+        { $$ = new_if($3, $5, $7, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 for_stmt
     : LOOP FOR LPAREN for_init COLON expr RPAREN stmt
-        { $$ = new_for($4, $6, NULL, $8, @1.first_line, @1.first_column); }
+        { $$ = new_for($4, $6, NULL, $8, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     | LOOP FOR LPAREN for_init COLON expr COLON expr RPAREN stmt
-        { $$ = new_for($4, $6, $8, $10, @1.first_line, @1.first_column); }
+        { $$ = new_for($4, $6, $8, $10, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 while_stmt
     : LOOP UNTIL LPAREN expr RPAREN stmt
-        { $$ = new_while($4, $6, @1.first_line, @1.first_column);}
+        { $$ = new_while($4, $6, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 fn_def
   : FN IDENTIFIER LPAREN opt_params RPAREN COLON DATATYPES block
       {
           $$ = new_fn_def($2->var, $4.params, $4.count, $7, $8, @1.first_line, @1.first_column);
+          TQ_SET_NODE_LOC($$, @$);
           ast_free($2);
       }
   | FN IDENTIFIER LPAREN opt_params RPAREN block
       {
           $$ = new_fn_def($2->var, $4.params, $4.count, UNKNOWN, $6, @1.first_line, @1.first_column);
+          TQ_SET_NODE_LOC($$, @$);
           ast_free($2);
       }
   ;
@@ -225,8 +239,8 @@ param
   ;
 
 return_stmt
-  : RETURN expr  { $$ = new_return($2, @1.first_line, @1.first_column); }
-  | RETURN       { $$ = new_return(NULL, @1.first_line, @1.first_column); }
+  : RETURN expr  { $$ = new_return($2, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
+  | RETURN       { $$ = new_return(NULL, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
   ;
 
 opt_args
@@ -236,7 +250,7 @@ opt_args
          
 args
     : expr              { $$ = $1; }
-    | expr COMMA args   { $$ = new_seq($1, $3); }        /* list */
+    | expr COMMA args   { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }        /* list */
     ;
 
 /* `let { ... }` / `var { ... }` declaration blocks (statement form). */
@@ -251,13 +265,13 @@ decl_block_items
     : decl_item_typed SEMICOLON
        { $$ = $1; }
     | decl_item_typed SEMICOLON decl_block_items
-        { $$ = new_seq($1, $3); }
+        { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 /* Item without explicit type (inherits the "default" type after var/let). */
 decl_item_untyped
     : IDENTIFIER ASSIGN expr
-        { $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN); }
+        { $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 /* Item with explicit type. */
@@ -266,6 +280,7 @@ decl_item_typed
         {
             if ($4->datatype == UNKNOWN) $4->datatype = $1;
             $$ = new_assign($2, $4, $1, @$.first_line, @$.first_column, OP_ASSIGN);
+            TQ_SET_NODE_LOC($$, @$);
         }
     ;
 
@@ -274,21 +289,21 @@ decl_item_typed
    - then optionally switch to typed items `, <type> <name> = <expr>` (each typed item explicit). */
 decl_items_after_type
     : decl_item_untyped decl_items_after_type_more
-        { $$ = $2 ? new_seq($1, $2) : $1; }
+        { $$ = $2 ? new_seq($1, $2) : $1; if ($$ && $$->kind == AST_SEQ) TQ_SET_NODE_LOC($$, @$); }
     ;
 
 decl_items_after_type_more
     : /* empty */ { $$ = NULL; }
     | COMMA decl_item_untyped decl_items_after_type_more
-        { $$ = $3 ? new_seq($2, $3) : $2; }
+        { $$ = $3 ? new_seq($2, $3) : $2; if ($$ && $$->kind == AST_SEQ) TQ_SET_NODE_LOC($$, @$); }
     | COMMA decl_item_typed decl_items_typed_more
-        { $$ = $3 ? new_seq($2, $3) : $2; }
+        { $$ = $3 ? new_seq($2, $3) : $2; if ($$ && $$->kind == AST_SEQ) TQ_SET_NODE_LOC($$, @$); }
     ;
 
     decl_items_typed_more
         : /* empty */ { $$ = NULL; }
         | COMMA decl_item_typed decl_items_typed_more
-            { $$ = $3 ? new_seq($2, $3) : $2; }
+            { $$ = $3 ? new_seq($2, $3) : $2; if ($$ && $$->kind == AST_SEQ) TQ_SET_NODE_LOC($$, @$); }
         ;
 
     /* Declarations are statement-only (and allowed in `for` init) to avoid
@@ -322,39 +337,39 @@ expr
     | STRING_LITERAL            {$$ = $1;}
     | BOOL_LITERAL              {$$ = $1;}
 
-    | expr PLUS expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_ADD); }
-    | expr MINUS expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_SUB); }
-    | expr STAR expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_MUL); }
-    | expr SLASH expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_DIV); }
-    | expr MOD expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_MOD); }
-    | expr POWER expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_POW); }
+    | expr PLUS expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_ADD); TQ_SET_NODE_LOC($$, @$); }
+    | expr MINUS expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_SUB); TQ_SET_NODE_LOC($$, @$); }
+    | expr STAR expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_MUL); TQ_SET_NODE_LOC($$, @$); }
+    | expr SLASH expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_DIV); TQ_SET_NODE_LOC($$, @$); }
+    | expr MOD expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_MOD); TQ_SET_NODE_LOC($$, @$); }
+    | expr POWER expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_POW); TQ_SET_NODE_LOC($$, @$); }
 
-    | expr LSHIFT expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LSHIFT); }
-    | expr RSHIFT expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_RSHIFT); }
+    | expr LSHIFT expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LSHIFT); TQ_SET_NODE_LOC($$, @$); }
+    | expr RSHIFT expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_RSHIFT); TQ_SET_NODE_LOC($$, @$); }
 
-    | expr AMP expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITAND); }
-    | expr BITXOR expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITXOR); }
-    | expr PIPE expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITOR); }
+    | expr AMP expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITAND); TQ_SET_NODE_LOC($$, @$); }
+    | expr BITXOR expr          { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITXOR); TQ_SET_NODE_LOC($$, @$); }
+    | expr PIPE expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_BITOR); TQ_SET_NODE_LOC($$, @$); }
 
-    | expr AND expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_AND); }
-    | expr OR expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_OR); }
+    | expr AND expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_AND); TQ_SET_NODE_LOC($$, @$); }
+    | expr OR expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_OR); TQ_SET_NODE_LOC($$, @$); }
 
-    | expr EQ expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_EQ); }
-    | expr NEQ expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_NEQ); }
-    | expr LT expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LT); }
-    | expr LE expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LE); }
-    | expr GT expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_GT); }
-    | expr GE expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_GE); }
+    | expr EQ expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_EQ); TQ_SET_NODE_LOC($$, @$); }
+    | expr NEQ expr             { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_NEQ); TQ_SET_NODE_LOC($$, @$); }
+    | expr LT expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LT); TQ_SET_NODE_LOC($$, @$); }
+    | expr LE expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_LE); TQ_SET_NODE_LOC($$, @$); }
+    | expr GT expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_GT); TQ_SET_NODE_LOC($$, @$); }
+    | expr GE expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_GE); TQ_SET_NODE_LOC($$, @$); }
 
-    | PLUS expr %prec UPLUS     { $$ = new_unop($2, @$.first_line, @$.first_column, OP_POS); }
-    | MINUS expr %prec UMINUS   { $$ = new_unop($2, @$.first_line, @$.first_column, OP_NEG); }
-    | NOT expr                  { $$ = new_unop($2, @$.first_line, @$.first_column, OP_NOT); }
-    | BITNOT expr               { $$ = new_unop($2, @$.first_line, @$.first_column, OP_BITNOT); }
+    | PLUS expr %prec UPLUS     { $$ = new_unop($2, @$.first_line, @$.first_column, OP_POS); TQ_SET_NODE_LOC($$, @$); }
+    | MINUS expr %prec UMINUS   { $$ = new_unop($2, @$.first_line, @$.first_column, OP_NEG); TQ_SET_NODE_LOC($$, @$); }
+    | NOT expr                  { $$ = new_unop($2, @$.first_line, @$.first_column, OP_NOT); TQ_SET_NODE_LOC($$, @$); }
+    | BITNOT expr               { $$ = new_unop($2, @$.first_line, @$.first_column, OP_BITNOT); TQ_SET_NODE_LOC($$, @$); }
 
     | IDENTIFIER INC %prec POSTFIX
-        { $$ = new_unop($1, @$.first_line, @$.first_column, OP_INC); }
+        { $$ = new_unop($1, @$.first_line, @$.first_column, OP_INC); TQ_SET_NODE_LOC($$, @$); }
     | IDENTIFIER DEC %prec POSTFIX
-        { $$ = new_unop($1, @$.first_line, @$.first_column, OP_DEC); }
+        { $$ = new_unop($1, @$.first_line, @$.first_column, OP_DEC); TQ_SET_NODE_LOC($$, @$); }
 
     | LPAREN expr RPAREN         { $$ = $2; }
     | LBRACE expr RBRACE         { $$ = $2; }
@@ -363,6 +378,7 @@ expr
     | IDENTIFIER LPAREN opt_args RPAREN
       {
           $$ = new_fn_call($1->var, $3, @1.first_line, @1.first_column);
+          TQ_SET_NODE_LOC($$, @$);
           ast_free($1);
       }
     ;
@@ -372,36 +388,37 @@ assignment
     : IDENTIFIER ASSIGN expr
         {
             $$ = new_assign($1, $3, $1->datatype, @$.first_line, @$.first_column, OP_ASSIGN);
+            TQ_SET_NODE_LOC($$, @$);
         }
 
     | IDENTIFIER PLUS_ASSIGN expr
         {
             $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_PLUS_ASSIGN); 
+            TQ_SET_NODE_LOC($$, @$);
         }
     | IDENTIFIER MINUS_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MINUS_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MINUS_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
     | IDENTIFIER STAR_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MUL_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MUL_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
     | IDENTIFIER SLASH_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_DIV_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_DIV_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
     | IDENTIFIER MOD_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MOD_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MOD_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
     | IDENTIFIER LSHIFT_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_LSHIFT_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_LSHIFT_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
     | IDENTIFIER RSHIFT_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_RSHIFT_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_RSHIFT_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
     
     | IDENTIFIER POWER_ASSIGN expr
-        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_POW_ASSIGN); }
+        { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_POW_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
     ;
 %%
 
 void yyerror(YYLTYPE *loc, const char *s) {
-    fprintf(stderr, "Error at %d:%d (pos %d): %s\n",
-            loc->first_line, loc->first_column, loc->first_pos, s);
+    panic(&file, loc->first_line, loc->first_column, loc->first_pos, s);
 }

@@ -3,6 +3,9 @@
 #include "ASTNode.h"
 #include "../eval/eval.h"
 #include "../utils/printers/value_printer.h"
+#include "../utils/error_handler/error_msg.h"
+
+extern file_t file;
 
 void assign_value(DataTypes_t dt, Value *dst, Value src) {
     switch (dt) {
@@ -25,10 +28,10 @@ void assign_value(DataTypes_t dt, Value *dst, Value src) {
 }
 
 Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
-    int line, int col) {
+    int line, int col, int pos) {
     if (!lhs || lhs->kind != AST_VAR) {
-        printf("Error [%d:%d]: assignment target must be a variable\n", line, col);
-		exit(-1);
+        panic(&file, line, col, pos, "assignment target must be a variable");
+        exit(EXIT_FAILURE);
     }
 
     Value r = ast_eval(rhs).val;
@@ -39,7 +42,7 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
         return r;
     }
 
-    Value cur = getvar(lhs->var, datatypes, line, col);
+    Value cur = getvar(lhs->var, datatypes, line, col, pos);
     OP_kind_t operation = get_assign_op(op);
     switch (datatypes) {
         case I32:
@@ -64,7 +67,7 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
             v.characters = r.characters;
             break;
         default:
-            fprintf(stderr, "Error: unsupported data type for assignment\n");
+            panic(&file, line, col, pos, "Unsupported data type for assignment");
             exit(EXIT_FAILURE);
     }
     set_var(lhs->var, &v, datatypes);

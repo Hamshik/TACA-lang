@@ -1,11 +1,14 @@
 #include "semantic.h"
 #include <stdio.h>
+#include "../utils/error_handler/error_msg.h"
+
+extern file_t file;
 
 /* Helpers */
 void type_error(ASTNode_t *n,const char* msg) {
-    fprintf(stderr, "Error: %s\n\n", msg);
-    n->datatype = UNKNOWN;
-    exit(1);
+    if (n) n->datatype = UNKNOWN;
+    panic(&file, n ? n->line : 0, n ? n->col : 0, n ? n->pos : 0, msg ? msg : "type error");
+    exit(EXIT_FAILURE);
 }
 
 int is_numeric(DataTypes_t t) {

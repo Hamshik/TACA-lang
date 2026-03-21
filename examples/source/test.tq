@@ -1,0 +1,12 @@
+i32 x = 10;
+i32 y = 20;
+
+if (x < y} {
+	"x is less than y";
+}
+else if {x > y} {
+	"x is greater than y";
+}
+else {
+	"x is equal to y";
+}

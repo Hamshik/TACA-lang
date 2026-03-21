@@ -76,6 +76,8 @@ typedef struct ASTNode {
     ASTKind_t kind;
     DataTypes_t datatype;
     int line, col;
+    int pos;      /* 0-based byte offset (start) */
+    int end_pos;  /* 0-based byte offset (end) */
 
     union {
         // variables
@@ -138,12 +140,12 @@ ASTNode_t *ast_alloc(void);
 /* Env */
 void set_var(const char *name, Value *val, DataTypes_t datatype);
 void set_var_current(const char *name, Value *val, DataTypes_t datatype);
-Value getvar(const char *name, DataTypes_t datatype, int line, int col);
+Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos);
 void env_push(void);
 void env_pop(void);
 void env_clear_all(void);
 void assign_value(DataTypes_t datatype, Value *dest, Value src);
-Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col);
+Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
 
 
 #endif

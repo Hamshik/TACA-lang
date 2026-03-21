@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../ast/ASTNode.h"
+#include "../utils/error_handler/error_msg.h"
 #include "../utils/printers/value_printer.h"
 #include "eval.h"
+
+extern file_t file;
 
 typedef struct FnEntry {
     char *name;
@@ -25,7 +28,7 @@ static FnEntry_t *fn_lookup_runtime(const char *name) {
 static void fn_register_runtime(ASTNode_t *fn) {
     if (!fn || fn->kind != AST_FN) return;
     if (fn_lookup_runtime(fn->fn_def.name)) {
-        fprintf(stderr, "Error: redeclaration of function '%s'\n", fn->fn_def.name);
+        panic(&file, fn->line, fn->col, fn->pos, logf_msg("Redeclaration of function '%s'", fn->fn_def.name));
         exit(EXIT_FAILURE);
     }
     FnEntry_t *e = calloc(1, sizeof(*e));
@@ -52,7 +55,7 @@ TypedValue ast_eval(ASTNode_t *node) {
             case F64:
                 v.val.lfnum = strtod(node->literal.raw, NULL); break;
             default:
-                fprintf(stderr, "Error: unsupported numeric literal type\n");
+                panic(&file, node->line, node->col, node->pos, "Unsupported numeric literal type");
                 exit(EXIT_FAILURE);
         }
         v.type = node->datatype;
@@ -70,7 +73,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_VAR: return (TypedValue){
         .type = node->datatype,
-        .val = getvar(node->var, node->datatype, node->line, node->col)
+        .val = getvar(node->var, node->datatype, node->line, node->col, node->pos)
     };
 
     case AST_BINOP: {
@@ -98,7 +101,7 @@ TypedValue ast_eval(ASTNode_t *node) {
             case STRINGS: v.val = (Value){.str = do_operation_str(l.val.str, r.val.str, node->bin.op)}; break;
             case BOOL: v.val = eval_bool(node->bin.op, l.type , l.val, r.val); break;
             default:
-                fprintf(stderr, "Error: unsupported data type for binary Datatypes\n");
+                panic(&file, node->line, node->col, node->pos, "Unsupported type for binary operation");
                 exit(EXIT_FAILURE);
         }
         print_value(v.val, node->datatype);
@@ -128,7 +131,8 @@ TypedValue ast_eval(ASTNode_t *node) {
                                 node->assign.op,
                                 node->datatype,
                                 node->line,
-                                node->col);
+                                node->col,
+                                node->pos);
         return (TypedValue){.val = val, .type = node->datatype};
     }
 
@@ -154,7 +158,7 @@ TypedValue ast_eval(ASTNode_t *node) {
     case NODE_FOR: {
         if (!node->fornode.init || node->fornode.init->kind != AST_ASSIGN ||
             node->fornode.init->assign.lhs->kind != AST_VAR || node->fornode.init->assign.op != OP_ASSIGN) {
-            fprintf(stderr, "Invalid for loop init\n");
+            panic(&file, node->line, node->col, node->pos, "Invalid for loop init");
             exit(EXIT_FAILURE);
         }
 
@@ -166,16 +170,16 @@ TypedValue ast_eval(ASTNode_t *node) {
         Value stepv = node->fornode.step ? ast_eval(node->fornode.step).val : default_step(loop_type);
 
         if (step_is_zero(loop_type, stepv)) {
-            fprintf(stderr, "for loop step cannot be zero\n");
+            panic(&file, node->line, node->col, node->pos, "for loop step cannot be zero");
             exit(EXIT_FAILURE);
         }
 
         TypedValue last = {0};
         
-        while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col), endv, stepv)) {
+        while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col, node->pos), endv, stepv)) {
             last = ast_eval(node->fornode.body);
             if (g_returning) return g_return_value;
-            Value cur = getvar(loop_name, loop_type, node->line, node->col);
+            Value cur = getvar(loop_name, loop_type, node->line, node->col, node->pos);
             Value next = add_step_for(loop_type, cur, stepv);
             set_var(loop_name, &next, loop_type);
         }
@@ -203,7 +207,7 @@ TypedValue ast_eval(ASTNode_t *node) {
     case AST_CALL: {
         FnEntry_t *e = fn_lookup_runtime(node->call.name);
         if (!e) {
-            fprintf(stderr, "Error: call to undefined function '%s'\n", node->call.name);
+            panic(&file, node->line, node->col, node->pos, logf_msg("Call to undefined function '%s'", node->call.name));
             exit(EXIT_FAILURE);
         }
         ASTNode_t *fn = e->def;
@@ -216,7 +220,7 @@ TypedValue ast_eval(ASTNode_t *node) {
             else it = NULL;
         }
         if (argc != fn->fn_def.param_count) {
-            fprintf(stderr, "Error: argument count mismatch in call to '%s'\n", node->call.name);
+            panic(&file, node->line, node->col, node->pos, logf_msg("Argument count mismatch in call to '%s'", node->call.name));
             exit(EXIT_FAILURE);
         }
 
@@ -264,7 +268,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         return r;
     }
     default:
-        fprintf(stderr, "Error: unknown AST node\n");
-        exit(-1);
+        panic(&file, node ? node->line : 0, node ? node->col : 0, node ? node->pos : 0, "Unknown AST node");
+        exit(EXIT_FAILURE);
     }
 }

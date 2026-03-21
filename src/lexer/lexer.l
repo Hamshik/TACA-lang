@@ -12,7 +12,10 @@
 
     #include "../parser/parser.h"
     #include "../ast/ASTNode.h"
+    #include "../utils/error_handler/error_msg.h"
     #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
+
+    extern file_t file;
 
     /* Bison %locations: Flex does not maintain columns for you.
        Track (line, column) ourselves and update it for every match,
@@ -67,6 +70,8 @@
     s[n - 2] = '\0';
 
     yylval->node = new_str(s, yylloc->first_line, yylloc->first_column);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
     free(s);
     return STRING_LITERAL;
 }
@@ -75,16 +80,26 @@ if                  { return IF; }
 else                { return ELSE; }
 for                 { return FOR; }
 loop                { return LOOP; }
-(i32)               { yylval->datatype = I32; return DATATYPES; }
-(i16)               { yylval->datatype = I16; return DATATYPES; }
-(f32)               { yylval->datatype = F32; return DATATYPES; }
-(f64)               { yylval->datatype = F64; return DATATYPES; }
+i32                 { yylval->datatype = I32; return DATATYPES; }
+i16                 { yylval->datatype = I16; return DATATYPES; }
+f32                 { yylval->datatype = F32; return DATATYPES; }
+f64                 { yylval->datatype = F64; return DATATYPES; }
 str                 { yylval->datatype = STRINGS; return DATATYPES; }
 char                { yylval->datatype = CHARACTER; return DATATYPES;}
 bool                { yylval->datatype = BOOL; return DATATYPES;}
 until               { return UNTIL; }
-true                { yylval->node = new_bool(1, yylloc->first_line, yylloc->first_column); return BOOL_LITERAL; }
-false               { yylval->node = new_bool(0, yylloc->first_line, yylloc->first_column); return BOOL_LITERAL; }
+true                {
+    yylval->node = new_bool(1, yylloc->first_line, yylloc->first_column);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
+    return BOOL_LITERAL;
+}
+false               {
+    yylval->node = new_bool(0, yylloc->first_line, yylloc->first_column);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
+    return BOOL_LITERAL;
+}
 let                 { return LET; }
 var                 { return VAR; }
 fn                  { return FN; }
@@ -92,6 +107,8 @@ return              { return RETURN; }
 
 [0-9]+(\.[0-9]+)? {
     yylval->node = new_num(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
     return NUMBER;
 }
 ","                 { return COMMA; }
@@ -137,8 +154,10 @@ return              { return RETURN; }
 "}"                 { return RBRACE; }
 [a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_] {
     yylval->node = new_var(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
     return IDENTIFIER;
 }
-.                  { printf("Unknown char: %s\n", yytext); }
+.                  { panic(&file, yylloc->first_line, yylloc->first_column, yylloc->first_pos, logf_msg("Unknown character '%s'", yytext)); }
 <<EOF>>             { return 0;  }
 %%

@@ -2,16 +2,19 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <string.h>
 #include "ast/ASTNode.h"
 #include "parser/parser.h"
 #include "semantic/semantic.h"
 #include "eval/eval.h"
+#include "utils/error_handler/error_msg.h"
 
 extern FILE *yyin;
 void yyrestart(FILE *input_file);
+file_t file = {0};
 
-FILE* open_file(const char *filename){
+FILE* open_file(const char *filename, char **resolved_path_out){
     char resolved[PATH_MAX];
     const char *open_path = filename;
     if (realpath(filename, resolved)) open_path = resolved;
@@ -25,6 +28,7 @@ FILE* open_file(const char *filename){
         perror("fopen");
         return NULL;
     }
+    if (resolved_path_out) *resolved_path_out = strdup(open_path);
     return input;
 }
 
@@ -32,8 +36,14 @@ int main(int argc, char **argv) {
     FILE *input = NULL;
     if (argc == 1) {
         input = stdin;
+        file.filename = "<stdin>";
+        file.source = stdin;
     } else if (argc == 2) {
-        input = open_file(argv[1]);
+        char *resolved_path = NULL;
+        input = open_file(argv[1], &resolved_path);
+        if (!input) return EXIT_FAILURE;
+        file.filename = resolved_path ? resolved_path : (char *)argv[1];
+        file.source = input;
     } else {
         fprintf(stderr, "Usage: %s [path]\n Use --help for more information", argv[0]);
         return EXIT_FAILURE;
@@ -51,5 +61,6 @@ int main(int argc, char **argv) {
     }
 
     if (input != stdin) fclose(input);
+    if (argc == 2 && file.filename && file.filename != argv[1]) free(file.filename);
     return 0;
 }

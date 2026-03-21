@@ -3,16 +3,17 @@
 #include "../ast/ASTNode.h"
 #include "semantic.h"
 #include "../eval/eval.h"
+#include "../utils/error_handler/error_msg.h"
 #include <limits.h>
+
 
 static DataTypes_t g_fn_ret = UNKNOWN;
 static int g_in_fn = 0;
 
 void semantic_check(ASTNode_t *root) {
     if (!root) return;
-    scope_push(); // global scope
+    scope_push();
     check_expr(root);
-    printf("Test is passes!\n");
     scope_pop();
     clear_fns();
 }
@@ -36,10 +37,11 @@ DataTypes_t check_expr(ASTNode_t *n) {
         switch (exit_code)
         {
         case NOT_DECLARED:
-            fprintf(stderr, "Error: %s is not defined\n", n->var);
+            panic(&file, n->line, n->col, n->pos, logf_msg("Variable '%s' not declared", n->var));
             exit(EXIT_FAILURE);
         case TYPE_MISMATCH:
-            type_error(n, "Type Mismatch");
+            panic(&file, n->line, n->col, n->pos, logf_msg("Type mismatch for variable '%s'", n->var));
+            exit(EXIT_FAILURE);
         case SUCCESS:
         default: break;
         }
@@ -66,7 +68,8 @@ DataTypes_t check_expr(ASTNode_t *n) {
         /* string ops */
         if (lt == STRINGS || rt == STRINGS) {
             if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
-                type_error(n, "Only string + string is allowed");
+                panic(&file, n->line, n->col, n->pos, logf_msg("Only string concatenation is supported for strings"));
+                exit(EXIT_FAILURE);
             }
             n->datatype = STRINGS;
             return STRINGS;
@@ -76,24 +79,34 @@ DataTypes_t check_expr(ASTNode_t *n) {
         switch (n->bin.op) {
             case OP_LT: case OP_LE: case OP_GT: case OP_GE:
             case OP_EQ: case OP_NEQ:
-                if (!is_numeric(lt) || !is_numeric(rt)) type_error(n, "comparison needs numeric operands");
+                if (!is_numeric(lt) || !is_numeric(rt)) {
+                    panic(&file, n->line, n->col, n->pos, logf_msg("Comparison needs numeric operands"));
+                    exit(EXIT_FAILURE);
+                }
                 n->datatype = BOOL;
                 return BOOL;
 
             case OP_AND: case OP_OR:
-                if (lt != BOOL || rt != BOOL) type_error(n, "logical ops need bool operands");
+                if (lt != BOOL || rt != BOOL) {
+                    panic(&file, n->line, n->col, n->pos, logf_msg("Logical ops need bool operands"));
+                    exit(EXIT_FAILURE);
+                }
                 n->datatype = BOOL;
                 return BOOL;
 
             default:
                 // arithmetic/bitwise path
-                if (!is_numeric(lt) || !is_numeric(rt)) type_error(n, "numeric op needs numeric operands");
+                if (!is_numeric(lt) || !is_numeric(rt)) {
+                    panic(&file, n->line, n->col, n->pos, logf_msg("numeric op needs numeric operands"));
+                    exit(EXIT_FAILURE);
+                }
                 n->datatype = promote(lt, rt);
                 return n->datatype;
         }
         /* numeric ops */
         if (!is_numeric(lt) || !is_numeric(rt)) {
-            type_error(n, "Invalid operands for binary operator");
+            panic(&file, n->line, n->col, n->pos, logf_msg("Invalid operands for binary operator"));
+            exit(EXIT_FAILURE);
         }
 
         n->datatype = promote(lt, rt);
@@ -104,7 +117,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
         DataTypes_t t = check_expr(n->unop.operand);
 
         if (n->unop.op == OP_NOT) {
-            if (t != BOOL) type_error(n, "Operator ! expects bool");
+            if (t != BOOL) {
+                panic(&file, n->line, n->col, n->pos, logf_msg("Operator ! expects bool"));
+                exit(EXIT_FAILURE);
+            }
             n->datatype = BOOL;
             return BOOL;
         }
@@ -118,7 +134,8 @@ DataTypes_t check_expr(ASTNode_t *n) {
         }
 
         if (!is_numeric(t)) {
-            type_error(n, "Unary operator requires numeric type");
+            panic(&file, n->line, n->col, n->pos, logf_msg("Unary operator requires numeric type"));
+            exit(EXIT_FAILURE);
         }
 
         if(n->datatype == UNKNOWN) n->datatype = t;
@@ -126,7 +143,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
     }
 
     case AST_ASSIGN: {
-        if (n->assign.lhs->kind != AST_VAR) type_error(n, "Only Variable can be assigned");
+        if (n->assign.lhs->kind != AST_VAR) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("Only Variable can be assigned"));
+            exit(EXIT_FAILURE);
+        }
 
         DataTypes_t lhs_t;
 
@@ -135,20 +155,20 @@ DataTypes_t check_expr(ASTNode_t *n) {
             n->assign.lhs->datatype = lhs_t;
 
             if (!declare(n->assign.lhs->var, lhs_t, n->assign.is_mutable))
-                type_error(n, "Redeclaration of variable");
+                panic(&file, n->line, n->col, n->pos, logf_msg("Redeclaration of variable '%s'", n->assign.lhs->var));
         } else {
             lhs_t = lookup(n->assign.lhs->var);
             switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype))
             {
             case NOT_DECLARED:
-                type_error(n, "Variable not declared");
-                break;
+                panic(&file, n->line, n->col, n->pos, logf_msg("Variable '%s' not declared", n->assign.lhs->var));
+                exit(EXIT_FAILURE);
             case TYPE_MISMATCH:
-                type_error(n, "Type mismatch in assignment");
-                break;
+                panic(&file, n->line, n->col, n->pos, logf_msg("Type mismatch in assignment for variable '%s'", n->assign.lhs->var));
+                exit(EXIT_FAILURE);
             case IMMUTABLE_TYPING:
-                type_error(n, "Cannot assign to immutable variable");
-                break;
+                panic(&file, n->line, n->col, n->pos, logf_msg("Cannot assign to immutable variable '%s'", n->assign.lhs->var));
+                exit(EXIT_FAILURE);
             case SUCCESS:
             default:
                 break;
@@ -161,7 +181,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
         force_numeric_type(n->assign.rhs, lhs_t);
         DataTypes_t rhs_t = check_expr(n->assign.rhs);
 
-        if (lhs_t != rhs_t) type_error(n, "Type mismatch in assignment");
+        if (lhs_t != rhs_t) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("Type mismatch in assignment for variable '%s'", n->assign.lhs->var));
+            exit(EXIT_FAILURE);
+        }
         return lhs_t;
     }
 
@@ -171,7 +194,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     case NODE_IF: {
         DataTypes_t ct =  check_expr(n->ifnode.cond);
-        if (ct != BOOL) type_error(n, "if condition must be boolean");
+        if (ct != BOOL) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("if condition must be boolean"));
+            exit(EXIT_FAILURE);
+        }
 
         check_expr(n->ifnode.then_branch);
         if (n->ifnode.else_branch)
@@ -183,25 +209,29 @@ DataTypes_t check_expr(ASTNode_t *n) {
     case NODE_FOR: {
         if (!n->fornode.init || n->fornode.init->kind != AST_ASSIGN
             || n->fornode.init->assign.lhs->kind != AST_VAR || n->fornode.init->assign.op != OP_ASSIGN) {
-            type_error(n, "for init must be an assignment/declaration");
+            panic(&file, n->line, n->col, n->pos, logf_msg("for init must be an assignment/declaration"));
+            exit(EXIT_FAILURE);
         }
 
         DataTypes_t init_t = check_expr(n->fornode.init);
         if (!is_numeric(init_t)) {
-            type_error(n, "for init variable must be numeric");
+            panic(&file, n->line, n->col, n->pos, logf_msg("for init variable must be numeric"));
+            exit(EXIT_FAILURE);
         }
 
         force_numeric_type(n->fornode.end, init_t);
         DataTypes_t end_t = check_expr(n->fornode.end);
         if (end_t != init_t) {
-            type_error(n, "for end value must match init type");
+            panic(&file, n->line, n->col, n->pos, logf_msg("for end value must match init type"));
+            exit(EXIT_FAILURE);
         }
 
         if (n->fornode.step) {
             force_numeric_type(n->fornode.step, init_t);
             DataTypes_t step_t = check_expr(n->fornode.step);
             if (step_t != init_t) {
-                type_error(n, "for step value must match init type");
+                panic(&file, n->line, n->col, n->pos, logf_msg("for step value must match init type"));
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -211,7 +241,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     case AST_WHILE: {
         DataTypes_t ct =  check_expr(n->whilenode.cond);
-        if (ct != BOOL) type_error(n, "while condition must be boolean");
+        if (ct != BOOL) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("while condition must be boolean"));
+            exit(EXIT_FAILURE);
+        }
 
         check_expr(n->whilenode.body);
         return UNKNOWN;
@@ -219,14 +252,16 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     case AST_FN: {
         if (!fn_declare(n->fn_def.name, n->fn_def.params, n->fn_def.param_count, n->fn_def.ret)) {
-            type_error(n, "Redeclaration of function");
+            panic(&file, n->line, n->col, n->pos, logf_msg("Redeclaration of function '%s'", n->fn_def.name));
+            exit(EXIT_FAILURE);
         }
 
         scope_push();
         for (int i = 0; i < n->fn_def.param_count; i++) {
             // params are mutable locals
             if (!declare(n->fn_def.params[i].name, n->fn_def.params[i].type, true)) {
-                type_error(n, "Duplicate parameter name");
+                panic(&file, n->line, n->col, n->pos, logf_msg("Duplicate parameter name '%s'", n->fn_def.params[i].name));
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -244,7 +279,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     case AST_CALL: {
         FnSymbol_t *f = fn_lookup(n->call.name);
-        if (!f) type_error(n, "Call to undefined function");
+        if (!f) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("Call to undefined function '%s'", n->call.name));
+            exit(EXIT_FAILURE);
+        }
 
         // count args and check types (args are stored as a left-associated AST_SEQ list)
         int argc = 0;
@@ -253,7 +291,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
             if (it->kind == AST_SEQ) it = it->seq.b;
             else it = NULL;
         }
-        if (argc != f->param_count) type_error(n, "Argument count mismatch");
+        if (argc != f->param_count) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("Argument count mismatch for function '%s'", n->call.name));
+            exit(EXIT_FAILURE);
+        }
 
         // walk args in the same order as we built them (left then seq.b chain)
         ASTNode_t *arg = n->call.args;
@@ -262,7 +303,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
             force_numeric_type(cur, f->params[i].type);
             DataTypes_t at = check_expr(cur);
-            if (at != f->params[i].type) type_error(n, "Argument type mismatch");
+            if (at != f->params[i].type) {
+                panic(&file, n->line, n->col, n->pos, logf_msg("Argument type mismatch for function '%s'", n->call.name));
+                exit(EXIT_FAILURE);
+            }
 
             if (arg && arg->kind == AST_SEQ) arg = arg->seq.b;
             else arg = NULL;
@@ -273,16 +317,23 @@ DataTypes_t check_expr(ASTNode_t *n) {
     }
 
     case AST_RETURN:
-        if (!g_in_fn) type_error(n, "return outside of function");
+        if (!g_in_fn) {
+            panic(&file, n->line, n->col, n->pos, logf_msg("return outside of function"));
+            exit(EXIT_FAILURE);
+        }
         if (n->ret_stmt.value) {
             force_numeric_type(n->ret_stmt.value, g_fn_ret);
             DataTypes_t rt = check_expr(n->ret_stmt.value);
-            if (g_fn_ret != UNKNOWN && rt != g_fn_ret) type_error(n, "Return type mismatch");
+            if (g_fn_ret != UNKNOWN && rt != g_fn_ret) {
+                panic(&file, n->line, n->col, n->pos, logf_msg("Return type mismatch"));
+                exit(EXIT_FAILURE);
+            }
             return rt;
         }
         return UNKNOWN;
     default:
-        type_error(n, "Unknown AST node in semantic analysis");
+        panic(&file, n->line, n->col, n->pos, logf_msg("Unknown AST node in semantic analysis"));
+        exit(EXIT_FAILURE);
         return UNKNOWN;
     }
 }
