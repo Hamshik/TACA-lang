@@ -9,6 +9,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/Complier",
+            "args": [
+                "examples/source/test.tq"
+            ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "externalConsole": false,
@@ -21,52 +24,8 @@
                         "ignoreFailures": true
                     }
             ],
-            "preLaunchTask": "build MyComplier(build.sh)",
+            "preLaunchTask": "build the Complier",
             "internalConsoleOptions": "neverOpen"
-        },
-        {
-            "name": "Launch MyCompiler(gcc)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/MyComplier",
-            "args": [
-                "examples/source/test.sasm"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "build MyComplier(gcc)"
-        },
-        {
-            "name": "Launch MyCompiler(clang)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/MyComplier",
-            "args": [
-                "examples/source/test.sasm"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": false
-                }
-            ],
-            "preLaunchTask": "build MyComplier(clang)"
         }
     ]
 

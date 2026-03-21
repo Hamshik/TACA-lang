@@ -2,18 +2,5 @@
     "C_Cpp.errorSquiggles": "disabled",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/**/*"
-    ],
-    "makefile.buildLog": "log",
-    "makefile.makefilePath": "build/Makefile",
-    "cSpell.words": [
-        "BITNOT",
-        "DATATYPES",
-        "fprintf",
-        "prec",
-        "RSHIFT",
-        "UMINUS",
-        "unop",
-        "yyerror",
-        "YYLTYPE"
     ]
 }
