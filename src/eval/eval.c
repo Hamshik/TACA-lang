@@ -43,13 +43,13 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_NUM:
         switch (node->datatype) {
-            case INT:
+            case I32:
                 v.val.inum = (int)strtol(node->literal.raw, NULL, 10); break;
-            case SHORT:
+            case I16:
                 v.val.shnum = (short)strtol(node->literal.raw, NULL, 10); break;
-            case FLOAT:
+            case F32:
                 v.val.fnum = strtof(node->literal.raw, NULL); break;
-            case DOUBLE:
+            case F64:
                 v.val.lfnum = strtod(node->literal.raw, NULL); break;
             default:
                 fprintf(stderr, "Error: unsupported numeric literal type\n");
@@ -79,19 +79,19 @@ TypedValue ast_eval(ASTNode_t *node) {
         v.type = node->datatype;
 
         switch (node->datatype) {
-            case INT:
+            case I32:
                 v.val = eval_binop_int(node->bin.op, false, l.val.inum, r.val.inum);
                 if(isBoolOP(node->bin.op)) node->datatype = BOOL;
                 break;
-            case FLOAT:
+            case F32:
                 v.val = eval_binop_float(node->bin.op, l.val.fnum, r.val.fnum);
                 if(isBoolOP(node->bin.op)) node->datatype = BOOL;
                 break;
-            case DOUBLE:
+            case F64:
                 v.val = eval_binop_double(node->bin.op, l.val.lfnum, r.val.lfnum);
                 if(isBoolOP(node->bin.op)) node->datatype = BOOL;
                 break;
-            case SHORT:
+            case I16:
                 v.val = eval_binop_int(node->bin.op, true, l.val.shnum, r.val.shnum);
                 if(isBoolOP(node->bin.op)) node->datatype = BOOL;
                 break;

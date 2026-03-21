@@ -6,10 +6,10 @@
 
 void assign_value(DataTypes_t dt, Value *dst, Value src) {
     switch (dt) {
-        case INT:    dst->inum = src.inum; break;
-        case FLOAT:  dst->fnum = src.fnum; break;
-        case DOUBLE: dst->lfnum = src.lfnum; break;
-        case SHORT:  dst->shnum = src.shnum; break;
+        case I32:    dst->inum = src.inum; break;
+        case F32:    dst->fnum = src.fnum; break;
+        case F64:    dst->lfnum = src.lfnum; break;
+        case I16:    dst->shnum = src.shnum; break;
         case BOOL:   dst->bval = src.bval; break;
         case STRINGS:
             free(dst->str);
@@ -42,16 +42,16 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
     Value cur = getvar(lhs->var, datatypes, line, col);
     OP_kind_t operation = get_assign_op(op);
     switch (datatypes) {
-        case INT:
+        case I32:
             v = eval_binop_int(operation, false, cur.inum, r.inum);
             break;
-        case FLOAT:
+        case F32:
             v = eval_binop_float(operation, cur.fnum, r.fnum);
             break;
-        case DOUBLE:
+        case F64:
             v = eval_binop_double(operation, cur.lfnum, r.lfnum);
             break;
-        case SHORT:
+        case I16:
             v = eval_binop_int(operation, true, cur.shnum, r.shnum);
             break;
         case BOOL:

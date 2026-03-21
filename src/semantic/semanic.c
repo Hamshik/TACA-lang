@@ -58,9 +58,9 @@ DataTypes_t check_expr(ASTNode_t *n) {
             rt = lt;
         }
         else if (n->bin.left->kind == AST_NUM && n->bin.left->datatype == UNKNOWN && n->bin.right->kind == AST_NUM && n->bin.right->datatype == UNKNOWN) {
-            n->bin.left->datatype = INT;
-            n->bin.right->datatype = INT;
-            lt = rt = INT;
+            n->bin.left->datatype = I32;
+            n->bin.right->datatype = I32;
+            lt = rt = I32;
         }
 
         /* string ops */
@@ -113,8 +113,8 @@ DataTypes_t check_expr(ASTNode_t *n) {
         if (n->unop.operand &&
             n->unop.operand->kind == AST_NUM &&
             n->unop.operand->datatype == UNKNOWN) {
-            n->unop.operand->datatype = INT;
-            t = INT;
+            n->unop.operand->datatype = I32;
+            t = I32;
         }
 
         if (!is_numeric(t)) {

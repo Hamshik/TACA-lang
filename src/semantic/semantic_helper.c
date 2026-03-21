@@ -9,14 +9,14 @@ void type_error(ASTNode_t *n,const char* msg) {
 }
 
 int is_numeric(DataTypes_t t) {
-    return t == INT || t == FLOAT || t == DOUBLE || t == SHORT;
+    return t == I32 || t == F32 || t == F64 || t == I16;
 }
 
 DataTypes_t promote(DataTypes_t a, DataTypes_t b) {
-    if (a == DOUBLE || b == DOUBLE) return DOUBLE;
-    if (a == FLOAT  || b == FLOAT)  return FLOAT;
-    if (a == INT    || b == INT)    return INT;
-    return SHORT;
+    if (a == F64 || b == F64) return F64;
+    if (a == F32 || b == F32) return F32;
+    if (a == I32 || b == I32) return I32;
+    return I16;
 }
 
 void force_numeric_type(ASTNode_t *n, DataTypes_t t) {

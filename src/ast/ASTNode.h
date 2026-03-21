@@ -23,10 +23,10 @@ typedef enum ASTKind {
 } ASTKind_t;
 
 typedef enum DataTypes{
-    INT,
-    FLOAT,
-    DOUBLE,
-    SHORT,
+    I32,
+    F32,
+    F64,
+    I16,
     BOOL,
     STRINGS,
     CHARACTER,

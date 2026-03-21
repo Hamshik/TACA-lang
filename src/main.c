@@ -11,19 +11,19 @@
 extern FILE *yyin;
 void yyrestart(FILE *input_file);
 
-FILE* open_file(){
+FILE* open_file(const char *filename){
     char resolved[PATH_MAX];
-    const char *open_path = argv[1];
-    if (realpath(argv[1], resolved)) open_path = resolved;
+    const char *open_path = filename;
+    if (realpath(filename, resolved)) open_path = resolved;
 
     FILE* input = fopen(open_path, "rb");
     if (!input) {
         int saved_errno = errno;
-        fprintf(stderr, "Failed to open input: %s\n", argv[1]);
-        if (open_path != argv[1]) fprintf(stderr, "Resolved path: %s\n", open_path);
+        fprintf(stderr, "Failed to open input: %s\n", filename);
+        if (open_path != filename) fprintf(stderr, "Resolved path: %s\n", open_path);
         errno = saved_errno;
         perror("fopen");
-        return EXIT_FAILURE;
+        return NULL;
     }
     return input;
 }
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     if (argc == 1) {
         input = stdin;
     } else if (argc == 2) {
-        FILE* input = open_file();
+        input = open_file(argv[1]);
     } else {
         fprintf(stderr, "Usage: %s [path]\n Use --help for more information", argv[0]);
         return EXIT_FAILURE;

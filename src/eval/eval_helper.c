@@ -6,7 +6,7 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
     
     switch (datatype)
     {
-    case SHORT:
+    case I16:
         switch (op) {
             UNOP_CASES(shnum, operand);
             case OP_BITNOT: result->shnum = ~((int)operand->shnum); break;
@@ -15,7 +15,7 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
                 exit(EXIT_FAILURE);
         }
         break;
-    case INT:
+    case I32:
         switch (op) {
             UNOP_CASES(inum, operand);
             case OP_BITNOT: result->inum = ~((int)operand->inum); break;
@@ -24,7 +24,7 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
                 exit(EXIT_FAILURE);
         }
         break;
-    case FLOAT:
+    case F32:
         switch (op) {
             UNOP_CASES(fnum, operand);
             default:
@@ -32,7 +32,7 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
                 exit(EXIT_FAILURE);
         }
         break;
-    case DOUBLE:
+    case F64:
         switch (op) {
             UNOP_CASES(lfnum, operand);
             default:
@@ -117,16 +117,16 @@ Value eval_bool(OP_kind_t op, DataTypes_t type, Value a, Value b) {
                 default: fprintf(stderr, "Invalid boolean operator\n"); exit(1); break;
             }
             break;
-        case INT:
+        case I32:
             switch (op){INT_CASES(inum, a.inum, b.inum); default: fprintf(stderr, "Invalid integer operator\n"); exit(1);}
             break;
-        case SHORT:
+        case I16:
             switch (op){INT_CASES(shnum, a.shnum, b.shnum); default: fprintf(stderr, "Invalid integer operator\n"); exit(1);}
             break;
-        case FLOAT:
+        case F32:
             switch (op){FP_CASES(fnum, a.fnum, b.fnum, powf, fmodf); default: fprintf(stderr, "Invalid float operator\n"); exit(1);}
             break;
-        case DOUBLE:
+        case F64:
             switch (op){FP_CASES(lfnum, a.lfnum, b.lfnum, pow, fmod); default: fprintf(stderr, "Invalid double operator\n"); exit(1);}
             break;
         default:

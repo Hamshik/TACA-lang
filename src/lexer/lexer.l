@@ -75,10 +75,10 @@ if                  { return IF; }
 else                { return ELSE; }
 for                 { return FOR; }
 loop                { return LOOP; }
-i32                 { yylval->datatype = INT; return DATATYPES; }
-i16                 { yylval->datatype = SHORT; return DATATYPES; }
-f32                 { yylval->datatype = FLOAT; return DATATYPES; }
-f64                 { yylval->datatype = DOUBLE; return DATATYPES; }
+(i32|int32)         { yylval->datatype = I32; return DATATYPES; }
+(i16|int16)         { yylval->datatype = I16; return DATATYPES; }
+(f32|real32)        { yylval->datatype = F32; return DATATYPES; }
+(f64|real64)        { yylval->datatype = F64; return DATATYPES; }
 str                 { yylval->datatype = STRINGS; return DATATYPES; }
 char                { yylval->datatype = CHARACTER; return DATATYPES;}
 bool                { yylval->datatype = BOOL; return DATATYPES;}
