@@ -1,4 +1,0 @@
-// Real-world negative test (should FAIL): type mismatch
-
-var int32 n = 1;
-n = "nope";   // ERROR: Type mismatch in assignment (int32 vs str)

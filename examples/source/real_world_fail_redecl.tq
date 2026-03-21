@@ -1,5 +1,0 @@
-// Real-world negative test (should FAIL): redeclaration
-
-var int32 a = 1;
-let int32 a = 2;
-

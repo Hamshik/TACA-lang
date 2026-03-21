@@ -1,7 +1,0 @@
-// Infinite loop demo (DO NOT RUN unless you want it to hang)
-// There is no break yet, so this will never terminate.
-
-loop until (true) {
-    "still running";
-}
-
