@@ -3,6 +3,7 @@
 
 #include "../utils/uhash.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum ASTKind {
     AST_NUM,
@@ -23,10 +24,25 @@ typedef enum ASTKind {
 } ASTKind_t;
 
 typedef enum DataTypes{
+    I8,
+    I16,
     I32,
+    I128,
+
     F32,
     F64,
-    I16,
+    F128,
+
+    UF32,
+    UF64,
+    UF128,
+
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
+    
     BOOL,
     STRINGS,
     CHARACTER,
@@ -48,10 +64,22 @@ typedef enum OP_kind {
 } OP_kind_t;
 
 typedef union {
+    /* Existing field names used across the codebase */
     int inum;
     float fnum;
     double lfnum;
     short shnum;
+
+    /* New numeric fields */
+    int8_t i8;
+    __int128 i128;
+    uint8_t u8;
+    uint16_t u16;
+    uint32_t u32;
+    uint64_t u64;
+    unsigned __int128 u128;
+    long double f128;
+
     bool bval;
     char characters;
     char* str;

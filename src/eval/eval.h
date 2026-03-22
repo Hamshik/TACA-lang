@@ -13,7 +13,6 @@
     case OP_MUL: return (Value){ .field = (a) * (b) }; \
     case OP_DIV: return (Value){ .field = (a) / (b) }; \
     case OP_MOD: return (Value){ .field = (a) % (b) }; \
-    case OP_POW: return (Value){ .field = pow(a,b) };  \
     case OP_LSHIFT: return (Value){ .field = (a) << (b) }; \
     case OP_RSHIFT: return (Value){ .field = (a) >> (b) }; \
     case OP_BITAND: return (Value){ .field = (a) & (b) }; \
@@ -62,9 +61,14 @@ OP_kind_t get_assign_op(OP_kind_t op);
 bool isBoolOP(OP_kind_t op);
 
 Value default_step(DataTypes_t type);
-int step_is_positive(DataTypes_t type, Value step);
-int step_is_zero(DataTypes_t type, Value step);
-int should_continue_for(DataTypes_t type, Value cur, Value end, Value step);
+bool step_is_positive(DataTypes_t type, Value step);
+bool step_is_zero(DataTypes_t type, Value step);
+bool should_continue_for(DataTypes_t type, Value cur, Value end, Value step);
 Value add_step_for(DataTypes_t type, Value cur, Value step);
+
+/* Numeric helpers (runtime) */
+DataTypes_t tq_promote_runtime(DataTypes_t a, DataTypes_t b);
+TypedValue tq_cast_typed(TypedValue v, DataTypes_t target, int line, int col, int pos);
+Value tq_eval_binop_numeric(OP_kind_t op, DataTypes_t type, Value a, Value b);
 
 #endif

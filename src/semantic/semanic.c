@@ -121,6 +121,14 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 if (!is_numeric(lt) || !is_numeric(rt)) 
                     panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM, NULL);
                      
+
+                if (n->bin.op == OP_LSHIFT || n->bin.op == OP_RSHIFT ||
+                    n->bin.op == OP_BITAND || n->bin.op == OP_BITOR || n->bin.op == OP_BITXOR) {
+                    if (!is_integer(lt) || !is_integer(rt)) {
+                        panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM, "bitwise ops require integer types");
+                    }
+                }
+
                 n->datatype = promote(lt, rt);
                 return n->datatype;
         }
@@ -155,6 +163,9 @@ DataTypes_t check_expr(ASTNode_t *n) {
         if (!is_numeric(t)) 
             panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM, NULL);
         
+        if (n->unop.op == OP_BITNOT && !is_integer(t)) {
+            panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM, "bitwise not requires integer type");
+        }
 
         if(n->datatype == UNKNOWN) n->datatype = t;
         return t;

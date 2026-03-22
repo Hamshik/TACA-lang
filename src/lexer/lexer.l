@@ -58,10 +58,24 @@
 else                         { return ELSE; }
 if                           { return IF; }
 for                          { return FOR; }
-i32                          { yylval->datatype = I32; return DATATYPES; }
+i8                           { yylval->datatype = I8; return DATATYPES; }
 i16                          { yylval->datatype = I16; return DATATYPES; }
+i32                          { yylval->datatype = I32; return DATATYPES; }
+i128                         { yylval->datatype = I128; return DATATYPES; }
+
+u8                           { yylval->datatype = U8; return DATATYPES; }
+u16                          { yylval->datatype = U16; return DATATYPES; }
+u32                          { yylval->datatype = U32; return DATATYPES; }
+u64                          { yylval->datatype = U64; return DATATYPES; }
+u128                         { yylval->datatype = U128; return DATATYPES; }
+
 f32                          { yylval->datatype = F32; return DATATYPES; }
 f64                          { yylval->datatype = F64; return DATATYPES; }
+f128                         { yylval->datatype = F128; return DATATYPES; }
+
+uf32                         { yylval->datatype = UF32; return DATATYPES; }
+uf64                         { yylval->datatype = UF64; return DATATYPES; }
+uf128                        { yylval->datatype = UF128; return DATATYPES; }
 str                          { yylval->datatype = STRINGS; return DATATYPES; }
 char                         { yylval->datatype = CHARACTER; return DATATYPES;}
 bool                         { yylval->datatype = BOOL; return DATATYPES;}

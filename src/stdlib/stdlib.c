@@ -1,5 +1,6 @@
 #include "stdlib.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -7,12 +8,48 @@
 
 extern file_t file;
 
+static void tq_write_u128(FILE *out, unsigned __int128 x) {
+    char buf[64];
+    size_t i = 0;
+    if (x == 0) {
+        fputc('0', out);
+        return;
+    }
+    while (x > 0 && i < sizeof(buf)) {
+        unsigned __int128 q = x / 10;
+        unsigned __int128 r = x % 10;
+        buf[i++] = (char)('0' + (int)r);
+        x = q;
+    }
+    while (i--) fputc(buf[i], out);
+}
+
+static void tq_write_i128(FILE *out, __int128 x) {
+    if (x < 0) {
+        fputc('-', out);
+        tq_write_u128(out, (unsigned __int128)(-x));
+        return;
+    }
+    tq_write_u128(out, (unsigned __int128)x);
+}
+
 static void tq_write_value(FILE *out, Value v, DataTypes_t t) {
     switch (t) {
+        case I8:        fprintf(out, "%d", (int)v.i8); break;
         case I32:       fprintf(out, "%d", v.inum); break;
         case I16:       fprintf(out, "%hd", v.shnum); break;
+        case I128:      tq_write_i128(out, v.i128); break;
+        case U8:        fprintf(out, "%u", (unsigned)v.u8); break;
+        case U16:       fprintf(out, "%u", (unsigned)v.u16); break;
+        case U32:       fprintf(out, "%" PRIu32, v.u32); break;
+        case U64:       fprintf(out, "%" PRIu64, v.u64); break;
+        case U128:      tq_write_u128(out, v.u128); break;
         case F32:       fprintf(out, "%f", v.fnum); break;
         case F64:       fprintf(out, "%g", v.lfnum); break;
+        case F128:      fprintf(out, "%Lg", v.f128); break;
+        case UF32:      fprintf(out, "%f", v.fnum); break;
+        case UF64:      fprintf(out, "%g", v.lfnum); break;
+        case UF128:     fprintf(out, "%Lg", v.f128); break;
         case BOOL:      fputs(v.bval ? "true" : "false", out); break;
         case STRINGS:   fputs(v.str ? v.str : "", out); break;
         case CHARACTER: fputc(v.characters, out); break;
@@ -64,4 +101,3 @@ TypedValue tq_std_call(
     panic(&file, call_line, call_col, call_pos, RT_CALL_UNDEF_FN, name);
     return (TypedValue){.type = VOID};
 }
-

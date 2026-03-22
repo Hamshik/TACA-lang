@@ -20,6 +20,31 @@ static FnEntry_t *g_fns = NULL;
 static int g_returning = 0;
 static TypedValue g_return_value = (TypedValue){0};
 
+static unsigned __int128 tq_parse_u128(const char *s, int *ok) {
+    if (ok) *ok = 0;
+    if (!s || !*s) return 0;
+    unsigned __int128 v = 0;
+    for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+        if (*p < '0' || *p > '9') return 0;
+        v = (v * 10) + (unsigned __int128)(*p - '0');
+    }
+    if (ok) *ok = 1;
+    return v;
+}
+
+static __int128 tq_parse_i128(const char *s, int *ok) {
+    if (ok) *ok = 0;
+    if (!s || !*s) return 0;
+    int neg = 0;
+    if (*s == '-') { neg = 1; s++; }
+    else if (*s == '+') { s++; }
+    int ok_u = 0;
+    unsigned __int128 u = tq_parse_u128(s, &ok_u);
+    if (!ok_u) return 0;
+    if (ok) *ok = 1;
+    return neg ? -(__int128)u : (__int128)u;
+}
+
 static FnEntry_t *fn_lookup_runtime(const char *name) {
     FnEntry_t *e = NULL;
     HASH_FIND_STR(g_fns, name, e);
@@ -47,14 +72,50 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_NUM:
         switch (node->datatype) {
-            case I32:
-                v.val.inum = (int)strtol(node->literal.raw, NULL, 10); break;
+            case I8:
+                v.val.i8 = (int8_t)strtol(node->literal.raw, NULL, 10); break;
             case I16:
                 v.val.shnum = (short)strtol(node->literal.raw, NULL, 10); break;
+            case I32:
+                v.val.inum = (int)strtol(node->literal.raw, NULL, 10); break;
+            case I128: {
+                int ok = 0;
+                v.val.i128 = tq_parse_i128(node->literal.raw, &ok);
+                if (!ok) {
+                    panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                    return (TypedValue){0};
+                }
+                break;
+            }
+            case U8:
+                v.val.u8 = (uint8_t)strtoul(node->literal.raw, NULL, 10); break;
+            case U16:
+                v.val.u16 = (uint16_t)strtoul(node->literal.raw, NULL, 10); break;
+            case U32:
+                v.val.u32 = (uint32_t)strtoul(node->literal.raw, NULL, 10); break;
+            case U64:
+                v.val.u64 = (uint64_t)strtoull(node->literal.raw, NULL, 10); break;
+            case U128: {
+                int ok = 0;
+                v.val.u128 = tq_parse_u128(node->literal.raw, &ok);
+                if (!ok) {
+                    panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                    return (TypedValue){0};
+                }
+                break;
+            }
             case F32:
                 v.val.fnum = strtof(node->literal.raw, NULL); break;
             case F64:
                 v.val.lfnum = strtod(node->literal.raw, NULL); break;
+            case F128:
+                v.val.f128 = strtold(node->literal.raw, NULL); break;
+            case UF32:
+                v.val.fnum = strtof(node->literal.raw, NULL); break;
+            case UF64:
+                v.val.lfnum = strtod(node->literal.raw, NULL); break;
+            case UF128:
+                v.val.f128 = strtold(node->literal.raw, NULL); break;
             default:
                 panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
                 return (TypedValue){0};
@@ -80,36 +141,41 @@ TypedValue ast_eval(ASTNode_t *node) {
     case AST_BINOP: {
         TypedValue l = ast_eval(node->bin.left);
         TypedValue r = ast_eval(node->bin.right);
-        v.type = node->datatype;
 
-        switch (node->datatype) {
-            case I32:
-                v.val = eval_binop_int(node->bin.op, false, l.val.inum, r.val.inum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
-                break;
-            case F32:
-                v.val = eval_binop_float(node->bin.op, l.val.fnum, r.val.fnum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
-                break;
-            case F64:
-                v.val = eval_binop_double(node->bin.op, l.val.lfnum, r.val.lfnum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
-                break;
-            case I16:
-                v.val = eval_binop_int(node->bin.op, true, l.val.shnum, r.val.shnum);
-                if(isBoolOP(node->bin.op)) node->datatype = BOOL;
-                break;
-            case STRINGS: v.val = (Value){.str = do_operation_str(l.val.str, r.val.str, node->bin.op)}; break;
-            case BOOL: v.val = eval_bool(node->bin.op, l.type , l.val, r.val); break;
-            default:
-                panic(&file, node->line, node->col, node->pos, RT_BINOP_UNSUPPORTED, NULL);
-                return (TypedValue){0};
+        if (node->datatype == STRINGS) {
+            v.type = STRINGS;
+            v.val = (Value){.str = do_operation_str(l.val.str, r.val.str, node->bin.op)};
+            return v;
         }
+
+        if (node->bin.op == OP_AND || node->bin.op == OP_OR) {
+            TypedValue lb = tq_cast_typed(l, BOOL, node->line, node->col, node->pos);
+            TypedValue rb = tq_cast_typed(r, BOOL, node->line, node->col, node->pos);
+            v.type = BOOL;
+            v.val = eval_bool(node->bin.op, BOOL, lb.val, rb.val);
+            return v;
+        }
+
+        if (isBoolOP(node->bin.op) || node->datatype == BOOL) {
+            DataTypes_t cmp_t = tq_promote_runtime(l.type, r.type);
+            TypedValue lc = tq_cast_typed(l, cmp_t, node->line, node->col, node->pos);
+            TypedValue rc = tq_cast_typed(r, cmp_t, node->line, node->col, node->pos);
+            v.type = BOOL;
+            v.val = eval_bool(node->bin.op, cmp_t, lc.val, rc.val);
+            return v;
+        }
+
+        DataTypes_t op_t = node->datatype;
+        TypedValue lc = tq_cast_typed(l, op_t, node->line, node->col, node->pos);
+        TypedValue rc = tq_cast_typed(r, op_t, node->line, node->col, node->pos);
+        v.type = op_t;
+        v.val = tq_eval_binop_numeric(node->bin.op, op_t, lc.val, rc.val);
         return v;
     }
 
     case AST_UNOP: {
-        TypedValue r = ast_eval(node->unop.operand);
+        TypedValue r0 = ast_eval(node->unop.operand);
+        TypedValue r = tq_cast_typed(r0, node->datatype, node->line, node->col, node->pos);
         do_unop_operation(&v.val, &r.val , node->datatype, node->unop.op);
         /* Only ++/-- mutate variables; other unary ops are pure. */
         if ((node->unop.op == OP_INC || node->unop.op == OP_DEC) &&
@@ -121,9 +187,10 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_ASSIGN: {
         if (node->assign.op == OP_ASSIGN && node->assign.is_declaration) {
-            Value r = ast_eval(node->assign.rhs).val;
-            set_var_current(node->assign.lhs->var, &r, node->datatype);
-            return (TypedValue){.val = r, .type = node->datatype};
+            TypedValue rt0 = ast_eval(node->assign.rhs);
+            TypedValue rt = tq_cast_typed(rt0, node->datatype, node->line, node->col, node->pos);
+            set_var_current(node->assign.lhs->var, &rt.val, node->datatype);
+            return (TypedValue){.val = rt.val, .type = node->datatype};
         }
 
         Value val = eval_assign(node->assign.lhs,
@@ -166,8 +233,12 @@ TypedValue ast_eval(ASTNode_t *node) {
         DataTypes_t loop_type = node->fornode.init->datatype;
         const char *loop_name = node->fornode.init->assign.lhs->var;
 
-        Value endv = ast_eval(node->fornode.end).val;
-        Value stepv = node->fornode.step ? ast_eval(node->fornode.step).val : default_step(loop_type);
+        TypedValue endt = tq_cast_typed(ast_eval(node->fornode.end), loop_type, node->line, node->col, node->pos);
+        Value endv_cast = endt.val;
+        TypedValue stept = node->fornode.step
+            ? tq_cast_typed(ast_eval(node->fornode.step), loop_type, node->line, node->col, node->pos)
+            : (TypedValue){.type = loop_type, .val = default_step(loop_type)};
+        Value stepv = stept.val;
 
         if (step_is_zero(loop_type, stepv)) {
             panic(&file, node->line, node->col, node->pos, RT_FOR_STEP_ZERO, NULL);
@@ -176,7 +247,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
         TypedValue last = {0};
         
-        while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col, node->pos), endv, stepv)) {
+        while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col, node->pos), endv_cast, stepv)) {
             last = ast_eval(node->fornode.body);
             if (g_returning) return g_return_value;
             Value cur = getvar(loop_name, loop_type, node->line, node->col, node->pos);
@@ -243,7 +314,8 @@ TypedValue ast_eval(ASTNode_t *node) {
         // New call frame.
         env_push();
         for (int i = 0; i < fn->fn_def.param_count; i++) {
-            Value vv = argv[i].val;
+            TypedValue casted = tq_cast_typed(argv[i], fn->fn_def.params[i].type, node->line, node->col, node->pos);
+            Value vv = casted.val;
             set_var_current(fn->fn_def.params[i].name, &vv, fn->fn_def.params[i].type);
         }
 
