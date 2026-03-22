@@ -30,8 +30,8 @@ void assign_value(DataTypes_t dt, Value *dst, Value src) {
 Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
     int line, int col, int pos) {
     if (!lhs || lhs->kind != AST_VAR) {
-        panic(&file, line, col, pos, "assignment target must be a variable");
-        exit(EXIT_FAILURE);
+        panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
+        return (Value){0};
     }
 
     Value r = ast_eval(rhs).val;
@@ -67,8 +67,8 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
             v.characters = r.characters;
             break;
         default:
-            panic(&file, line, col, pos, "Unsupported data type for assignment");
-            exit(EXIT_FAILURE);
+            panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
+            return (Value){0};
     }
     set_var(lhs->var, &v, datatypes);
     print_value(v, datatypes);

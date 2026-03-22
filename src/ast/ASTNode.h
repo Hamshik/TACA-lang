@@ -30,6 +30,7 @@ typedef enum DataTypes{
     BOOL,
     STRINGS,
     CHARACTER,
+    VOID,
     UNKNOWN
 } DataTypes_t;
 

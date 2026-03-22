@@ -103,12 +103,12 @@ Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos)
         HASH_FIND_STR(it->vars, name, v);
         if (!v) continue;
         if (v->typedval.type != datatype) {
-            panic(&file, line, col, pos, logf_msg("Type mismatch for variable '%s'", name));
-            exit(EXIT_FAILURE);
+            panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+            return (Value){0};
         }
         return v->typedval.val;
     }
 
-    panic(&file, line, col, pos, logf_msg("Variable '%s' not defined", name));
-    exit(EXIT_FAILURE);
+    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    return (Value){0};
 }

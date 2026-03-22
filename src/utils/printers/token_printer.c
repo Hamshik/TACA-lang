@@ -6,8 +6,10 @@ char* get_datatype(DataTypes_t type){
     case I16: return "I16";
     case F32: return "F32";
     case F64: return "F64";
+    case BOOL: return "BOOL";
     case STRINGS: return "STRING";
     case CHARACTER: return "CHAR";
+    case VOID: return "VOID";
     case UNKNOWN: return "UNKNOWN";
     default: return "UNKNOWNS";
     }

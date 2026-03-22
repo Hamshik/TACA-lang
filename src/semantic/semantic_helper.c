@@ -7,8 +7,8 @@ extern file_t file;
 /* Helpers */
 void type_error(ASTNode_t *n,const char* msg) {
     if (n) n->datatype = UNKNOWN;
-    panic(&file, n ? n->line : 0, n ? n->col : 0, n ? n->pos : 0, msg ? msg : "type error");
-    exit(EXIT_FAILURE);
+    panic(&file, n ? n->line : 0, n ? n->col : 0, n ? n->pos : 0, SEM_BINOP_INVALID, msg ? msg : NULL);
+    return;
 }
 
 int is_numeric(DataTypes_t t) {

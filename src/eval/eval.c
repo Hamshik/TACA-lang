@@ -28,8 +28,8 @@ static FnEntry_t *fn_lookup_runtime(const char *name) {
 static void fn_register_runtime(ASTNode_t *fn) {
     if (!fn || fn->kind != AST_FN) return;
     if (fn_lookup_runtime(fn->fn_def.name)) {
-        panic(&file, fn->line, fn->col, fn->pos, logf_msg("Redeclaration of function '%s'", fn->fn_def.name));
-        exit(EXIT_FAILURE);
+        panic(&file, fn->line, fn->col, fn->pos, SEM_FN_REDECL, fn->fn_def.name);
+        return;
     }
     FnEntry_t *e = calloc(1, sizeof(*e));
     if (!e) { perror("memory error: failed to allocate the memory"); exit(1); }
@@ -55,8 +55,8 @@ TypedValue ast_eval(ASTNode_t *node) {
             case F64:
                 v.val.lfnum = strtod(node->literal.raw, NULL); break;
             default:
-                panic(&file, node->line, node->col, node->pos, "Unsupported numeric literal type");
-                exit(EXIT_FAILURE);
+                panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                return (TypedValue){0};
         }
         v.type = node->datatype;
         return v;
@@ -101,8 +101,8 @@ TypedValue ast_eval(ASTNode_t *node) {
             case STRINGS: v.val = (Value){.str = do_operation_str(l.val.str, r.val.str, node->bin.op)}; break;
             case BOOL: v.val = eval_bool(node->bin.op, l.type , l.val, r.val); break;
             default:
-                panic(&file, node->line, node->col, node->pos, "Unsupported type for binary operation");
-                exit(EXIT_FAILURE);
+                panic(&file, node->line, node->col, node->pos, RT_BINOP_UNSUPPORTED, NULL);
+                return (TypedValue){0};
         }
         print_value(v.val, node->datatype);
         return v;
@@ -158,8 +158,8 @@ TypedValue ast_eval(ASTNode_t *node) {
     case NODE_FOR: {
         if (!node->fornode.init || node->fornode.init->kind != AST_ASSIGN ||
             node->fornode.init->assign.lhs->kind != AST_VAR || node->fornode.init->assign.op != OP_ASSIGN) {
-            panic(&file, node->line, node->col, node->pos, "Invalid for loop init");
-            exit(EXIT_FAILURE);
+            panic(&file, node->line, node->col, node->pos, RT_FOR_INIT_INVALID, NULL);
+            return (TypedValue){0};
         }
 
         ast_eval(node->fornode.init);
@@ -170,8 +170,8 @@ TypedValue ast_eval(ASTNode_t *node) {
         Value stepv = node->fornode.step ? ast_eval(node->fornode.step).val : default_step(loop_type);
 
         if (step_is_zero(loop_type, stepv)) {
-            panic(&file, node->line, node->col, node->pos, "for loop step cannot be zero");
-            exit(EXIT_FAILURE);
+            panic(&file, node->line, node->col, node->pos, RT_FOR_STEP_ZERO, NULL);
+            return (TypedValue){0};
         }
 
         TypedValue last = {0};
@@ -207,8 +207,8 @@ TypedValue ast_eval(ASTNode_t *node) {
     case AST_CALL: {
         FnEntry_t *e = fn_lookup_runtime(node->call.name);
         if (!e) {
-            panic(&file, node->line, node->col, node->pos, logf_msg("Call to undefined function '%s'", node->call.name));
-            exit(EXIT_FAILURE);
+            panic(&file, node->line, node->col, node->pos, RT_CALL_UNDEF_FN, node->call.name);
+            return (TypedValue){0};
         }
         ASTNode_t *fn = e->def;
 
@@ -220,8 +220,8 @@ TypedValue ast_eval(ASTNode_t *node) {
             else it = NULL;
         }
         if (argc != fn->fn_def.param_count) {
-            panic(&file, node->line, node->col, node->pos, logf_msg("Argument count mismatch in call to '%s'", node->call.name));
-            exit(EXIT_FAILURE);
+            panic(&file, node->line, node->col, node->pos, RT_ARGC_MISMATCH, node->call.name);
+            return (TypedValue){0};
         }
 
         TypedValue *argv = argc ? calloc((size_t)argc, sizeof(TypedValue)) : NULL;
@@ -249,6 +249,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
         TypedValue last = ast_eval(fn->fn_def.body);
         TypedValue ret = g_returning ? g_return_value : last;
+        if (fn->fn_def.ret == VOID) ret = (TypedValue){.type = VOID};
 
         g_returning = saved_returning;
         g_return_value = saved_return_value;
@@ -261,14 +262,14 @@ TypedValue ast_eval(ASTNode_t *node) {
     }
 
     case AST_RETURN: {
-        TypedValue r = {0};
+        TypedValue r = {.type = VOID};
         if (node->ret_stmt.value) r = ast_eval(node->ret_stmt.value);
         g_return_value = r;
         g_returning = 1;
         return r;
     }
     default:
-        panic(&file, node ? node->line : 0, node ? node->col : 0, node ? node->pos : 0, "Unknown AST node");
-        exit(EXIT_FAILURE);
+        panic(&file, node ? node->line : 0, node ? node->col : 0, node ? node->pos : 0, RT_UNKNOWN_AST, NULL);
+        return (TypedValue){0};
     }
 }

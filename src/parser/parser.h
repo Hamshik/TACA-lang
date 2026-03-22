@@ -52,6 +52,7 @@ extern int yydebug;
     #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
     #include "../utils/error_handler/error_msg.h"
+    #include "parser_helpers.h"
     extern ASTNode_t *root;
     extern file_t file;
 
@@ -65,7 +66,7 @@ extern int yydebug;
         int last_pos;    /* 0-based byte offset */
     } TQLocation;
 
-#line 69 "src/parser/parser.h"
+#line 70 "src/parser/parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -143,7 +144,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 93 "src/parser/parser.y"
+#line 72 "src/parser/parser.y"
 
     ASTNode_t *node;
     DataTypes_t datatype;
@@ -152,7 +153,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 156 "src/parser/parser.h"
+#line 157 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

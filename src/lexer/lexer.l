@@ -13,56 +13,23 @@
     #include "../parser/parser.h"
     #include "../ast/ASTNode.h"
     #include "../utils/error_handler/error_msg.h"
+    #include "lexer_helpers.h"
     #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
 
     extern file_t file;
+    static int tq_brace_depth = 0;
 
-    /* Bison %locations: Flex does not maintain columns for you.
-       Track (line, column) ourselves and update it for every match,
-       including skipped whitespace/comments. Columns/pos are byte-based. */
-    static int tq_lex_line = 1;
-    static int tq_lex_col = 1;
-    static int tq_lex_pos = 0; /* 0-based byte offset */
-
-    static void tq_update_loc(YYLTYPE *loc, const char *text, int len) {
-        if (!loc) return;
-
-        loc->first_line = tq_lex_line;
-        loc->first_column = tq_lex_col;
-        loc->first_pos = tq_lex_pos;
-
-        int line = tq_lex_line;
-        int col = tq_lex_col;
-        int pos = tq_lex_pos;
-
-        for (int i = 0; i < len; i++) {
-            if (text[i] == '\n') {
-                line += 1;
-                col = 1;
-            } else {
-                col += 1;
-            }
-            pos += 1;
-        }
-
-        loc->last_line = line;
-        loc->last_column = (col > 1) ? (col - 1) : 1;
-        loc->last_pos = (pos > 0) ? (pos - 1) : 0;
-
-        tq_lex_line = line;
-        tq_lex_col = col;
-        tq_lex_pos = pos;
-    }
-
-    #define YY_USER_ACTION tq_update_loc(yylloc, yytext, (int)yyleng);
+    #define YY_USER_INIT tq_lexer_reset_loc();
+    #define YY_USER_ACTION tq_lexer_update_loc(yylloc, yytext, (int)yyleng);
 %}
 
 %%
-[ \t\r\n]+          { /* skip */ }
-"//".*               { /* skip single-line comments */ }
+"\357\273\277"               { /* skip */ }
+[ \t\r\n]+                   { /* skip */ }
+"//".*                       { /* skip single-line comments */ }
 "/*"([^*]|\*+[^*/])*\*+"/"   { /* skip multi-line comments */ }
 
-\"([^"\\\n]|\\.)*\" {
+\"([^"\\\n]|\\.)*\"          {
     size_t n = yyleng;
     char *s = malloc(n - 1);          // remove 2 quotes + keep '\0'
     if (!s) exit(1);
@@ -76,19 +43,20 @@
     return STRING_LITERAL;
 }
 
-if                  { return IF; }
-else                { return ELSE; }
-for                 { return FOR; }
-loop                { return LOOP; }
-i32                 { yylval->datatype = I32; return DATATYPES; }
-i16                 { yylval->datatype = I16; return DATATYPES; }
-f32                 { yylval->datatype = F32; return DATATYPES; }
-f64                 { yylval->datatype = F64; return DATATYPES; }
-str                 { yylval->datatype = STRINGS; return DATATYPES; }
-char                { yylval->datatype = CHARACTER; return DATATYPES;}
-bool                { yylval->datatype = BOOL; return DATATYPES;}
-until               { return UNTIL; }
-true                {
+else                         { return ELSE; }
+if                           { return IF; }
+for                          { return FOR; }
+loop                         { return LOOP; }
+i32                          { yylval->datatype = I32; return DATATYPES; }
+i16                          { yylval->datatype = I16; return DATATYPES; }
+f32                          { yylval->datatype = F32; return DATATYPES; }
+f64                          { yylval->datatype = F64; return DATATYPES; }
+str                          { yylval->datatype = STRINGS; return DATATYPES; }
+char                         { yylval->datatype = CHARACTER; return DATATYPES;}
+bool                         { yylval->datatype = BOOL; return DATATYPES;}
+void                         { yylval->datatype = VOID; return DATATYPES;}
+until                        { return UNTIL; }
+true                         {
     yylval->node = new_bool(1, yylloc->first_line, yylloc->first_column);
     yylval->node->pos = yylloc->first_pos;
     yylval->node->end_pos = yylloc->last_pos;
@@ -150,14 +118,26 @@ return              { return RETURN; }
 ">="                { return GE; }
 "<"                 { return LT; }
 ">"                 { return GT; }
-"{"                 { return LBRACE; }
-"}"                 { return RBRACE; }
+"{"                 { tq_brace_depth++; return LBRACE; }
+"}"                 { if (tq_brace_depth > 0) tq_brace_depth--; return RBRACE; }
 [a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_] {
     yylval->node = new_var(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
     yylval->node->pos = yylloc->first_pos;
     yylval->node->end_pos = yylloc->last_pos;
     return IDENTIFIER;
 }
-.                  { panic(&file, yylloc->first_line, yylloc->first_column, yylloc->first_pos, logf_msg("Unknown character '%s'", yytext)); }
-<<EOF>>             { return 0;  }
+.                   {
+    unsigned char b0 = (unsigned char)yytext[0];
+    char detail[32];
+    snprintf(detail, sizeof(detail), "0x%02X", b0);
+    panic(&file, yylloc->first_line, yylloc->first_column, yylloc->first_pos, LEX_UNKNOWN_CHAR, detail);
+}
+<<EOF>>             {
+    if (tq_brace_depth > 0) {
+        int line = 0, col = 0, pos = 0;
+        tq_lexer_get_cursor(&line, &col, &pos);
+        panic(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
+    }
+    return 0;
+}
 %%

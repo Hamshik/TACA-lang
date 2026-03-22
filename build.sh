@@ -18,7 +18,9 @@ echo "[3/3] Compiling..."
 mkdir -p "$BIN_DIR"
 gcc -Wall -Wextra -g -Isrc \
     $PARSER_DIR/parser.c \
+    $PARSER_DIR/parser_helpers.c \
     $LEXER_DIR/lexer.c \
+    $LEXER_DIR/lexer_helpers.c \
     $EVAL_DIR/eval.c \
     $AST_DIR/ASTNode.c \
     $AST_DIR/ASTHelper.c \

@@ -4,6 +4,7 @@
     #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
     #include "../utils/error_handler/error_msg.h"
+    #include "parser_helpers.h"
     extern ASTNode_t *root;
     extern file_t file;
 
@@ -20,37 +21,12 @@
 
 %{
     #include "../ast/ASTNode.h"
+    #include "parser_helpers.h"
     ASTNode_t *root = NULL;
-
-    /* Parser sugar:
-       - Allow multi-declarations like:
-         `var int32 a = 1, b = 2;`
-         `let int32 a = 1, str s = "hi";`
-         `let { int32 a = 1; str s = "hi"; }`
-       We expand them into a chain of `AST_SEQ` containing normal `AST_ASSIGN` declarations,
-       so evaluator/semantic logic does not change.
-    */
-    static void annotate_decl_list(ASTNode_t *n, DataTypes_t default_t, bool is_mutable) {
-        if (!n) return;
-        if (n->kind == AST_SEQ) {
-            annotate_decl_list(n->seq.a, default_t, is_mutable);
-            annotate_decl_list(n->seq.b, default_t, is_mutable);
-            return;
-        }
-        if (n->kind != AST_ASSIGN) return;
-
-        n->assign.is_declaration = true;
-        n->assign.is_mutable = is_mutable;
-
-        /* Untyped items inherit the "default" type (the one after var/let). */
-        if (n->datatype == UNKNOWN) n->datatype = default_t;
-
-        /* Keep LHS and RHS types consistent for semantic/eval. */
-        if (n->assign.lhs && n->assign.lhs->kind == AST_VAR && n->assign.lhs->datatype == UNKNOWN)
-            n->assign.lhs->datatype = n->datatype;
-        if (n->assign.rhs && n->assign.rhs->datatype == UNKNOWN)
-            n->assign.rhs->datatype = n->datatype;
-    }
+    static int g_last_parse_err_line = 1;
+    static int g_last_parse_err_col = 1;
+    static int g_last_parse_err_pos = 0;
+    static const char *g_last_parse_err_msg = NULL;
 
     /* Tell Bison how to propagate our extra location fields. */
     #ifndef YYLLOC_DEFAULT
@@ -83,6 +59,9 @@
                 (node)->end_pos = (loc).last_pos;    \
             }                                        \
         } while (0)
+
+    #define TQ_PANIC_LOC(loc, code, detail) \
+        panic(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
 %}
 
 %define api.pure full
@@ -145,7 +124,6 @@
 %nonassoc ELSE
 
 %%
-
 program
     : /* empty */               { root = NULL; }
     | stmt_list                 { root = $1; }
@@ -153,11 +131,16 @@ program
 
 stmt_list
     : stmt                      { $$ = $1; }
-    | stmt stmt_list            { $$ = new_seq($1, $2); TQ_SET_NODE_LOC($$, @$); }
+    | stmt stmt_list            {
+                                  if (!$1) $$ = $2;
+                                  else if (!$2) $$ = $1;
+                                  else { $$ = new_seq($1, $2); TQ_SET_NODE_LOC($$, @$); }
+                                }
     ;
 
 stmt
     : expr SEMICOLON            { $$ = $1; }
+    | expr error                { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, NULL); yyerrok; $$ = $1; }
     | if_stmt                   { $$ = $1; }
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
@@ -167,6 +150,8 @@ stmt
     | typed_decl_stmt           { $$ = $1; }
     | fn_def                    { $$ = $1; }
     | return_stmt SEMICOLON     { $$ = $1; }
+    | return_stmt error         { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, NULL); yyerrok; $$ = $1; }
+    | error SEMICOLON           { panic(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
     ;
 
 block
@@ -201,7 +186,7 @@ fn_def
       }
   | FN IDENTIFIER LPAREN opt_params RPAREN block
       {
-          $$ = new_fn_def($2->var, $4.params, $4.count, UNKNOWN, $6, @1.first_line, @1.first_column);
+          $$ = new_fn_def($2->var, $4.params, $4.count, VOID, $6, @1.first_line, @1.first_column);
           TQ_SET_NODE_LOC($$, @$);
           ast_free($2);
       }
@@ -256,9 +241,13 @@ args
 /* `let { ... }` / `var { ... }` declaration blocks (statement form). */
 let_block
     : LET LBRACE decl_block_items RBRACE
-        { annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
+        { tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
     | VAR LBRACE decl_block_items RBRACE
-        { annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
+        { tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
+    | LET LBRACE decl_block_items error
+        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
+    | VAR LBRACE decl_block_items error
+        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
     ;
 
 decl_block_items
@@ -310,13 +299,14 @@ decl_items_after_type_more
        ambiguity with function-call argument lists (both use commas). */
     decl
         : VAR DATATYPES decl_items_after_type
-            { annotate_decl_list($3, $2, true); $$ = $3; }
+            { tq_annotate_decl_list($3, $2, true); $$ = $3; }
         | LET DATATYPES decl_items_after_type
-            { annotate_decl_list($3, $2, false); $$ = $3; }
+            { tq_annotate_decl_list($3, $2, false); $$ = $3; }
         ;
 
     decl_stmt
         : decl SEMICOLON { $$ = $1; }
+        | decl error     { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, NULL); yyerrok; $$ = $1; }
         ;
 
     for_init
@@ -328,7 +318,9 @@ decl_items_after_type_more
    to avoid ambiguity with function-call arguments (both use commas). */
 typed_decl_stmt
     : DATATYPES decl_items_after_type SEMICOLON
-        { annotate_decl_list($2, $1, false); $$ = $2; }
+        { tq_annotate_decl_list($2, $1, false); $$ = $2; }
+    | DATATYPES decl_items_after_type error
+        { TQ_PANIC_LOC(@3, PARSE_MISSING_SEMI, NULL); yyerrok; tq_annotate_decl_list($2, $1, false); $$ = $2; }
     ;
 
 expr
@@ -372,8 +364,9 @@ expr
         { $$ = new_unop($1, @$.first_line, @$.first_column, OP_DEC); TQ_SET_NODE_LOC($$, @$); }
 
     | LPAREN expr RPAREN         { $$ = $2; }
-    | LBRACE expr RBRACE         { $$ = $2; }
+    | LPAREN expr error          { TQ_PANIC_LOC(@3, PARSE_UNCLOSED_PAREN, NULL); yyerrok; $$ = $2; }
     | LSQUARE expr RSQUARE       { $$ = $2; }
+    | LSQUARE expr error         { TQ_PANIC_LOC(@3, PARSE_UNCLOSED_BRACKET, NULL); yyerrok; $$ = $2; }
     | assignment                 { $$ = $1; }
     | IDENTIFIER LPAREN opt_args RPAREN
       {
@@ -417,8 +410,14 @@ assignment
     | IDENTIFIER POWER_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_POW_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
     ;
+
 %%
 
 void yyerror(YYLTYPE *loc, const char *s) {
-    panic(&file, loc->first_line, loc->first_column, loc->first_pos, s);
+    if (loc) {
+        g_last_parse_err_line = loc->first_line;
+        g_last_parse_err_col = loc->first_column;
+        g_last_parse_err_pos = loc->first_pos;
+    }
+    g_last_parse_err_msg = s;
 }

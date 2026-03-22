@@ -34,6 +34,7 @@ FILE* open_file(const char *filename, char **resolved_path_out){
 
 int main(int argc, char **argv) {
     FILE *input = NULL;
+    panic_fatal = true; /* lexer/parser should stop immediately */
     if (argc == 1) {
         input = stdin;
         file.filename = "<stdin>";
@@ -54,7 +55,9 @@ int main(int argc, char **argv) {
 
     yyparse();
     if (root != NULL) {
+        panic_fatal = false; /* collect semantic errors like Rust */
         semantic_check(root);
+        panic_fatal = true;  /* runtime errors should still stop */
         ast_eval(root);
         ast_free(root);
         env_clear_all();
