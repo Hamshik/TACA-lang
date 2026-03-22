@@ -5,6 +5,7 @@
 #include "../ast/ASTNode.h"
 #include "../utils/error_handler/error_msg.h"
 #include "../utils/printers/value_printer.h"
+#include "../stdlib/stdlib.h"
 #include "eval.h"
 
 extern file_t file;
@@ -62,13 +63,13 @@ TypedValue ast_eval(ASTNode_t *node) {
         return v;
 
     case AST_STR:
+        v.type = STRINGS;
         v.val.str = node->literal.raw;
-        print_value(v.val, node->datatype);
         return v;
 
     case AST_CHAR:
+        v.type = CHARACTER;
         v.val.characters = node->literal.raw ? node->literal.raw[0] : '\0';
-        print_value(v.val, node->datatype);
         return v;
 
     case AST_VAR: return (TypedValue){
@@ -104,7 +105,6 @@ TypedValue ast_eval(ASTNode_t *node) {
                 panic(&file, node->line, node->col, node->pos, RT_BINOP_UNSUPPORTED, NULL);
                 return (TypedValue){0};
         }
-        print_value(v.val, node->datatype);
         return v;
     }
 
@@ -184,7 +184,6 @@ TypedValue ast_eval(ASTNode_t *node) {
             set_var(loop_name, &next, loop_type);
         }
 
-        print_value(last.val, last.type);
         return last;
     }
 
@@ -206,11 +205,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_CALL: {
         FnEntry_t *e = fn_lookup_runtime(node->call.name);
-        if (!e) {
-            panic(&file, node->line, node->col, node->pos, RT_CALL_UNDEF_FN, node->call.name);
-            return (TypedValue){0};
-        }
-        ASTNode_t *fn = e->def;
+        ASTNode_t *fn = e ? e->def : NULL;
 
         // Evaluate args left-to-right into a small array.
         int argc = 0;
@@ -218,10 +213,6 @@ TypedValue ast_eval(ASTNode_t *node) {
             argc++;
             if (it->kind == AST_SEQ) it = it->seq.b;
             else it = NULL;
-        }
-        if (argc != fn->fn_def.param_count) {
-            panic(&file, node->line, node->col, node->pos, RT_ARGC_MISMATCH, node->call.name);
-            return (TypedValue){0};
         }
 
         TypedValue *argv = argc ? calloc((size_t)argc, sizeof(TypedValue)) : NULL;
@@ -233,6 +224,20 @@ TypedValue ast_eval(ASTNode_t *node) {
             argv[i] = ast_eval(cur);
             if (arg && arg->kind == AST_SEQ) arg = arg->seq.b;
             else arg = NULL;
+        }
+
+        if (!fn) {
+            int ok = 0;
+            TypedValue out = tq_std_call(node->call.name, argv, argc, node->line, node->col, node->pos, &ok);
+            free(argv);
+            if (!ok) panic(&file, node->line, node->col, node->pos, RT_CALL_UNDEF_FN, node->call.name);
+            return out;
+        }
+
+        if (argc != fn->fn_def.param_count) {
+            panic(&file, node->line, node->col, node->pos, RT_ARGC_MISMATCH, node->call.name);
+            free(argv);
+            return (TypedValue){0};
         }
 
         // New call frame.
@@ -257,7 +262,6 @@ TypedValue ast_eval(ASTNode_t *node) {
         env_pop();
         free(argv);
 
-        print_value(ret.val, ret.type);
         return ret;
     }
 

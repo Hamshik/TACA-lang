@@ -30,11 +30,23 @@
 "/*"([^*]|\*+[^*/])*\*+"/"   { /* skip multi-line comments */ }
 
 \"([^"\\\n]|\\.)*\"          {
-    size_t n = yyleng;
-    char *s = malloc(n - 1);          // remove 2 quotes + keep '\0'
-    if (!s) exit(1);
-    memcpy(s, yytext + 1, n - 2);
-    s[n - 2] = '\0';
+    const char *inner = yytext + 1;
+    size_t inner_len = (size_t)yyleng - 2;
+    size_t out_len = 0;
+    int err_i = -1;
+    const char *err_msg = NULL;
+
+    char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
+    if (!s) {
+        int off = (err_i >= 0) ? err_i : 0;
+        panic(&file,
+              yylloc->first_line,
+              yylloc->first_column + 1 + off,
+              yylloc->first_pos + 1 + off,
+              LEX_INVALID_ESCAPE,
+              err_msg);
+        return 0;
+    }
 
     yylval->node = new_str(s, yylloc->first_line, yylloc->first_column);
     yylval->node->pos = yylloc->first_pos;
@@ -46,7 +58,6 @@
 else                         { return ELSE; }
 if                           { return IF; }
 for                          { return FOR; }
-loop                         { return LOOP; }
 i32                          { yylval->datatype = I32; return DATATYPES; }
 i16                          { yylval->datatype = I16; return DATATYPES; }
 f32                          { yylval->datatype = F32; return DATATYPES; }
@@ -55,7 +66,7 @@ str                          { yylval->datatype = STRINGS; return DATATYPES; }
 char                         { yylval->datatype = CHARACTER; return DATATYPES;}
 bool                         { yylval->datatype = BOOL; return DATATYPES;}
 void                         { yylval->datatype = VOID; return DATATYPES;}
-until                        { return UNTIL; }
+while                        { return WHILE; }
 true                         {
     yylval->node = new_bool(1, yylloc->first_line, yylloc->first_column);
     yylval->node->pos = yylloc->first_pos;
@@ -68,10 +79,10 @@ false               {
     yylval->node->end_pos = yylloc->last_pos;
     return BOOL_LITERAL;
 }
-let                 { return LET; }
-var                 { return VAR; }
+(let|immut)         { return IMMUT; }
+(var|mut)           { return VAR; }
 fn                  { return FN; }
-return              { return RETURN; }
+(ret|return)        { return RETURN; }
 
 [0-9]+(\.[0-9]+)? {
     yylval->node = new_num(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);

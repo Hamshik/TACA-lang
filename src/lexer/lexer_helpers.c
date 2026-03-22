@@ -1,11 +1,44 @@
 #include "lexer_helpers.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 /* Bison %locations: Flex does not maintain columns for you.
    Track (line, column) ourselves and update it for every match,
    including skipped whitespace/comments. Columns/pos are byte-based. */
 static int tq_lex_line = 1;
 static int tq_lex_col = 1;
 static int tq_lex_pos = 0; /* 0-based byte offset */
+
+static int tq_hex_val(unsigned char c) {
+    if (c >= '0' && c <= '9') return (int)(c - '0');
+    if (c >= 'a' && c <= 'f') return 10 + (int)(c - 'a');
+    if (c >= 'A' && c <= 'F') return 10 + (int)(c - 'A');
+    return -1;
+}
+
+static int tq_utf8_encode(unsigned int cp, unsigned char out[4]) {
+    if (cp <= 0x7F) { out[0] = (unsigned char)cp; return 1; }
+    if (cp <= 0x7FF) {
+        out[0] = (unsigned char)(0xC0 | (cp >> 6));
+        out[1] = (unsigned char)(0x80 | (cp & 0x3F));
+        return 2;
+    }
+    if (cp <= 0xFFFF) {
+        out[0] = (unsigned char)(0xE0 | (cp >> 12));
+        out[1] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
+        out[2] = (unsigned char)(0x80 | (cp & 0x3F));
+        return 3;
+    }
+    if (cp <= 0x10FFFF) {
+        out[0] = (unsigned char)(0xF0 | (cp >> 18));
+        out[1] = (unsigned char)(0x80 | ((cp >> 12) & 0x3F));
+        out[2] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
+        out[3] = (unsigned char)(0x80 | (cp & 0x3F));
+        return 4;
+    }
+    return 0;
+}
 
 void tq_lexer_reset_loc(void) {
     tq_lex_line = 1;
@@ -47,4 +80,161 @@ void tq_lexer_get_cursor(int *line, int *col, int *pos) {
     if (line) *line = tq_lex_line;
     if (col) *col = tq_lex_col;
     if (pos) *pos = tq_lex_pos;
+}
+
+char *tq_unescape_string(const char *in, size_t in_len, size_t *out_len, int *err_index, const char **err_msg) {
+    if (err_index) *err_index = -1;
+    if (err_msg) *err_msg = "invalid escape sequence";
+    if (out_len) *out_len = 0;
+    if (!in) return NULL;
+
+    size_t cap = in_len + 1;
+    char *out = (char *)malloc(cap);
+    if (!out) return NULL;
+
+    size_t j = 0;
+    for (size_t i = 0; i < in_len; i++) {
+        unsigned char c = (unsigned char)in[i];
+        if (c != '\\') {
+            if (j + 1 >= cap) {
+                cap = cap * 2 + 8;
+                char *p = (char *)realloc(out, cap);
+                if (!p) { free(out); return NULL; }
+                out = p;
+            }
+            out[j++] = (char)c;
+            continue;
+        }
+
+        if (i + 1 >= in_len) {
+            if (err_index) *err_index = (int)i;
+            if (err_msg) *err_msg = "trailing backslash";
+            free(out);
+            return NULL;
+        }
+
+        unsigned char e = (unsigned char)in[++i];
+        unsigned char b[4];
+        int n = 0;
+        switch (e) {
+            case 'n': out[j++] = '\n'; break;
+            case 't': out[j++] = '\t'; break;
+            case 'r': out[j++] = '\r'; break;
+            case '0':
+                if (err_index) *err_index = (int)(i - 1);
+                if (err_msg) *err_msg = "NUL in string is not supported";
+                free(out);
+                return NULL;
+            case '\\': out[j++] = '\\'; break;
+            case '"': out[j++] = '"'; break;
+            case '\'': out[j++] = '\''; break;
+            case 'b': out[j++] = '\b'; break;
+            case 'f': out[j++] = '\f'; break;
+            case 'v': out[j++] = '\v'; break;
+            case 'a': out[j++] = '\a'; break;
+
+            case 'x': {
+                if (i + 1 >= in_len) {
+                    if (err_index) *err_index = (int)(i - 1);
+                    if (err_msg) *err_msg = "expected hex digits after \\x";
+                    free(out);
+                    return NULL;
+                }
+                int h1 = tq_hex_val((unsigned char)in[i + 1]);
+                if (h1 < 0) {
+                    if (err_index) *err_index = (int)(i - 1);
+                    if (err_msg) *err_msg = "expected hex digits after \\x";
+                    free(out);
+                    return NULL;
+                }
+                int v = h1;
+                i += 1;
+                if (i + 1 < in_len) {
+                    int h2 = tq_hex_val((unsigned char)in[i + 1]);
+                    if (h2 >= 0) {
+                        v = (v << 4) | h2;
+                        i += 1;
+                    }
+                }
+                if (v == 0) {
+                    if (err_index) *err_index = (int)(i - 1);
+                    if (err_msg) *err_msg = "NUL in string is not supported";
+                    free(out);
+                    return NULL;
+                }
+                out[j++] = (char)(unsigned char)v;
+                break;
+            }
+
+            case 'u':
+            case 'U': {
+                int digits = (e == 'u') ? 4 : 8;
+                if (i + (size_t)digits >= in_len) {
+                    if (err_index) *err_index = (int)(i - 1);
+                    if (err_msg) *err_msg = (e == 'u') ? "expected 4 hex digits after \\u" : "expected 8 hex digits after \\U";
+                    free(out);
+                    return NULL;
+                }
+                unsigned int cp = 0;
+                for (int k = 0; k < digits; k++) {
+                    int hv = tq_hex_val((unsigned char)in[i + 1 + (size_t)k]);
+                    if (hv < 0) {
+                        if (err_index) *err_index = (int)(i - 1);
+                        if (err_msg) *err_msg = (e == 'u') ? "expected 4 hex digits after \\u" : "expected 8 hex digits after \\U";
+                        free(out);
+                        return NULL;
+                    }
+                    cp = (cp << 4) | (unsigned int)hv;
+                }
+                i += (size_t)digits;
+
+                /* reject surrogate halves */
+                if (cp >= 0xD800 && cp <= 0xDFFF) {
+                    if (err_index) *err_index = (int)(i - (size_t)digits);
+                    if (err_msg) *err_msg = "invalid unicode codepoint";
+                    free(out);
+                    return NULL;
+                }
+                if (cp == 0) {
+                    if (err_index) *err_index = (int)(i - (size_t)digits);
+                    if (err_msg) *err_msg = "NUL in string is not supported";
+                    free(out);
+                    return NULL;
+                }
+
+                n = tq_utf8_encode(cp, b);
+                if (n == 0) {
+                    if (err_index) *err_index = (int)(i - (size_t)digits);
+                    if (err_msg) *err_msg = "invalid unicode codepoint";
+                    free(out);
+                    return NULL;
+                }
+                if (j + (size_t)n + 1 >= cap) {
+                    while (j + (size_t)n + 1 >= cap) cap = cap * 2 + 8;
+                    char *p = (char *)realloc(out, cap);
+                    if (!p) { free(out); return NULL; }
+                    out = p;
+                }
+                for (int k = 0; k < n; k++) out[j++] = (char)b[k];
+                break;
+            }
+
+            default:
+                if (err_index) *err_index = (int)(i - 1);
+                if (err_msg) *err_msg = "unknown escape sequence";
+                free(out);
+                return NULL;
+        }
+
+        if (j + 1 >= cap) {
+            cap = cap * 2 + 8;
+            char *p = (char *)realloc(out, cap);
+            if (!p) { free(out); return NULL; }
+            out = p;
+        }
+    }
+
+    out[j] = '\0';
+    if (out_len) *out_len = j;
+    return out;
 }

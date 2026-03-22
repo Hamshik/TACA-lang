@@ -125,17 +125,16 @@ extern int yydebug;
     IF = 303,                      /* IF  */
     ELSE = 304,                    /* ELSE  */
     FOR = 305,                     /* FOR  */
-    LOOP = 306,                    /* LOOP  */
-    UNTIL = 307,                   /* UNTIL  */
-    VAR = 308,                     /* VAR  */
-    LET = 309,                     /* LET  */
-    FN = 310,                      /* FN  */
-    RETURN = 311,                  /* RETURN  */
-    DATATYPES = 312,               /* DATATYPES  */
-    UPLUS = 313,                   /* UPLUS  */
-    UMINUS = 314,                  /* UMINUS  */
-    POSTFIX = 315,                 /* POSTFIX  */
-    LOWER_THAN_ELSE = 316          /* LOWER_THAN_ELSE  */
+    WHILE = 306,                   /* WHILE  */
+    VAR = 307,                     /* VAR  */
+    IMMUT = 308,                   /* IMMUT  */
+    FN = 309,                      /* FN  */
+    RETURN = 310,                  /* RETURN  */
+    DATATYPES = 311,               /* DATATYPES  */
+    UPLUS = 312,                   /* UPLUS  */
+    UMINUS = 313,                  /* UMINUS  */
+    POSTFIX = 314,                 /* POSTFIX  */
+    LOWER_THAN_ELSE = 315          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -153,7 +152,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 157 "src/parser/parser.h"
+#line 156 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

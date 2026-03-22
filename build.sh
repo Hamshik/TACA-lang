@@ -35,6 +35,7 @@ gcc -Wall -Wextra -g -Isrc \
     $EVAL_DIR/stepper.c \
     $EVAL_DIR/eval_helper.c \
     $SEMAN/semantic_helper.c \
+    src/stdlib/stdlib.c \
     src/main.c \
     -o "$BIN_DIR/Complier" -lm || exit 1
 

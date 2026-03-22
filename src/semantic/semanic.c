@@ -5,6 +5,7 @@
 #include "../eval/eval.h"
 #include "../utils/error_handler/error_msg.h"
 #include "../utils/colors.h"
+#include "../stdlib/stdlib.h"
 #include <limits.h>
 
 extern bool isError;
@@ -285,9 +286,9 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     case AST_CALL: {
         FnSymbol_t *f = fn_lookup(n->call.name);
-        if (!f) {
-            panic(&file, n->line, n->col, n->pos, SEM_CALL_UNDEF_FN, n->call.name);
-        }
+        const tq_std_sig_t *std = NULL;
+        if (!f) std = tq_std_sig(n->call.name);
+        if (!f && !std) panic(&file, n->line, n->col, n->pos, SEM_CALL_UNDEF_FN, n->call.name);
 
         // count args and check types (args are stored as a left-associated AST_SEQ list)
         int argc = 0;
@@ -296,27 +297,27 @@ DataTypes_t check_expr(ASTNode_t *n) {
             if (it->kind == AST_SEQ) it = it->seq.b;
             else it = NULL;
         }
-        if (argc != f->param_count) {
-            panic(&file, n->line, n->col, n->pos, SEM_ARGC_MISMATCH, n->call.name);
-        }
+        if (f && argc != f->param_count) panic(&file, n->line, n->col, n->pos, SEM_ARGC_MISMATCH, n->call.name);
+        if (std && argc != std->param_count) panic(&file, n->line, n->col, n->pos, SEM_ARGC_MISMATCH, n->call.name);
 
         // walk args in the same order as we built them (left then seq.b chain)
         ASTNode_t *arg = n->call.args;
-        for (int i = 0; i < f->param_count; i++) {
+        int param_count = f ? f->param_count : (std ? std->param_count : 0);
+        for (int i = 0; i < param_count; i++) {
             ASTNode_t *cur = arg ? (arg->kind == AST_SEQ ? arg->seq.a : arg) : NULL;
 
-            force_numeric_type(cur, f->params[i].type);
+            DataTypes_t want = f ? f->params[i].type : std->params[i];
+            if (want != UNKNOWN) force_numeric_type(cur, want);
             DataTypes_t at = check_expr(cur);
-            if (at != f->params[i].type) {
-                panic(&file, n->line, n->col, n->pos, SEM_ARG_TYPE_MISMATCH, n->call.name);
-            }
+            if (want != UNKNOWN && at != want) panic(&file, n->line, n->col, n->pos, SEM_ARG_TYPE_MISMATCH, n->call.name);
 
             if (arg && arg->kind == AST_SEQ) arg = arg->seq.b;
             else arg = NULL;
         }
 
-        n->datatype = f->ret;
-        return f->ret;
+        DataTypes_t ret = f ? f->ret : (std ? std->ret : UNKNOWN);
+        n->datatype = ret;
+        return ret;
     }
 
     case AST_RETURN:

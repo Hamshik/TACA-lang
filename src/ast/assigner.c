@@ -71,6 +71,5 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
             return (Value){0};
     }
     set_var(lhs->var, &v, datatypes);
-    print_value(v, datatypes);
     return v;
 }

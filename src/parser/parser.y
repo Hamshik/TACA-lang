@@ -94,11 +94,11 @@
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON COMMA
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR LOOP UNTIL VAR LET FN RETURN
+%token IF ELSE FOR WHILE VAR  IMMUT FN RETURN
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
 %type <node> fn_def param return_stmt opt_args args
-%type <node> let_block decl_block_items decl_item_untyped decl_item_typed
+%type <node> var_block decl_block_items decl_item_untyped decl_item_typed
 %type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more
 %type <node> typed_decl_stmt
 %type <node> decl decl_stmt for_init
@@ -140,17 +140,17 @@ stmt_list
 
 stmt
     : expr SEMICOLON            { $$ = $1; }
-    | expr error                { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, NULL); yyerrok; $$ = $1; }
+    | expr error                { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
     | if_stmt                   { $$ = $1; }
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
     | while_stmt                { $$ = $1; }
-    | let_block                 { $$ = $1; }
+    | var_block                 { $$ = $1; }
     | decl_stmt                 { $$ = $1; }
     | typed_decl_stmt           { $$ = $1; }
     | fn_def                    { $$ = $1; }
     | return_stmt SEMICOLON     { $$ = $1; }
-    | return_stmt error         { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, NULL); yyerrok; $$ = $1; }
+    | return_stmt error         { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
     | error SEMICOLON           { panic(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
     ;
 
@@ -166,15 +166,15 @@ if_stmt
     ;
 
 for_stmt
-    : LOOP FOR LPAREN for_init COLON expr RPAREN stmt
-        { $$ = new_for($4, $6, NULL, $8, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
-    | LOOP FOR LPAREN for_init COLON expr COLON expr RPAREN stmt
-        { $$ = new_for($4, $6, $8, $10, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
+    : FOR LPAREN for_init COLON expr RPAREN stmt
+        { $$ = new_for($3, $5, NULL, $7, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
+    | FOR LPAREN for_init COLON expr COLON expr RPAREN stmt
+        { $$ = new_for($3, $5, $7, $9, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 while_stmt
-    : LOOP UNTIL LPAREN expr RPAREN stmt
-        { $$ = new_while($4, $6, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
+    :  WHILE LPAREN expr RPAREN stmt
+        { $$ = new_while($3, $5, @1.first_line, @1.first_column); TQ_SET_NODE_LOC($$, @$); }
     ;
 
 fn_def
@@ -238,13 +238,13 @@ args
     | expr COMMA args   { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }        /* list */
     ;
 
-/* `let { ... }` / `var { ... }` declaration blocks (statement form). */
-let_block
-    : LET LBRACE decl_block_items RBRACE
+/* `var { ... }` / `var { ... }` declaration blocks (statement form). */
+var_block
+    :  IMMUT LBRACE decl_block_items RBRACE
         { tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
     | VAR LBRACE decl_block_items RBRACE
         { tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
-    | LET LBRACE decl_block_items error
+    |  IMMUT LBRACE decl_block_items error
         { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
     | VAR LBRACE decl_block_items error
         { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
@@ -257,7 +257,7 @@ decl_block_items
         { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }
     ;
 
-/* Item without explicit type (inherits the "default" type after var/let). */
+/* Item without explicit type (inherits the "default" type after var/var). */
 decl_item_untyped
     : IDENTIFIER ASSIGN expr
         { $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
@@ -273,7 +273,7 @@ decl_item_typed
         }
     ;
 
-/* After the initial `var/let <type>`, allow:
+/* After the initial `var/var <type>`, allow:
    - zero or more `, <name> = <expr>` (same type),
    - then optionally switch to typed items `, <type> <name> = <expr>` (each typed item explicit). */
 decl_items_after_type
@@ -300,13 +300,13 @@ decl_items_after_type_more
     decl
         : VAR DATATYPES decl_items_after_type
             { tq_annotate_decl_list($3, $2, true); $$ = $3; }
-        | LET DATATYPES decl_items_after_type
+        |  IMMUT DATATYPES decl_items_after_type
             { tq_annotate_decl_list($3, $2, false); $$ = $3; }
         ;
 
     decl_stmt
         : decl SEMICOLON { $$ = $1; }
-        | decl error     { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, NULL); yyerrok; $$ = $1; }
+        | decl error     { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
         ;
 
     for_init
@@ -314,13 +314,13 @@ decl_items_after_type_more
         | assignment { $$ = $1; }
         ;
     
-/* Typed declarations without `let/var` are statement-only (immutable by default),
+/* Typed declarations without ` IMMUT/var` are statement-only (immutable by default),
    to avoid ambiguity with function-call arguments (both use commas). */
 typed_decl_stmt
     : DATATYPES decl_items_after_type SEMICOLON
         { tq_annotate_decl_list($2, $1, false); $$ = $2; }
     | DATATYPES decl_items_after_type error
-        { TQ_PANIC_LOC(@3, PARSE_MISSING_SEMI, NULL); yyerrok; tq_annotate_decl_list($2, $1, false); $$ = $2; }
+        { TQ_PANIC_LOC(@3, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; tq_annotate_decl_list($2, $1, false); $$ = $2; }
     ;
 
 expr

@@ -1,6 +1,5 @@
 #include "eval.h"
 #include <stdio.h>
-#include "../utils/printers/value_printer.h"
 
 void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kind_t op) {
     
@@ -52,8 +51,6 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
         fprintf(stderr, "Invalid datatype for unary operation\n");
         exit(EXIT_FAILURE);
     }
-    printf("Result of unary operation: ");
-    print_value(*result, datatype);
 }
 
 
