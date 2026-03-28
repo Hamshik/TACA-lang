@@ -9,6 +9,7 @@ const char *errc_msg(errc_t code) {
     switch (code) {
         case LEX_UNKNOWN_CHAR: return "unknown character";
         case LEX_INVALID_ESCAPE: return "invalid escape sequence";
+        case LEX_UNCLOSED_COMMENT: return "unterminated block comment";
         case PARSE_SYNTAX: return "syntax error";
         case PARSE_MISSING_SEMI: return "missing semicolon after statement";
         case PARSE_UNCLOSED_PAREN: return "missing closing parenthesis";

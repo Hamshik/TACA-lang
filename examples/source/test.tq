@@ -1,4 +1,8 @@
 mut i32 x = 10;
-mut *i32 p = &x;
+mut *i32 p = &x; '' single - commet
+'''
+	multi - line
+	comment
+'''
 *p = 13345465;
 print(*p);

@@ -18,16 +18,39 @@
 
     extern file_t file;
     static int tq_brace_depth = 0;
+    static int tq_comment_start_line = 1;
+    static int tq_comment_start_col = 1;
+    static int tq_comment_start_pos = 0;
 
     #define YY_USER_INIT tq_lexer_reset_loc();
     #define YY_USER_ACTION tq_lexer_update_loc(yylloc, yytext, (int)yyleng);
 %}
 
+%x COMMENT3
+
 %%
 "\357\273\277"               { /* skip */ }
 [ \t\r\n]+                   { /* skip */ }
-"//".*                       { /* skip single-line comments */ }
-"/*"([^*]|\*+[^*/])*\*+"/"   { /* skip multi-line comments */ }
+"'''"                        {
+    tq_comment_start_line = yylloc->first_line;
+    tq_comment_start_col = yylloc->first_column;
+    tq_comment_start_pos = yylloc->first_pos;
+    BEGIN(COMMENT3);
+}
+<COMMENT3>"'''"               { BEGIN(INITIAL); }
+<COMMENT3>\n                  { /* skip */ }
+<COMMENT3>.                   { /* skip */ }
+<COMMENT3><<EOF>>             {
+    panic(&file,
+          tq_comment_start_line,
+          tq_comment_start_col,
+          tq_comment_start_pos,
+          LEX_UNCLOSED_COMMENT,
+          NULL);
+    return 0;
+}
+
+"''".*                       { /* skip single-line comments */ }
 
 \"([^"\\\n]|\\.)*\"          {
     const char *inner = yytext + 1;

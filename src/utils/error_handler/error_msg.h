@@ -14,6 +14,7 @@ typedef enum errc {
     /* Lexer */
     LEX_UNKNOWN_CHAR = 1,
     LEX_INVALID_ESCAPE = 2,
+    LEX_UNCLOSED_COMMENT = 3,
 
     /* Parser */
     PARSE_SYNTAX = 100,
