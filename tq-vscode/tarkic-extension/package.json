@@ -1,0 +1,25 @@
+{
+  "name": "tarkic-extension",
+  "displayName": "Tarkic Extension",
+  "description": "Syntax highlighter for Tarkic-lang",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "tarkic",
+      "aliases": ["Tarkic", "tarkic"],
+      "extensions": [".tq"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "tarkic",
+      "scopeName": "source.tq",
+      "path": "./syntaxes/tarkic.tmLanguage.json"
+    }]
+  }
+}
