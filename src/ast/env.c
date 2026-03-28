@@ -112,3 +112,15 @@ Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos)
     panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
     return (Value){0};
 }
+
+TypedValue *getvar_ref(const char *name, int line, int col, int pos) {
+    for (EnvFrame_t *it = env_top(); it; it = it->parent) {
+        VarEntry *v = NULL;
+        HASH_FIND_STR(it->vars, name, v);
+        if (!v) continue;
+        return &v->typedval;
+    }
+
+    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    return (TypedValue *){0};
+}

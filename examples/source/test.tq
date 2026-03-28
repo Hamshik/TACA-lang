@@ -1,5 +1,5 @@
-i32 x = 10;
-i32 y = 20;
+mut i32 x = 10;
+mut i32 y = 20;
 
 if {x < y} {
 	print("x is less than y\n");
@@ -10,3 +10,4 @@ else if {x > y} {
 else {
 	print("x is equal to y\n");
 }
+x =10;

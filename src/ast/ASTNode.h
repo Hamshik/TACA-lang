@@ -13,6 +13,7 @@ typedef enum ASTKind {
     AST_BOOL,
     AST_ASSIGN,
     AST_SEQ,
+    AST_NULL,
     NODE_IF,
     NODE_FOR,
     AST_STR,
@@ -43,6 +44,8 @@ typedef enum DataTypes{
     U64,
     U128,
     
+    PTR,
+
     BOOL,
     STRINGS,
     CHARACTER,
@@ -60,28 +63,32 @@ typedef enum OP_kind {
     OP_ASSIGN, OP_PLUS_ASSIGN, OP_MINUS_ASSIGN,
     OP_MUL_ASSIGN, OP_DIV_ASSIGN, OP_MOD_ASSIGN, OP_POW_ASSIGN,
     OP_LSHIFT_ASSIGN, OP_RSHIFT_ASSIGN,
-    OP_INC, OP_DEC
+    OP_INC, OP_DEC,
+    OP_ADDR, OP_DEREF
 } OP_kind_t;
 
 typedef union {
-    /* Existing field names used across the codebase */
-    int inum;
-    float fnum;
-    double lfnum;
-    short shnum;
-
-    /* New numeric fields */
+    /* signed numeric type */
     int8_t i8;
+    short i16;
+    int i32;
     __int128 i128;
+
+    float f32;
+    double f64;
+    long double f128;
+
+    /*unsigned numeric type*/
     uint8_t u8;
     uint16_t u16;
     uint32_t u32;
     uint64_t u64;
     unsigned __int128 u128;
-    long double f128;
+
+    void *ptr;
 
     bool bval;
-    char characters;
+    char chars;
     char* str;
 } Value;
 
@@ -101,9 +108,11 @@ typedef struct Param {
   DataTypes_t type;
 } Param_t;
 
+
 typedef struct ASTNode {
     ASTKind_t kind;
     DataTypes_t datatype;
+    DataTypes_t ptr_to;
     int line, col;
     int pos;      /* 0-based byte offset (start) */
     int end_pos;  /* 0-based byte offset (end) */
@@ -162,6 +171,7 @@ ASTNode_t* new_bool(bool val, int line, int col);
 ASTNode_t* new_fn_def(const char *name, Param_t *params, int param_count, DataTypes_t ret_type, ASTNode_t *body, int line, int col);
 ASTNode_t* new_fn_call(const char *name, ASTNode_t *args, int line, int col);
 ASTNode_t* new_return(ASTNode_t *value, int line, int col);
+
 /* Eval + memory */
 void ast_free(ASTNode_t *n);
 ASTNode_t *ast_alloc(void);
@@ -175,6 +185,6 @@ void env_pop(void);
 void env_clear_all(void);
 void assign_value(DataTypes_t datatype, Value *dest, Value src);
 Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
-
+TypedValue *getvar_ref(const char *name, int line, int col, int pos);
 
 #endif

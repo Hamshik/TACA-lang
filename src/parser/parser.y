@@ -1,7 +1,6 @@
 %code requires {
     #include <stdio.h>
     #include <stdlib.h>
-    #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
     #include "../utils/error_handler/error_msg.h"
     #include "parser_helpers.h"
@@ -62,6 +61,7 @@
 
     #define TQ_PANIC_LOC(loc, code, detail) \
         panic(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
+    
 %}
 
 %define api.pure full
@@ -94,11 +94,11 @@
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON COMMA
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR WHILE VAR  IMMUT FN RETURN
+%token IF ELSE FOR WHILE MUT  IMMUT FN RETURN
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
 %type <node> fn_def param return_stmt opt_args args
-%type <node> var_block decl_block_items decl_item_untyped decl_item_typed
+%type <node> MUT_block decl_block_items decl_item_untyped decl_item_typed
 %type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more
 %type <node> typed_decl_stmt
 %type <node> decl decl_stmt for_init
@@ -145,7 +145,7 @@ stmt
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
     | while_stmt                { $$ = $1; }
-    | var_block                 { $$ = $1; }
+    | MUT_block                 { $$ = $1; }
     | decl_stmt                 { $$ = $1; }
     | typed_decl_stmt           { $$ = $1; }
     | fn_def                    { $$ = $1; }
@@ -238,15 +238,15 @@ args
     | expr COMMA args   { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }        /* list */
     ;
 
-/* `var { ... }` / `var { ... }` declaration blocks (statement form). */
-var_block
+/* `MUT { ... }` / `MUT { ... }` declaration blocks (statement form). */
+MUT_block
     :  IMMUT LBRACE decl_block_items RBRACE
         { tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
-    | VAR LBRACE decl_block_items RBRACE
+    | MUT LBRACE decl_block_items RBRACE
         { tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
     |  IMMUT LBRACE decl_block_items error
         { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
-    | VAR LBRACE decl_block_items error
+    | MUT LBRACE decl_block_items error
         { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
     ;
 
@@ -257,7 +257,7 @@ decl_block_items
         { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }
     ;
 
-/* Item without explicit type (inherits the "default" type after var/var). */
+/* Item without explicit type (inherits the "default" type after MUT/MUT). */
 decl_item_untyped
     : IDENTIFIER ASSIGN expr
         { $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
@@ -273,7 +273,7 @@ decl_item_typed
         }
     ;
 
-/* After the initial `var/var <type>`, allow:
+/* After the initial `MUT/MUT <type>`, allow:
    - zero or more `, <name> = <expr>` (same type),
    - then optionally switch to typed items `, <type> <name> = <expr>` (each typed item explicit). */
 decl_items_after_type
@@ -298,7 +298,7 @@ decl_items_after_type_more
     /* Declarations are statement-only (and allowed in `for` init) to avoid
        ambiguity with function-call argument lists (both use commas). */
     decl
-        : VAR DATATYPES decl_items_after_type
+        : MUT DATATYPES decl_items_after_type
             { tq_annotate_decl_list($3, $2, true); $$ = $3; }
         |  IMMUT DATATYPES decl_items_after_type
             { tq_annotate_decl_list($3, $2, false); $$ = $3; }
@@ -314,7 +314,7 @@ decl_items_after_type_more
         | assignment { $$ = $1; }
         ;
     
-/* Typed declarations without ` IMMUT/var` are statement-only (immutable by default),
+/* Typed declarations without ` IMMUT/MUT` are statement-only (immutable by default),
    to avoid ambiguity with function-call arguments (both use commas). */
 typed_decl_stmt
     : DATATYPES decl_items_after_type SEMICOLON
@@ -383,7 +383,6 @@ assignment
             $$ = new_assign($1, $3, $1->datatype, @$.first_line, @$.first_column, OP_ASSIGN);
             TQ_SET_NODE_LOC($$, @$);
         }
-
     | IDENTIFIER PLUS_ASSIGN expr
         {
             $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_PLUS_ASSIGN); 

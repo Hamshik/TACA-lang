@@ -17,29 +17,6 @@ static int tq_hex_val(unsigned char c) {
     return -1;
 }
 
-static int tq_utf8_encode(unsigned int cp, unsigned char out[4]) {
-    if (cp <= 0x7F) { out[0] = (unsigned char)cp; return 1; }
-    if (cp <= 0x7FF) {
-        out[0] = (unsigned char)(0xC0 | (cp >> 6));
-        out[1] = (unsigned char)(0x80 | (cp & 0x3F));
-        return 2;
-    }
-    if (cp <= 0xFFFF) {
-        out[0] = (unsigned char)(0xE0 | (cp >> 12));
-        out[1] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
-        out[2] = (unsigned char)(0x80 | (cp & 0x3F));
-        return 3;
-    }
-    if (cp <= 0x10FFFF) {
-        out[0] = (unsigned char)(0xF0 | (cp >> 18));
-        out[1] = (unsigned char)(0x80 | ((cp >> 12) & 0x3F));
-        out[2] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
-        out[3] = (unsigned char)(0x80 | (cp & 0x3F));
-        return 4;
-    }
-    return 0;
-}
-
 void tq_lexer_reset_loc(void) {
     tq_lex_line = 1;
     tq_lex_col = 1;
@@ -114,8 +91,6 @@ char *tq_unescape_string(const char *in, size_t in_len, size_t *out_len, int *er
         }
 
         unsigned char e = (unsigned char)in[++i];
-        unsigned char b[4];
-        int n = 0;
         switch (e) {
             case 'n': out[j++] = '\n'; break;
             case 't': out[j++] = '\t'; break;
@@ -163,59 +138,6 @@ char *tq_unescape_string(const char *in, size_t in_len, size_t *out_len, int *er
                     return NULL;
                 }
                 out[j++] = (char)(unsigned char)v;
-                break;
-            }
-
-            case 'u':
-            case 'U': {
-                int digits = (e == 'u') ? 4 : 8;
-                if (i + (size_t)digits >= in_len) {
-                    if (err_index) *err_index = (int)(i - 1);
-                    if (err_msg) *err_msg = (e == 'u') ? "expected 4 hex digits after \\u" : "expected 8 hex digits after \\U";
-                    free(out);
-                    return NULL;
-                }
-                unsigned int cp = 0;
-                for (int k = 0; k < digits; k++) {
-                    int hv = tq_hex_val((unsigned char)in[i + 1 + (size_t)k]);
-                    if (hv < 0) {
-                        if (err_index) *err_index = (int)(i - 1);
-                        if (err_msg) *err_msg = (e == 'u') ? "expected 4 hex digits after \\u" : "expected 8 hex digits after \\U";
-                        free(out);
-                        return NULL;
-                    }
-                    cp = (cp << 4) | (unsigned int)hv;
-                }
-                i += (size_t)digits;
-
-                /* reject surrogate halves */
-                if (cp >= 0xD800 && cp <= 0xDFFF) {
-                    if (err_index) *err_index = (int)(i - (size_t)digits);
-                    if (err_msg) *err_msg = "invalid unicode codepoint";
-                    free(out);
-                    return NULL;
-                }
-                if (cp == 0) {
-                    if (err_index) *err_index = (int)(i - (size_t)digits);
-                    if (err_msg) *err_msg = "NUL in string is not supported";
-                    free(out);
-                    return NULL;
-                }
-
-                n = tq_utf8_encode(cp, b);
-                if (n == 0) {
-                    if (err_index) *err_index = (int)(i - (size_t)digits);
-                    if (err_msg) *err_msg = "invalid unicode codepoint";
-                    free(out);
-                    return NULL;
-                }
-                if (j + (size_t)n + 1 >= cap) {
-                    while (j + (size_t)n + 1 >= cap) cap = cap * 2 + 8;
-                    char *p = (char *)realloc(out, cap);
-                    if (!p) { free(out); return NULL; }
-                    out = p;
-                }
-                for (int k = 0; k < n; k++) out[j++] = (char)b[k];
                 break;
             }
 

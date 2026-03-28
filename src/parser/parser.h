@@ -49,7 +49,6 @@ extern int yydebug;
 
     #include <stdio.h>
     #include <stdlib.h>
-    #include "../utils/printers/token_printer.h"
     #include "../ast/ASTNode.h"
     #include "../utils/error_handler/error_msg.h"
     #include "parser_helpers.h"
@@ -66,7 +65,7 @@ extern int yydebug;
         int last_pos;    /* 0-based byte offset */
     } TQLocation;
 
-#line 70 "src/parser/parser.h"
+#line 69 "src/parser/parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -152,7 +151,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 156 "src/parser/parser.h"
+#line 155 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -11,9 +11,7 @@ bool isError = false;
 bool isWarning = false;
 bool panic_fatal = true;
 
-static char *read_entire_path(const char *path, size_t *out_len) {
-    if (!path) return NULL;
-    FILE *f = fopen(path, "rb");
+static char *read_entire_path(FILE *f, size_t *out_len) {
     if (!f) return NULL;
 
     if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
@@ -58,7 +56,7 @@ void panic(
     isError = true;
     err_no++;
     size_t src_len = 0;
-    char *src = read_entire_path(filename, &src_len);
+    char *src = read_entire_path(file->source, &src_len);
 
     if (detail && *detail) {
         /* Avoid "syntax error: syntax error, unexpected X" style duplication. */

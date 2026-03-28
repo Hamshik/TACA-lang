@@ -11,6 +11,7 @@ typedef struct symboltable{
     bool is_mutable;
 }Symboltable_t;
 
+
 typedef struct fnsymbol{
     const char *name;
     Param_t *params;

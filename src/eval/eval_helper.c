@@ -59,12 +59,12 @@ DataTypes_t tq_promote_runtime(DataTypes_t a, DataTypes_t b) {
 static long double tq_as_f128(Value v, DataTypes_t t) {
     t = tq_norm(t);
     switch (t) {
-        case F32: return (long double)v.fnum;
-        case F64: return (long double)v.lfnum;
+        case F32: return (long double)v.f32;
+        case F64: return (long double)v.f64;
         case F128: return v.f128;
         case I8: return (long double)v.i8;
-        case I16: return (long double)v.shnum;
-        case I32: return (long double)v.inum;
+        case I16: return (long double)v.i16;
+        case I32: return (long double)v.i32;
         case I128: return (long double)v.i128;
         case U8: return (long double)v.u8;
         case U16: return (long double)v.u16;
@@ -80,16 +80,16 @@ static __int128 tq_as_i128(Value v, DataTypes_t t) {
     t = tq_norm(t);
     switch (t) {
         case I8: return (__int128)v.i8;
-        case I16: return (__int128)v.shnum;
-        case I32: return (__int128)v.inum;
+        case I16: return (__int128)v.i16;
+        case I32: return (__int128)v.i32;
         case I128: return v.i128;
         case U8: return (__int128)v.u8;
         case U16: return (__int128)v.u16;
         case U32: return (__int128)v.u32;
         case U64: return (__int128)v.u64;
         case U128: return (__int128)v.u128;
-        case F32: return (__int128)v.fnum;
-        case F64: return (__int128)v.lfnum;
+        case F32: return (__int128)v.f32;
+        case F64: return (__int128)v.f64;
         case F128: return (__int128)v.f128;
         case BOOL: return v.bval ? 1 : 0;
         default: return 0;
@@ -105,11 +105,11 @@ static unsigned __int128 tq_as_u128(Value v, DataTypes_t t) {
         case U64: return (unsigned __int128)v.u64;
         case U128: return v.u128;
         case I8: return (unsigned __int128)(unsigned char)v.i8;
-        case I16: return (unsigned __int128)(unsigned short)v.shnum;
-        case I32: return (unsigned __int128)(unsigned int)v.inum;
+        case I16: return (unsigned __int128)(unsigned short)v.i16;
+        case I32: return (unsigned __int128)(unsigned int)v.i32;
         case I128: return (unsigned __int128)v.i128;
-        case F32: return (unsigned __int128)v.fnum;
-        case F64: return (unsigned __int128)v.lfnum;
+        case F32: return (unsigned __int128)v.f32;
+        case F64: return (unsigned __int128)v.f64;
         case F128: return (unsigned __int128)v.f128;
         case BOOL: return v.bval ? 1 : 0;
         default: return 0;
@@ -121,11 +121,11 @@ static Value tq_from_f128(long double x, DataTypes_t t) {
     switch (t) {
         case F32:
         case UF32:
-            out.fnum = (float)x;
+            out.f32 = (float)x;
             break;
         case F64:
         case UF64:
-            out.lfnum = (double)x;
+            out.f64 = (double)x;
             break;
         case F128:
         case UF128:
@@ -141,8 +141,8 @@ static Value tq_from_i128(__int128 x, DataTypes_t t) {
     Value out = {0};
     switch (t) {
         case I8: out.i8 = (int8_t)x; break;
-        case I16: out.shnum = (short)x; break;
-        case I32: out.inum = (int)x; break;
+        case I16: out.i16 = (short)x; break;
+        case I32: out.i32 = (int)x; break;
         case I128: out.i128 = x; break;
         default: break;
     }
@@ -228,15 +228,15 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
             break;
         case I16:
             switch (op) {
-                UNOP_CASES(shnum, operand);
-                case OP_BITNOT: result->shnum = (short)~operand->shnum; break;
+                UNOP_CASES(i16, operand);
+                case OP_BITNOT: result->i16 = (short)~operand->i16; break;
                 default: DIE("Invalid i16 unary operator");
             }
             break;
         case I32:
             switch (op) {
-                UNOP_CASES(inum, operand);
-                case OP_BITNOT: result->inum = ~operand->inum; break;
+                UNOP_CASES(i32, operand);
+                case OP_BITNOT: result->i32 = ~operand->i32; break;
                 default: DIE("Invalid i32 unary operator");
             }
             break;
@@ -303,14 +303,14 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
         case F32:
         case UF32:
             switch (op) {
-                UNOP_CASES(fnum, operand);
+                UNOP_CASES(f32, operand);
                 default: DIE("Invalid f32 unary operator");
             }
             break;
         case F64:
         case UF64:
             switch (op) {
-                UNOP_CASES(lfnum, operand);
+                UNOP_CASES(f64, operand);
                 default: DIE("Invalid f64 unary operator");
             }
             break;
@@ -366,9 +366,9 @@ Value eval_binop_int(OP_kind_t op, bool isShort, int a, int b) {
                 exp >>= 1;
                 if (exp) base = (short)(base * base);
             }
-            return (Value){.shnum = result};
+            return (Value){.i16 = result};
         }
-        switch (op) { INT_CASES(shnum, (short)a, (short)b); default: DIE("Invalid short binary op"); }
+        switch (op) { INT_CASES(i16, (short)a, (short)b); default: DIE("Invalid short binary op"); }
     }
     CHECK_INT_ZERO(op, b);
     if (op == OP_POW) {
@@ -381,19 +381,19 @@ Value eval_binop_int(OP_kind_t op, bool isShort, int a, int b) {
             exp >>= 1;
             if (exp) base = base * base;
         }
-        return (Value){.inum = result};
+        return (Value){.i32 = result};
     }
-    switch (op) { INT_CASES(inum, a, b); default: DIE("Invalid int binary op"); }
+    switch (op) { INT_CASES(i32, a, b); default: DIE("Invalid int binary op"); }
 }
 
 Value eval_binop_float(OP_kind_t op, float a, float b) {
     if (op == OP_DIV && fabsf(b) < 1e-12f) DIE("division by zero");
-    switch (op) { FP_CASES(fnum, a, b, powf, fmodf); default: DIE("Invalid float binary op"); }
+    switch (op) { FP_CASES(f32, a, b, powf, fmodf); default: DIE("Invalid float binary op"); }
 }
 
 Value eval_binop_double(OP_kind_t op, double a, double b) {
     if (op == OP_DIV && fabs(b) < 1e-12) DIE("division by zero");
-    switch (op) { FP_CASES(lfnum, a, b, pow, fmod); default: DIE("Invalid double binary op"); }
+    switch (op) { FP_CASES(f64, a, b, pow, fmod); default: DIE("Invalid double binary op"); }
 }
 
 bool isBoolOP(OP_kind_t op){

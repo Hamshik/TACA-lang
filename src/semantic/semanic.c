@@ -5,7 +5,7 @@
 #include "../eval/eval.h"
 #include "../utils/error_handler/error_msg.h"
 #include "../utils/colors.h"
-#include "../stdlib/stdlib.h"
+#include "../builtin/builtin.h"
 #include <limits.h>
 
 extern bool isError;
@@ -144,12 +144,31 @@ DataTypes_t check_expr(ASTNode_t *n) {
     case AST_UNOP: {
         DataTypes_t t = check_expr(n->unop.operand);
 
-        if (n->unop.op == OP_NOT) {
-            if (t != BOOL) 
-                panic(&file, n->line, n->col, n->pos, SEM_NOT_NEEDS_BOOL, NULL);
-            
-            n->datatype = BOOL;
-            return BOOL;
+         switch (n->unop.op) {
+            case OP_NOT:
+                if (t != BOOL) type_error(n, "Operator ! expects bool");
+                n->datatype = BOOL;
+                return BOOL;
+
+            case OP_ADDR:
+                if (n->unop.operand->kind != AST_VAR)
+                    type_error(n, "address-of requires a variable");
+                if (t == UNKNOWN)
+                    type_error(n, "cannot take address of unknown type");
+                n->datatype = PTR;
+                n->ptr_to = t;
+                return PTR;
+
+            case OP_DEREF:
+                if (t != PTR)
+                    type_error(n, "dereference requires a pointer");
+                if (n->unop.operand->ptr_to == UNKNOWN)
+                    type_error(n, "pointer target type is unknown");
+                n->datatype = n->unop.operand->ptr_to;
+                return n->datatype;
+
+            default:
+                break;
         }
 
         /* If a numeric literal has no type yet, default it for unary numeric ops. */
@@ -159,6 +178,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
             n->unop.operand->datatype = I32;
             t = I32;
         }
+
 
         if (!is_numeric(t)) 
             panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM, NULL);
@@ -183,6 +203,8 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
             if (!declare(n->assign.lhs->var, lhs_t, n->assign.is_mutable))
                 panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
+            
+            
         } else {
             lhs_t = lookup(n->assign.lhs->var);
             switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype))

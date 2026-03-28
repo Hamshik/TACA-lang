@@ -2,5 +2,7 @@
     "C_Cpp.errorSquiggles": "enabledIfIncludesResolve",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/**/*"
-    ]
+    ],
+    "editor.fontLigatures": false
+    
 }

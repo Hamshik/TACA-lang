@@ -145,6 +145,8 @@ fn                  { return FN; }
 ">"                 { return GT; }
 "{"                 { tq_brace_depth++; return LBRACE; }
 "}"                 { if (tq_brace_depth > 0) tq_brace_depth--; return RBRACE; }
+
+
 [a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_] {
     yylval->node = new_var(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
     yylval->node->pos = yylloc->first_pos;

@@ -1308,7 +1308,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 148 "src/lexer/lexer.l"
+#line 150 "src/lexer/lexer.l"
 {
     yylval->node = new_var(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
     yylval->node->pos = yylloc->first_pos;
@@ -1318,7 +1318,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 154 "src/lexer/lexer.l"
+#line 156 "src/lexer/lexer.l"
 {
     unsigned char b0 = (unsigned char)yytext[0];
     char detail[32];
@@ -1327,7 +1327,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 160 "src/lexer/lexer.l"
+#line 162 "src/lexer/lexer.l"
 {
     if (tq_brace_depth > 0) {
         int line = 0, col = 0, pos = 0;
@@ -1339,7 +1339,7 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 168 "src/lexer/lexer.l"
+#line 170 "src/lexer/lexer.l"
 ECHO;
 	YY_BREAK
 #line 1346 "src/lexer/lexer.c"
@@ -2308,6 +2308,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 168 "src/lexer/lexer.l"
+#line 170 "src/lexer/lexer.l"
 
 

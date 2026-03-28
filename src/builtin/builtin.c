@@ -1,4 +1,4 @@
-#include "stdlib.h"
+#include "builtin.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -36,23 +36,23 @@ static void tq_write_i128(FILE *out, __int128 x) {
 static void tq_write_value(FILE *out, Value v, DataTypes_t t) {
     switch (t) {
         case I8:        fprintf(out, "%d", (int)v.i8); break;
-        case I32:       fprintf(out, "%d", v.inum); break;
-        case I16:       fprintf(out, "%hd", v.shnum); break;
+        case I32:       fprintf(out, "%d", v.i32); break;
+        case I16:       fprintf(out, "%hd", v.i16); break;
         case I128:      tq_write_i128(out, v.i128); break;
         case U8:        fprintf(out, "%u", (unsigned)v.u8); break;
         case U16:       fprintf(out, "%u", (unsigned)v.u16); break;
         case U32:       fprintf(out, "%" PRIu32, v.u32); break;
         case U64:       fprintf(out, "%" PRIu64, v.u64); break;
         case U128:      tq_write_u128(out, v.u128); break;
-        case F32:       fprintf(out, "%f", v.fnum); break;
-        case F64:       fprintf(out, "%g", v.lfnum); break;
+        case F32:       fprintf(out, "%f", v.f32); break;
+        case F64:       fprintf(out, "%g", v.f64); break;
         case F128:      fprintf(out, "%Lg", v.f128); break;
-        case UF32:      fprintf(out, "%f", v.fnum); break;
-        case UF64:      fprintf(out, "%g", v.lfnum); break;
+        case UF32:      fprintf(out, "%f", v.f32); break;
+        case UF64:      fprintf(out, "%g", v.f64); break;
         case UF128:     fprintf(out, "%Lg", v.f128); break;
         case BOOL:      fputs(v.bval ? "true" : "false", out); break;
         case STRINGS:   fputs(v.str ? v.str : "", out); break;
-        case CHARACTER: fputc(v.characters, out); break;
+        case CHARACTER: fputc(v.chars, out); break;
         case VOID:      break;
         case UNKNOWN:
         default:        fputs("<unknown>", out); break;

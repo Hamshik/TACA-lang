@@ -4,8 +4,7 @@
 #include <string.h>
 #include "../ast/ASTNode.h"
 #include "../utils/error_handler/error_msg.h"
-#include "../utils/printers/value_printer.h"
-#include "../stdlib/stdlib.h"
+#include "../builtin/builtin.h"
 #include "eval.h"
 
 extern file_t file;
@@ -75,9 +74,9 @@ TypedValue ast_eval(ASTNode_t *node) {
             case I8:
                 v.val.i8 = (int8_t)strtol(node->literal.raw, NULL, 10); break;
             case I16:
-                v.val.shnum = (short)strtol(node->literal.raw, NULL, 10); break;
+                v.val.i16 = (short)strtol(node->literal.raw, NULL, 10); break;
             case I32:
-                v.val.inum = (int)strtol(node->literal.raw, NULL, 10); break;
+                v.val.i32 = (int)strtol(node->literal.raw, NULL, 10); break;
             case I128: {
                 int ok = 0;
                 v.val.i128 = tq_parse_i128(node->literal.raw, &ok);
@@ -105,15 +104,15 @@ TypedValue ast_eval(ASTNode_t *node) {
                 break;
             }
             case F32:
-                v.val.fnum = strtof(node->literal.raw, NULL); break;
+                v.val.f32 = strtof(node->literal.raw, NULL); break;
             case F64:
-                v.val.lfnum = strtod(node->literal.raw, NULL); break;
+                v.val.f64 = strtod(node->literal.raw, NULL); break;
             case F128:
                 v.val.f128 = strtold(node->literal.raw, NULL); break;
             case UF32:
-                v.val.fnum = strtof(node->literal.raw, NULL); break;
+                v.val.f32 = strtof(node->literal.raw, NULL); break;
             case UF64:
-                v.val.lfnum = strtod(node->literal.raw, NULL); break;
+                v.val.f64 = strtod(node->literal.raw, NULL); break;
             case UF128:
                 v.val.f128 = strtold(node->literal.raw, NULL); break;
             default:
@@ -130,7 +129,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_CHAR:
         v.type = CHARACTER;
-        v.val.characters = node->literal.raw ? node->literal.raw[0] : '\0';
+        v.val.chars = node->literal.raw ? node->literal.raw[0] : '\0';
         return v;
 
     case AST_VAR: return (TypedValue){
@@ -173,17 +172,39 @@ TypedValue ast_eval(ASTNode_t *node) {
         return v;
     }
 
-    case AST_UNOP: {
-        TypedValue r0 = ast_eval(node->unop.operand);
-        TypedValue r = tq_cast_typed(r0, node->datatype, node->line, node->col, node->pos);
-        do_unop_operation(&v.val, &r.val , node->datatype, node->unop.op);
-        /* Only ++/-- mutate variables; other unary ops are pure. */
-        if ((node->unop.op == OP_INC || node->unop.op == OP_DEC) &&
-            node->unop.operand && node->unop.operand->kind == AST_VAR) {
-            set_var(node->unop.operand->var, &v.val, node->datatype);
+    case AST_UNOP:{
+        if (node->unop.op == OP_ADDR) {
+            if (node->unop.operand->kind != AST_VAR) {
+                fprintf(stderr, "address-of requires variable\n");
+                exit(EXIT_FAILURE);
+            }
+            TypedValue *ref = getvar_ref(
+                node->unop.operand->var,
+                node->line, node->col, node->pos
+            );
+            return (TypedValue){
+                .type = PTR,
+                .val = { .ptr = ref }
+            };
         }
-        return v;
+
+        if (node->unop.op == OP_DEREF) {
+            TypedValue p = ast_eval(node->unop.operand);
+            if (p.type != PTR || p.val.ptr == NULL) {
+                fprintf(stderr, "invalid pointer dereference\n");
+                exit(EXIT_FAILURE);
+            }
+            TypedValue *ref = (TypedValue *)p.val.ptr;
+            return *ref;
+        }
+
+        TypedValue r = ast_eval(node->unop.operand);
+        TypedValue casted = tq_cast_typed(r, node->datatype, node->line, node->col, node->pos);
+        TypedValue out = { .type = node->datatype };
+        do_unop_operation(&out.val, &casted.val, node->datatype, node->unop.op);
+        return out;
     }
+
 
     case AST_ASSIGN: {
         if (node->assign.op == OP_ASSIGN && node->assign.is_declaration) {

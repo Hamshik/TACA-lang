@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <linux/limits.h>
 #include <string.h>
+#include <stdbool.h>
 #include "ast/ASTNode.h"
 #include "parser/parser.h"
 #include "semantic/semantic.h"

@@ -7,6 +7,7 @@ EVAL_DIR="src/eval"
 SEMAN="src/semantic"
 UTILS="src/utils"
 BIN_DIR="bin"
+BUILTIN="src/builtin"
 
 echo "Running bison to generate the parser..."
 bison -d -o "$PARSER_DIR/parser.c" "$PARSER_DIR/parser.y" || exit 1
@@ -30,12 +31,10 @@ gcc -Wall -Wextra -g -Isrc \
     $SEMAN/symbol_table.c \
     $UTILS/error_handler/error.c \
     $UTILS/error_handler/error_msg.c \
-    $UTILS/printers/token_printer.c \
-    $UTILS/printers/value_printer.c \
     $EVAL_DIR/stepper.c \
     $EVAL_DIR/eval_helper.c \
     $SEMAN/semantic_helper.c \
-    src/stdlib/stdlib.c \
+    $BUILTIN/builtin.c \
     src/main.c \
     -o "$BIN_DIR/Complier" -lm || exit 1
 
