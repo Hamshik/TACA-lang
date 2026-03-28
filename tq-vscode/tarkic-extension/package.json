@@ -1,8 +1,10 @@
 {
   "name": "tarkic-extension",
+  "publisher": "hamshik",
   "displayName": "Tarkic Extension",
   "description": "Syntax highlighter for Tarkic-lang",
   "version": "0.0.1",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.110.0"
   },
@@ -21,5 +23,11 @@
       "scopeName": "source.tarkic",
       "path": "./syntaxes/tarkic.tmLanguage.json"
     }]
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hamshik/tarkiq"
   }
+
 }
