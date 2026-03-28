@@ -18,7 +18,7 @@
     }],
     "grammars": [{
       "language": "tarkic",
-      "scopeName": "source.tq",
+      "scopeName": "source.tarkic",
       "path": "./syntaxes/tarkic.tmLanguage.json"
     }]
   }

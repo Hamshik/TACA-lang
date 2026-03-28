@@ -2,31 +2,29 @@
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Launch MyComplier",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/Complier",
-            "args": [
-                "examples/source/test.tq"
-            ],
-            "cwd": "${workspaceFolder}",
-            "stopAtEntry": false,
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                
-                {
-                        "description": "Enable pretty-printing for gdb",
-                        "text": "-enable-pretty-printing",
-                        "ignoreFailures": true
-                    }
-            ],
-            "preLaunchTask": "build the Complier",
-            "internalConsoleOptions": "neverOpen"
-        }
-    ]
+	    "version": "0.2.0",
+	    "configurations": [
+	        {
+	            "name": "Launch MyComplier",
+	            "type": "cppdbg",
+	            "request": "launch",
+	            "program": "${workspaceFolder}/bin/Complier",
+	            "args": ["${file}"],
+	            "cwd": "${workspaceFolder}",
+	            "stopAtEntry": false,
+	            "externalConsole": false,
+	            "MIMode": "gdb",
+	            "setupCommands": [
+	                
+	                {
+	                        "description": "Enable pretty-printing for gdb",
+	                        "text": "-enable-pretty-printing",
+	                        "ignoreFailures": true
+	                    }
+	            ],
+	            "preLaunchTask": "build the Complier",
+	            "internalConsoleOptions": "neverOpen"
+	        }
+	    ]
 
-}
+	}

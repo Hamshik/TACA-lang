@@ -9,6 +9,9 @@
 			"name": "Extension",
 			"type": "extensionHost",
 			"request": "launch",
+			"env": {
+				"NODE_OPTIONS": "--trace-warnings"
+			},
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			]
