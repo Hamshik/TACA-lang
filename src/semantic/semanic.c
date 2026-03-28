@@ -53,8 +53,9 @@ DataTypes_t check_expr(ASTNode_t *n) {
         return STRINGS;
 
     case AST_VAR:
-        if(n->datatype == UNKNOWN) n->datatype = lookup(n->var);
-        exit_code = exists(n->var, n->datatype);
+        if (n->datatype == UNKNOWN) n->datatype = lookup(n->var);
+        if (n->datatype == PTR && n->ptr_to == UNKNOWN) n->ptr_to = lookup_ptr_to(n->var);
+        exit_code = exists(n->var, n->datatype, n->ptr_to);
         switch (exit_code)
         {
         case NOT_DECLARED:
@@ -65,7 +66,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
             panic(&file, n->line, n->col, n->pos, SEM_VAR_TYPE_MISMATCH, n->var);
             return UNKNOWN;
 
-        case SUCCESS:
+        case SUCCESS: break;
         default: break;
         }
         return n->datatype;
@@ -192,47 +193,63 @@ DataTypes_t check_expr(ASTNode_t *n) {
     }
 
     case AST_ASSIGN: {
-        if (n->assign.lhs->kind != AST_VAR) 
-            panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
-        
-        DataTypes_t lhs_t;
+        DataTypes_t lhs_t = UNKNOWN;
+        DataTypes_t lhs_ptr_to = UNKNOWN;
 
-        if (n->assign.is_declaration) {
-            lhs_t = n->datatype;
-            n->assign.lhs->datatype = lhs_t;
+        if (n->assign.lhs->kind == AST_VAR) {
+            if (n->assign.is_declaration) {
+                lhs_t = n->datatype;
+                lhs_ptr_to = n->ptr_to;
+                n->assign.lhs->datatype = lhs_t;
+                n->assign.lhs->ptr_to = lhs_ptr_to;
 
-            if (!declare(n->assign.lhs->var, lhs_t, n->assign.is_mutable))
-                panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
-            
-            
-        } else {
-            lhs_t = lookup(n->assign.lhs->var);
-            switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype))
-            {
-            case NOT_DECLARED:
-                panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
-                return UNKNOWN;
-            case TYPE_MISMATCH:
-                panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
-                return UNKNOWN;
-            case IMMUTABLE_TYPING:
-                panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_IMMUTABLE, n->assign.lhs->var);
-                return UNKNOWN;
-            case SUCCESS:
-            default:
-                break;
+                if (!declare(n->assign.lhs->var, lhs_t, lhs_ptr_to, n->assign.is_mutable))
+                    panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
+            } else {
+                lhs_t = lookup(n->assign.lhs->var);
+                lhs_ptr_to = lookup_ptr_to(n->assign.lhs->var);
+
+                switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype, n->assign.rhs->ptr_to))
+                {
+                case NOT_DECLARED:
+                    panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
+                    return UNKNOWN;
+                case TYPE_MISMATCH:
+                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
+                    return UNKNOWN;
+                case IMMUTABLE_TYPING:
+                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_IMMUTABLE, n->assign.lhs->var);
+                    return UNKNOWN;
+                case SUCCESS:
+                default:
+                    break;
+                }
+
+                n->assign.lhs->datatype = lhs_t;
+                n->assign.lhs->ptr_to = lhs_ptr_to;
+                n->datatype = lhs_t;
+                n->ptr_to = lhs_ptr_to;
             }
-
-            n->assign.lhs->datatype = lhs_t;
+        } else if (n->assign.lhs->kind == AST_UNOP && n->assign.lhs->unop.op == OP_DEREF) {
+            if (n->assign.is_declaration)
+                panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, "cannot declare through dereference");
+            lhs_t = check_expr(n->assign.lhs);
             n->datatype = lhs_t;
+        } else {
+            panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
         }
 
-        force_numeric_type(n->assign.rhs, lhs_t);
+        if (is_numeric(lhs_t)) force_numeric_type(n->assign.rhs, lhs_t);
         DataTypes_t rhs_t = check_expr(n->assign.rhs);
 
         if (lhs_t != rhs_t)
-            panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
-        
+            panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+        if (lhs_t == PTR) {
+            DataTypes_t rhs_ptr_to = n->assign.rhs->ptr_to;
+            if (lhs_ptr_to != rhs_ptr_to)
+                panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+        }
+
         return lhs_t;
     }
 
@@ -300,7 +317,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
         scope_push();
         for (int i = 0; i < n->fn_def.param_count; i++) {
             // params are mutable locals
-            if (!declare(n->fn_def.params[i].name, n->fn_def.params[i].type, true)) 
+            if (!declare(n->fn_def.params[i].name, n->fn_def.params[i].type, n->fn_def.params[i].ptr_to, true)) 
                 panic(&file, n->line, n->col, n->pos, SEM_DUP_PARAM, n->fn_def.params[i].name);
             
         }
@@ -340,9 +357,11 @@ DataTypes_t check_expr(ASTNode_t *n) {
             ASTNode_t *cur = arg ? (arg->kind == AST_SEQ ? arg->seq.a : arg) : NULL;
 
             DataTypes_t want = f ? f->params[i].type : std->params[i];
-            if (want != UNKNOWN) force_numeric_type(cur, want);
+            DataTypes_t want_ptr_to = f ? f->params[i].ptr_to : UNKNOWN;
+            if (want != UNKNOWN && want != PTR) force_numeric_type(cur, want);
             DataTypes_t at = check_expr(cur);
             if (want != UNKNOWN && at != want) panic(&file, n->line, n->col, n->pos, SEM_ARG_TYPE_MISMATCH, n->call.name);
+            if (want == PTR && cur && cur->ptr_to != want_ptr_to) panic(&file, n->line, n->col, n->pos, SEM_ARG_TYPE_MISMATCH, n->call.name);
 
             if (arg && arg->kind == AST_SEQ) arg = arg->seq.b;
             else arg = NULL;

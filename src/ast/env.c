@@ -6,16 +6,19 @@
 extern file_t file;
 
 typedef struct EnvFrame {
+    int id;
     VarEntry *vars;            // uthash table for this scope
     struct EnvFrame *parent;   // enclosing scope
 } EnvFrame_t;
 
 static EnvFrame_t *g_env = NULL;
+static int g_next_env_id = 1;
 
 static EnvFrame_t *env_top(void) {
     if (!g_env) {
         g_env = calloc(1, sizeof(*g_env));
         if (!g_env) { perror("calloc"); exit(1); }
+        g_env->id = 0;
     }
     return g_env;
 }
@@ -28,6 +31,9 @@ static void free_frame_vars(VarEntry *vars) {
         if (cur->typedval.type == STRINGS) {
             free(cur->typedval.val.str);
         }
+        if (cur->typedval.type == PTR) {
+            free(cur->typedval.val.ptr.name);
+        }
         free(cur);
     }
 }
@@ -35,6 +41,7 @@ static void free_frame_vars(VarEntry *vars) {
 void env_push(void) {
     EnvFrame_t *f = calloc(1, sizeof(*f));
     if (!f) { perror("calloc"); exit(1); }
+    f->id = g_next_env_id++;
     f->parent = env_top();
     g_env = f;
 }
@@ -123,4 +130,56 @@ TypedValue *getvar_ref(const char *name, int line, int col, int pos) {
 
     panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
     return (TypedValue *){0};
+}
+
+int env_frame_id_of(const char *name, int line, int col, int pos) {
+    for (EnvFrame_t *it = env_top(); it; it = it->parent) {
+        VarEntry *v = NULL;
+        HASH_FIND_STR(it->vars, name, v);
+        if (!v) continue;
+        return it->id;
+    }
+    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    return -1;
+}
+
+static EnvFrame_t *env_find_frame(int frame_id) {
+    for (EnvFrame_t *it = env_top(); it; it = it->parent) {
+        if (it->id == frame_id) return it;
+    }
+    return NULL;
+}
+
+TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int pos) {
+    EnvFrame_t *f = env_find_frame(frame_id);
+    if (!f) {
+        panic(&file, line, col, pos, RT_DANGLING_PTR, name);
+        return (TypedValue *){0};
+    }
+    VarEntry *v = NULL;
+    HASH_FIND_STR(f->vars, name, v);
+    if (!v) {
+        panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+        return (TypedValue *){0};
+    }
+    return &v->typedval;
+}
+
+void set_var_at(int frame_id, const char *name, Value *val, DataTypes_t datatype, int line, int col, int pos) {
+    EnvFrame_t *f = env_find_frame(frame_id);
+    if (!f) {
+        panic(&file, line, col, pos, RT_DANGLING_PTR, name);
+        return;
+    }
+    VarEntry *v = NULL;
+    HASH_FIND_STR(f->vars, name, v);
+    if (!v) {
+        panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+        return;
+    }
+    if (v->typedval.type != datatype) {
+        panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+        return;
+    }
+    assign_value(datatype, &v->typedval.val, *val);
 }

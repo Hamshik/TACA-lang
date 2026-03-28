@@ -174,28 +174,26 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_UNOP:{
         if (node->unop.op == OP_ADDR) {
-            if (node->unop.operand->kind != AST_VAR) {
-                fprintf(stderr, "address-of requires variable\n");
-                exit(EXIT_FAILURE);
+            if (!node->unop.operand || node->unop.operand->kind != AST_VAR) {
+                panic(&file, node->line, node->col, node->pos, RT_UNKNOWN_AST, "address-of requires a variable");
+                return (TypedValue){0};
             }
-            TypedValue *ref = getvar_ref(
-                node->unop.operand->var,
-                node->line, node->col, node->pos
-            );
-            return (TypedValue){
-                .type = PTR,
-                .val = { .ptr = ref }
-            };
+            int fid = env_frame_id_of(node->unop.operand->var, node->line, node->col, node->pos);
+            Value pv = {0};
+            pv.ptr.frame_id = fid;
+            pv.ptr.name = node->unop.operand->var;
+            return (TypedValue){ .type = PTR, .val = pv };
         }
 
         if (node->unop.op == OP_DEREF) {
-            TypedValue p = ast_eval(node->unop.operand);
-            if (p.type != PTR || p.val.ptr == NULL) {
-                fprintf(stderr, "invalid pointer dereference\n");
-                exit(EXIT_FAILURE);
+            TypedValue pv = ast_eval(node->unop.operand);
+            if (pv.type != PTR || pv.val.ptr.name == NULL) {
+                panic(&file, node->line, node->col, node->pos, RT_DANGLING_PTR, NULL);
+                return (TypedValue){0};
             }
-            TypedValue *ref = (TypedValue *)p.val.ptr;
-            return *ref;
+            TypedValue *ref = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, node->line, node->col, node->pos);
+            if (!ref) return (TypedValue){0};
+            return (TypedValue){ .type = ref->type, .val = ref->val };
         }
 
         TypedValue r = ast_eval(node->unop.operand);

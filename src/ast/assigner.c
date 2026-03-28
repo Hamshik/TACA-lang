@@ -32,6 +32,14 @@ void assign_value(DataTypes_t dt, Value *dst, Value src) {
         case CHARACTER:
             dst->chars = src.chars;
             break;
+        
+        case PTR: {
+            free(dst->ptr.name);
+            dst->ptr.frame_id = src.ptr.frame_id;
+            dst->ptr.name = src.ptr.name ? strdup(src.ptr.name) : NULL;
+            if (src.ptr.name && !dst->ptr.name) { perror("strdup"); exit(1); }
+            break;
+        }
         default:
             fprintf(stderr, "Invalid assignment type\n");
             exit(1);
@@ -40,43 +48,88 @@ void assign_value(DataTypes_t dt, Value *dst, Value src) {
 
 Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
     int line, int col, int pos) {
-    if (!lhs || lhs->kind != AST_VAR) {
-        panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
-        return (Value){0};
-    }
-
     TypedValue rt0 = ast_eval(rhs);
     TypedValue rt = tq_cast_typed(rt0, datatypes, line, col, pos);
     Value r = rt.val;
     Value v = {0};
 
-    if (op == OP_ASSIGN) {
-        set_var(lhs->var, &r, datatypes);
-        return r;
+    if (!lhs) {
+        panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
+        return (Value){0};
     }
 
-    Value cur = getvar(lhs->var, datatypes, line, col, pos);
-    OP_kind_t operation = get_assign_op(op);
-    switch (datatypes) {
-        case I8: case I16: case I32: case I128:
-        case U8: case U16: case U32: case U64: case U128:
-        case F32: case F64: case F128:
-        case UF32: case UF64: case UF128:
-            v = tq_eval_binop_numeric(operation, datatypes, cur, r);
-            break;
-        case BOOL:
-            v = eval_bool(operation, BOOL, cur, r);
-            break;
-        case STRINGS:
-            v = (Value){.str = do_operation_str(cur.str, r.str, operation)};
-            break;
-        case CHARACTER:
-            v.chars = r.chars;
-            break;
-        default:
-            panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
-            return (Value){0};
+    /* Assignment to variable */
+    if (lhs->kind == AST_VAR) {
+        if (op == OP_ASSIGN) {
+            set_var(lhs->var, &r, datatypes);
+            return r;
+        }
+
+        Value cur = getvar(lhs->var, datatypes, line, col, pos);
+        OP_kind_t operation = get_assign_op(op);
+        switch (datatypes) {
+            case I8: case I16: case I32: case I128:
+            case U8: case U16: case U32: case U64: case U128:
+            case F32: case F64: case F128:
+            case UF32: case UF64: case UF128:
+                v = tq_eval_binop_numeric(operation, datatypes, cur, r);
+                break;
+            case BOOL:
+                v = eval_bool(operation, BOOL, cur, r);
+                break;
+            case STRINGS:
+                v = (Value){.str = do_operation_str(cur.str, r.str, operation)};
+                break;
+            case CHARACTER:
+                v.chars = r.chars;
+                break;
+            case PTR:
+                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "pointer compound assignment not supported");
+                return (Value){0};
+            default:
+                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
+                return (Value){0};
+        }
+        set_var(lhs->var, &v, datatypes);
+        return v;
     }
-    set_var(lhs->var, &v, datatypes);
-    return v;
+
+    /* Assignment through dereference: *p = rhs */
+    if (lhs->kind == AST_UNOP && lhs->unop.op == OP_DEREF) {
+        TypedValue pv = ast_eval(lhs->unop.operand);
+        if (pv.type != PTR || pv.val.ptr.name == NULL) {
+            panic(&file, line, col, pos, RT_DANGLING_PTR, NULL);
+            return (Value){0};
+        }
+        TypedValue *target = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, line, col, pos);
+        if (!target) return (Value){0};
+        if (target->type != datatypes) {
+            panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, pv.val.ptr.name);
+            return (Value){0};
+        }
+
+        if (op == OP_ASSIGN) {
+            assign_value(datatypes, &target->val, r);
+            return r;
+        }
+
+        Value cur = target->val;
+        OP_kind_t operation = get_assign_op(op);
+        switch (datatypes) {
+            case I8: case I16: case I32: case I128:
+            case U8: case U16: case U32: case U64: case U128:
+            case F32: case F64: case F128:
+            case UF32: case UF64: case UF128:
+                v = tq_eval_binop_numeric(operation, datatypes, cur, r);
+                break;
+            default:
+                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "unsupported deref assignment type");
+                return (Value){0};
+        }
+        assign_value(datatypes, &target->val, v);
+        return v;
+    }
+
+    panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
+    return (Value){0};
 }

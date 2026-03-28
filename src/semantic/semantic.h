@@ -6,6 +6,7 @@
 
 typedef struct symboltable{
     DataTypes_t type;
+    DataTypes_t ptr_to; /* for PTR only */
     const char* name;
     UT_hash_handle hh;
     bool is_mutable;
@@ -35,9 +36,10 @@ bool is_integer(DataTypes_t t);
 DataTypes_t promote(DataTypes_t a, DataTypes_t b);
 
 DataTypes_t lookup(const char* name);
-bool declare(const char* name, DataTypes_t type, const bool is_mutable);
-exitcode_t exists(const char* name, DataTypes_t type);
-exitcode_t assign_check(const char* name, DataTypes_t rhs_type);
+DataTypes_t lookup_ptr_to(const char* name);
+bool declare(const char* name, DataTypes_t type, DataTypes_t ptr_to, const bool is_mutable);
+exitcode_t exists(const char* name, DataTypes_t type, DataTypes_t ptr_to);
+exitcode_t assign_check(const char* name, DataTypes_t rhs_type, DataTypes_t rhs_ptr_to);
 void clear_symbols(void);
 
 void scope_push(void);

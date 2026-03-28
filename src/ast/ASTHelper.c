@@ -5,6 +5,8 @@
 ASTNode_t *ast_alloc(void) {
     ASTNode_t *n = calloc(1, sizeof(ASTNode_t));
     if (!n) { perror("malloc"); exit(1); }
+    n->datatype = UNKNOWN;
+    n->ptr_to = UNKNOWN;
     return n;
 }
 

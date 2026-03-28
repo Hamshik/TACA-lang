@@ -54,6 +54,7 @@ const char *errc_msg(errc_t code) {
         case RT_VAR_TYPE_MISMATCH: return "type mismatch for variable (runtime)";
         case RT_ASSIGN_TARGET_NOT_VAR: return "assignment target must be a variable (runtime)";
         case RT_ASSIGN_UNSUPPORTED: return "unsupported assignment type (runtime)";
+        case RT_DANGLING_PTR: return "dangling pointer (runtime)";
 
         default: return "error";
     }

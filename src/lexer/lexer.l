@@ -94,7 +94,7 @@ false               {
     return BOOL_LITERAL;
 }
 (let|immut)         { return IMMUT; }
-(var|mut)           { return VAR; }
+(var|mut)           { return MUT; }
 fn                  { return FN; }
 (ret|return)        { return RETURN; }
 

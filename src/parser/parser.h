@@ -125,15 +125,17 @@ extern int yydebug;
     ELSE = 304,                    /* ELSE  */
     FOR = 305,                     /* FOR  */
     WHILE = 306,                   /* WHILE  */
-    VAR = 307,                     /* VAR  */
+    MUT = 307,                     /* MUT  */
     IMMUT = 308,                   /* IMMUT  */
     FN = 309,                      /* FN  */
     RETURN = 310,                  /* RETURN  */
     DATATYPES = 311,               /* DATATYPES  */
     UPLUS = 312,                   /* UPLUS  */
     UMINUS = 313,                  /* UMINUS  */
-    POSTFIX = 314,                 /* POSTFIX  */
-    LOWER_THAN_ELSE = 315          /* LOWER_THAN_ELSE  */
+    UADDR = 314,                   /* UADDR  */
+    UDEREF = 315,                  /* UDEREF  */
+    POSTFIX = 316,                 /* POSTFIX  */
+    LOWER_THAN_ELSE = 317          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -147,11 +149,15 @@ union YYSTYPE
     ASTNode_t *node;
     DataTypes_t datatype;
     struct {
+        DataTypes_t type;
+        DataTypes_t ptr_to;
+    } typespec;
+    struct {
         Param_t *params;
         int count;
     } paramlist;
 
-#line 155 "src/parser/parser.h"
+#line 161 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

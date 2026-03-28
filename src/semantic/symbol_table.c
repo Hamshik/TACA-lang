@@ -54,18 +54,28 @@ DataTypes_t lookup(const char* name){
     return UNKNOWN;
 }
 
-exitcode_t exists(const char *name, DataTypes_t type) {
+DataTypes_t lookup_ptr_to(const char* name){
+    for (Scope_t *it = scope_top(); it; it = it->parent) {
+        Symboltable_t *v = NULL;
+        HASH_FIND_STR(it->symbols, name, v);
+        if (v) return v->ptr_to;
+    }
+    return UNKNOWN;
+}
+
+exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t ptr_to) {
     for (Scope_t *it = scope_top(); it; it = it->parent) {
         Symboltable_t *v = NULL;
         HASH_FIND_STR(it->symbols, name, v);
         if (!v) continue;
         if (v->type != type) return TYPE_MISMATCH;
+        if (type == PTR && v->ptr_to != ptr_to) return TYPE_MISMATCH;
         return SUCCESS;
     }
     return NOT_DECLARED;
 }
 
-bool declare(const char* name, DataTypes_t type, const bool is_mutable){
+bool declare(const char* name, DataTypes_t type, DataTypes_t ptr_to, const bool is_mutable){
     Scope_t *top = scope_top();
     Symboltable_t *v = NULL;
     HASH_FIND_STR(top->symbols, name, v);
@@ -75,17 +85,19 @@ bool declare(const char* name, DataTypes_t type, const bool is_mutable){
     if (!v) { perror("malloc"); exit(1); }
     v->name = strdup(name);
     v->type = type;
+    v->ptr_to = (type == PTR) ? ptr_to : UNKNOWN;
     v->is_mutable = is_mutable;
     HASH_ADD_KEYPTR(hh, top->symbols, v->name, strlen(v->name), v);
     return true;
 }
 
-exitcode_t assign_check(const char* name, DataTypes_t rhs_t){
+exitcode_t assign_check(const char* name, DataTypes_t rhs_t, DataTypes_t rhs_ptr_to){
     for (Scope_t *it = scope_top(); it; it = it->parent) {
         Symboltable_t *v = NULL;
         HASH_FIND_STR(it->symbols, name, v);
         if (!v) continue;
         if (rhs_t != UNKNOWN && v->type != rhs_t) return TYPE_MISMATCH;
+        if (rhs_t == PTR && v->ptr_to != rhs_ptr_to) return TYPE_MISMATCH;
         if (!v->is_mutable) return IMMUTABLE_TYPING;
         return SUCCESS;
     }

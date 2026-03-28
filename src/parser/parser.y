@@ -73,6 +73,10 @@
     ASTNode_t *node;
     DataTypes_t datatype;
     struct {
+        DataTypes_t type;
+        DataTypes_t ptr_to;
+    } typespec;
+    struct {
         Param_t *params;
         int count;
     } paramlist;
@@ -98,12 +102,14 @@
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
 %type <node> fn_def param return_stmt opt_args args
+%type <node> lvalue
 %type <node> MUT_block decl_block_items decl_item_untyped decl_item_typed
 %type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more
 %type <node> typed_decl_stmt
 %type <node> decl decl_stmt for_init
 %type <paramlist> opt_params params
 %token <datatype> DATATYPES
+%type <typespec> type_spec
 
 %right ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN LSHIFT_ASSIGN RSHIFT_ASSIGN
 %left OR
@@ -117,7 +123,7 @@
 %left PLUS MINUS
 %left STAR SLASH MOD
 %right POWER
-%right UPLUS UMINUS NOT BITNOT
+%right UPLUS UMINUS UADDR UDEREF NOT BITNOT
 %left INC DEC
 %precedence POSTFIX
 %nonassoc LOWER_THAN_ELSE
@@ -139,7 +145,9 @@ stmt_list
     ;
 
 stmt
-    : expr SEMICOLON            { $$ = $1; }
+    : assignment SEMICOLON      { $$ = $1; }
+    | assignment error          { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
+    | expr SEMICOLON            { $$ = $1; }
     | expr error                { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
     | if_stmt                   { $$ = $1; }
     | for_stmt                  { $$ = $1; }
@@ -204,6 +212,7 @@ params
         if (!$$.params) { perror("malloc"); exit(1); }
         $$.params[0].name = strdup($1->var);
         $$.params[0].type = $1->datatype;
+        $$.params[0].ptr_to = $1->ptr_to;
         ast_free($1);
     }
   | param COMMA params {
@@ -212,15 +221,23 @@ params
         if (!$$.params) { perror("malloc"); exit(1); }
         $$.params[0].name = strdup($1->var);
         $$.params[0].type = $1->datatype;
+        $$.params[0].ptr_to = $1->ptr_to;
         ast_free($1);
         for (int i = 0; i < $3.count; i++) $$.params[i + 1] = $3.params[i];
         free($3.params);
     }
   ;
 
+type_spec
+  : DATATYPES
+      { $$.type = $1; $$.ptr_to = UNKNOWN; }
+  | STAR DATATYPES %prec UDEREF
+      { $$.type = PTR; $$.ptr_to = $2; }
+  ;
+
 param
-  : DATATYPES IDENTIFIER
-      { $2->datatype = $1; $$ = $2; }  /* AST_VAR node typed as param */
+  : type_spec IDENTIFIER
+      { $2->datatype = $1.type; $2->ptr_to = $1.ptr_to; $$ = $2; }  /* AST_VAR node typed as param */
   ;
 
 return_stmt
@@ -241,13 +258,13 @@ args
 /* `MUT { ... }` / `MUT { ... }` declaration blocks (statement form). */
 MUT_block
     :  IMMUT LBRACE decl_block_items RBRACE
-        { tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
+        { tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, false); $$ = $3; }
     | MUT LBRACE decl_block_items RBRACE
-        { tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
+        { tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
     |  IMMUT LBRACE decl_block_items error
-        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, false); $$ = $3; }
+        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, false); $$ = $3; }
     | MUT LBRACE decl_block_items error
-        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, true); $$ = $3; }
+        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
     ;
 
 decl_block_items
@@ -265,10 +282,12 @@ decl_item_untyped
 
 /* Item with explicit type. */
 decl_item_typed
-    : DATATYPES IDENTIFIER ASSIGN expr
+    : type_spec IDENTIFIER ASSIGN expr
         {
-            if ($4->datatype == UNKNOWN) $4->datatype = $1;
-            $$ = new_assign($2, $4, $1, @$.first_line, @$.first_column, OP_ASSIGN);
+            if ($4->datatype == UNKNOWN) $4->datatype = $1.type;
+            if ($4->datatype == PTR && $4->ptr_to == UNKNOWN) $4->ptr_to = $1.ptr_to;
+            $$ = new_assign($2, $4, $1.type, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$->ptr_to = $1.ptr_to;
             TQ_SET_NODE_LOC($$, @$);
         }
     ;
@@ -297,11 +316,11 @@ decl_items_after_type_more
 
     /* Declarations are statement-only (and allowed in `for` init) to avoid
        ambiguity with function-call argument lists (both use commas). */
-    decl
-        : MUT DATATYPES decl_items_after_type
-            { tq_annotate_decl_list($3, $2, true); $$ = $3; }
-        |  IMMUT DATATYPES decl_items_after_type
-            { tq_annotate_decl_list($3, $2, false); $$ = $3; }
+decl
+        : MUT type_spec decl_items_after_type
+            { tq_annotate_decl_list($3, $2.type, $2.ptr_to, true); $$ = $3; }
+        |  IMMUT type_spec decl_items_after_type
+            { tq_annotate_decl_list($3, $2.type, $2.ptr_to, false); $$ = $3; }
         ;
 
     decl_stmt
@@ -317,10 +336,10 @@ decl_items_after_type_more
 /* Typed declarations without ` IMMUT/MUT` are statement-only (immutable by default),
    to avoid ambiguity with function-call arguments (both use commas). */
 typed_decl_stmt
-    : DATATYPES decl_items_after_type SEMICOLON
-        { tq_annotate_decl_list($2, $1, false); $$ = $2; }
-    | DATATYPES decl_items_after_type error
-        { TQ_PANIC_LOC(@3, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; tq_annotate_decl_list($2, $1, false); $$ = $2; }
+    : type_spec decl_items_after_type SEMICOLON
+        { tq_annotate_decl_list($2, $1.type, $1.ptr_to, false); $$ = $2; }
+    | type_spec decl_items_after_type error
+        { TQ_PANIC_LOC(@3, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; tq_annotate_decl_list($2, $1.type, $1.ptr_to, false); $$ = $2; }
     ;
 
 expr
@@ -353,6 +372,8 @@ expr
     | expr GT expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_GT); TQ_SET_NODE_LOC($$, @$); }
     | expr GE expr              { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_GE); TQ_SET_NODE_LOC($$, @$); }
 
+    | AMP expr %prec UADDR      { $$ = new_unop($2, @$.first_line, @$.first_column, OP_ADDR); TQ_SET_NODE_LOC($$, @$); }
+    | STAR expr %prec UDEREF    { $$ = new_unop($2, @$.first_line, @$.first_column, OP_DEREF); TQ_SET_NODE_LOC($$, @$); }
     | PLUS expr %prec UPLUS     { $$ = new_unop($2, @$.first_line, @$.first_column, OP_POS); TQ_SET_NODE_LOC($$, @$); }
     | MINUS expr %prec UMINUS   { $$ = new_unop($2, @$.first_line, @$.first_column, OP_NEG); TQ_SET_NODE_LOC($$, @$); }
     | NOT expr                  { $$ = new_unop($2, @$.first_line, @$.first_column, OP_NOT); TQ_SET_NODE_LOC($$, @$); }
@@ -367,7 +388,6 @@ expr
     | LPAREN expr error          { TQ_PANIC_LOC(@3, PARSE_UNCLOSED_PAREN, NULL); yyerrok; $$ = $2; }
     | LSQUARE expr RSQUARE       { $$ = $2; }
     | LSQUARE expr error         { TQ_PANIC_LOC(@3, PARSE_UNCLOSED_BRACKET, NULL); yyerrok; $$ = $2; }
-    | assignment                 { $$ = $1; }
     | IDENTIFIER LPAREN opt_args RPAREN
       {
           $$ = new_fn_call($1->var, $3, @1.first_line, @1.first_column);
@@ -376,37 +396,45 @@ expr
       }
     ;
 
+lvalue
+    : IDENTIFIER { $$ = $1; }
+    | STAR IDENTIFIER %prec UDEREF
+      {
+          $$ = new_unop($2, @$.first_line, @$.first_column, OP_DEREF);
+          TQ_SET_NODE_LOC($$, @$);
+      }
+    ;
 
 assignment
-    : IDENTIFIER ASSIGN expr
+    : lvalue ASSIGN expr
         {
-            $$ = new_assign($1, $3, $1->datatype, @$.first_line, @$.first_column, OP_ASSIGN);
+            $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN);
             TQ_SET_NODE_LOC($$, @$);
         }
-    | IDENTIFIER PLUS_ASSIGN expr
+    | lvalue PLUS_ASSIGN expr
         {
             $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_PLUS_ASSIGN); 
             TQ_SET_NODE_LOC($$, @$);
         }
-    | IDENTIFIER MINUS_ASSIGN expr
+    | lvalue MINUS_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MINUS_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
-    | IDENTIFIER STAR_ASSIGN expr
+    | lvalue STAR_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MUL_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
-    | IDENTIFIER SLASH_ASSIGN expr
+    | lvalue SLASH_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_DIV_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
-    | IDENTIFIER MOD_ASSIGN expr
+    | lvalue MOD_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_MOD_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
-    | IDENTIFIER LSHIFT_ASSIGN expr
+    | lvalue LSHIFT_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_LSHIFT_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
 
-    | IDENTIFIER RSHIFT_ASSIGN expr
+    | lvalue RSHIFT_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_RSHIFT_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
     
-    | IDENTIFIER POWER_ASSIGN expr
+    | lvalue POWER_ASSIGN expr
         { $$ = new_assign($1, $3,UNKNOWN, @$.first_line, @$.first_column, OP_POW_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
     ;
 

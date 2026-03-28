@@ -1079,7 +1079,7 @@ YY_RULE_SETUP
 case 32:
 YY_RULE_SETUP
 #line 97 "src/lexer/lexer.l"
-{ return VAR; }
+{ return MUT; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP

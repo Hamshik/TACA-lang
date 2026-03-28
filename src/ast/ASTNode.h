@@ -53,6 +53,11 @@ typedef enum DataTypes{
     UNKNOWN
 } DataTypes_t;
 
+typedef struct TQPtr {
+    int frame_id;
+    char *name;
+} TQPtr;
+
 typedef enum OP_kind {
     OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_MOD, OP_POW,
     OP_AND, OP_OR, OP_NOT,
@@ -85,7 +90,7 @@ typedef union {
     uint64_t u64;
     unsigned __int128 u128;
 
-    void *ptr;
+    TQPtr ptr;
 
     bool bval;
     char chars;
@@ -106,6 +111,7 @@ typedef struct {
 typedef struct Param {
   char *name;
   DataTypes_t type;
+  DataTypes_t ptr_to; /* for PTR only */
 } Param_t;
 
 
@@ -186,5 +192,8 @@ void env_clear_all(void);
 void assign_value(DataTypes_t datatype, Value *dest, Value src);
 Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
 TypedValue *getvar_ref(const char *name, int line, int col, int pos);
+int env_frame_id_of(const char *name, int line, int col, int pos);
+TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int pos);
+void set_var_at(int frame_id, const char *name, Value *val, DataTypes_t datatype, int line, int col, int pos);
 
 #endif

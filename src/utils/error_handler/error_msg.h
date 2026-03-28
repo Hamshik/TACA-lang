@@ -63,6 +63,7 @@ typedef enum errc {
     RT_VAR_TYPE_MISMATCH = 2009,
     RT_ASSIGN_TARGET_NOT_VAR = 2010,
     RT_ASSIGN_UNSUPPORTED = 2011,
+    RT_DANGLING_PTR = 2012,
 } errc_t;
 
 const char *errc_msg(errc_t code);
