@@ -70,6 +70,7 @@ ASTNode_t* new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int 
     node->assign.is_declaration = false;
     node->line = line;
     node->col = col;
+    node->assign.is_autotyped = (datatype == UNKNOWN);
     return node;
 }
 

@@ -98,14 +98,13 @@
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON COMMA
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR WHILE MUT  IMMUT FN RETURN
+%token IF ELSE FOR WHILE MUT VAR FN RETURN
 
 %type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
 %type <node> fn_def param return_stmt opt_args args
 %type <node> lvalue
 %type <node> MUT_block decl_block_items decl_item_untyped decl_item_typed
 %type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more
-%type <node> typed_decl_stmt
 %type <node> decl decl_stmt for_init
 %type <paramlist> opt_params params
 %token <datatype> DATATYPES
@@ -155,7 +154,6 @@ stmt
     | while_stmt                { $$ = $1; }
     | MUT_block                 { $$ = $1; }
     | decl_stmt                 { $$ = $1; }
-    | typed_decl_stmt           { $$ = $1; }
     | fn_def                    { $$ = $1; }
     | return_stmt SEMICOLON     { $$ = $1; }
     | return_stmt error         { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
@@ -255,14 +253,10 @@ args
     | expr COMMA args   { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }        /* list */
     ;
 
-/* `MUT { ... }` / `MUT { ... }` declaration blocks (statement form). */
+/* `MUT { ... }` declaration blocks (statement form). */
 MUT_block
-    :  IMMUT LBRACE decl_block_items RBRACE
-        { tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, false); $$ = $3; }
-    | MUT LBRACE decl_block_items RBRACE
+    : MUT LBRACE decl_block_items RBRACE
         { tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
-    |  IMMUT LBRACE decl_block_items error
-        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, false); $$ = $3; }
     | MUT LBRACE decl_block_items error
         { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
     ;
@@ -274,7 +268,7 @@ decl_block_items
         { $$ = new_seq($1, $3); TQ_SET_NODE_LOC($$, @$); }
     ;
 
-/* Item without explicit type (inherits the "default" type after MUT/MUT). */
+/* Item without explicit type (inherits the default type after MUT). */
 decl_item_untyped
     : IDENTIFIER ASSIGN expr
         { $$ = new_assign($1, $3, UNKNOWN, @$.first_line, @$.first_column, OP_ASSIGN); TQ_SET_NODE_LOC($$, @$); }
@@ -292,7 +286,7 @@ decl_item_typed
         }
     ;
 
-/* After the initial `MUT/MUT <type>`, allow:
+/* After the initial `MUT <type>`, allow:
    - zero or more `, <name> = <expr>` (same type),
    - then optionally switch to typed items `, <type> <name> = <expr>` (each typed item explicit). */
 decl_items_after_type
@@ -314,13 +308,23 @@ decl_items_after_type_more
             { $$ = $3 ? new_seq($2, $3) : $2; if ($$ && $$->kind == AST_SEQ) TQ_SET_NODE_LOC($$, @$); }
         ;
 
-    /* Declarations are statement-only (and allowed in `for` init) to avoid
-       ambiguity with function-call argument lists (both use commas). */
+/* Declarations are statement-only (and allowed in `for` init) to avoid
+   ambiguity with function-call argument lists (both use commas). */
 decl
-        : MUT type_spec decl_items_after_type
-            { tq_annotate_decl_list($3, $2.type, $2.ptr_to, true); $$ = $3; }
-        |  IMMUT type_spec decl_items_after_type
+        : VAR MUT type_spec decl_items_after_type
+            { tq_annotate_decl_list($4, $3.type, $3.ptr_to, true); $$ = $4; }
+        | VAR MUT decl_item_untyped decl_items_after_type_more
+            { ASTNode_t *n = $4 ? new_seq($3, $4) : $3; if (n && n->kind == AST_SEQ) TQ_SET_NODE_LOC(n, @$); tq_annotate_decl_list(n, UNKNOWN, UNKNOWN, true); $$ = n; }
+        | VAR type_spec decl_items_after_type
             { tq_annotate_decl_list($3, $2.type, $2.ptr_to, false); $$ = $3; }
+        | VAR decl_item_untyped decl_items_after_type_more
+            { ASTNode_t *n = $3 ? new_seq($2, $3) : $2; if (n && n->kind == AST_SEQ) TQ_SET_NODE_LOC(n, @$); tq_annotate_decl_list(n, UNKNOWN, UNKNOWN, false); $$ = n; }
+        | MUT type_spec decl_items_after_type
+            { tq_annotate_decl_list($3, $2.type, $2.ptr_to, true); $$ = $3; }
+        | MUT decl_item_untyped decl_items_after_type_more
+            { ASTNode_t *n = $3 ? new_seq($2, $3) : $2; if (n && n->kind == AST_SEQ) TQ_SET_NODE_LOC(n, @$); tq_annotate_decl_list(n, UNKNOWN, UNKNOWN, true); $$ = n; }
+        | type_spec decl_items_after_type
+            { tq_annotate_decl_list($2, $1.type, $1.ptr_to, false); $$ = $2; }
         ;
 
     decl_stmt
@@ -333,15 +337,6 @@ decl
         | assignment { $$ = $1; }
         ;
     
-/* Typed declarations without ` IMMUT/MUT` are statement-only (immutable by default),
-   to avoid ambiguity with function-call arguments (both use commas). */
-typed_decl_stmt
-    : type_spec decl_items_after_type SEMICOLON
-        { tq_annotate_decl_list($2, $1.type, $1.ptr_to, false); $$ = $2; }
-    | type_spec decl_items_after_type error
-        { TQ_PANIC_LOC(@3, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; tq_annotate_decl_list($2, $1.type, $1.ptr_to, false); $$ = $2; }
-    ;
-
 expr
     : NUMBER                    {$$ = $1;}
 	| IDENTIFIER				{$$ = $1;}

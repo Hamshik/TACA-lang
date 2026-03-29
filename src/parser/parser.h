@@ -126,7 +126,7 @@ extern int yydebug;
     FOR = 305,                     /* FOR  */
     WHILE = 306,                   /* WHILE  */
     MUT = 307,                     /* MUT  */
-    IMMUT = 308,                   /* IMMUT  */
+    VAR = 308,                     /* VAR  */
     FN = 309,                      /* FN  */
     RETURN = 310,                  /* RETURN  */
     DATATYPES = 311,               /* DATATYPES  */

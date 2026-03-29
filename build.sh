@@ -8,6 +8,7 @@ SEMAN="src/semantic"
 UTILS="src/utils"
 BIN_DIR="bin"
 BUILTIN="src/builtin"
+DATASPEC="src/dataspecifier"
 
 echo "Running bison to generate the parser..."
 bison -d -o "$PARSER_DIR/parser.c" "$PARSER_DIR/parser.y" || exit 1
@@ -35,6 +36,7 @@ gcc -Wall -Wextra -g -Isrc \
     $EVAL_DIR/eval_helper.c \
     $SEMAN/semantic_helper.c \
     $BUILTIN/builtin.c \
+    $DATASPEC/NumericTypeSpecifier.c \
     src/main.c \
     -o "$BIN_DIR/Complier" -lm || exit 1
 

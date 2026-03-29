@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "../utils/uhash.h"
 #include "../utils/error_handler/error_msg.h"
+#include "../semantic/semantic.h"
 
 extern file_t file;
 
@@ -109,7 +110,7 @@ Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos)
         VarEntry *v = NULL;
         HASH_FIND_STR(it->vars, name, v);
         if (!v) continue;
-        if (v->typedval.type != datatype) {
+        if (v->typedval.type != datatype && !is_numeric(v->typedval.type) && !is_numeric(datatype)) {
             panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
             return (Value){0};
         }

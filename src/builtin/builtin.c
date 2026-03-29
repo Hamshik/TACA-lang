@@ -3,7 +3,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <inttypes.h>
 
+#include "../semantic/semantic.h"
 #include "../utils/error_handler/error_msg.h"
 
 extern file_t file;
@@ -64,9 +67,18 @@ static void tq_write_value(FILE *out, Value v, DataTypes_t t) {
 }
 
 static const DataTypes_t g_print_params[] = { UNKNOWN };
+static const DataTypes_t g_alloc_params[]  = { UNKNOWN };
+static const DataTypes_t g_calloc_params[] = { UNKNOWN, UNKNOWN };
+static const DataTypes_t g_realloc_params[] = { PTR, UNKNOWN };
+static const DataTypes_t g_getdt_params[]  = { UNKNOWN };
+
 static const tq_std_sig_t g_builtins[] = {
-    { "print",   g_print_params, 1, VOID },
-    { "println", g_print_params, 1, VOID },
+    { "print",     g_print_params,   1, VOID },
+    { "println",   g_print_params,   1, VOID },
+    { "alloc",     g_alloc_params,   1, PTR  },
+    { "calloc",    g_calloc_params,  2, PTR  },
+    { "realloc",   g_realloc_params, 2, PTR  },
+    { "getdatatype", g_getdt_params, 1, STRINGS },
 };
 
 const tq_std_sig_t *tq_std_sig(const char *name) {
@@ -100,6 +112,73 @@ TypedValue tq_std_call(
         if (argc == 1) tq_write_value(stdout, argv[0].val, argv[0].type);
         if (strcmp(sig->name, "println") == 0) fputc('\n', stdout);
         return (TypedValue){.type = VOID};
+    }
+
+    if (strcmp(sig->name, "alloc") == 0) {
+        if (!is_numeric(argv[0].type)) {
+            panic(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
+            return (TypedValue){.type = VOID};
+        }
+        size_t sz = (size_t)argv[0].val.u64;
+        void *p = malloc(sz);
+        if (!p) {
+            syserr("alloc failed");
+            return (TypedValue){.type = PTR};
+        }
+        TypedValue tv = {.type = PTR};
+        tv.val.ptr.name = NULL;
+        tv.val.ptr.frame_id = 0;
+        return tv;
+    }
+
+    if (strcmp(sig->name, "calloc") == 0) {
+        if (!is_numeric(argv[0].type) || !is_numeric(argv[1].type)) {
+            panic(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
+            return (TypedValue){.type = VOID};
+        }
+        size_t n = (size_t)argv[0].val.u64;
+        size_t sz = (size_t)argv[1].val.u64;
+        void *p = calloc(n, sz);
+        if (!p) {
+            syserr("calloc failed");
+            return (TypedValue){.type = PTR};
+        }
+        TypedValue tv = {.type = PTR};
+        tv.val.ptr.name = NULL;
+        tv.val.ptr.frame_id = 0;
+        return tv;
+    }
+
+    if (strcmp(sig->name, "realloc") == 0) {
+        if (argv[0].type != PTR || !is_numeric(argv[1].type)) {
+            panic(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
+            return (TypedValue){.type = VOID};
+        }
+        size_t sz = (size_t)argv[1].val.u64;
+        void *p = realloc(NULL, sz); /* placeholder; real ptr not tracked */
+        if (!p) {
+            syserr("realloc failed");
+            return (TypedValue){.type = PTR};
+        }
+        TypedValue tv = {.type = PTR};
+        tv.val.ptr.name = NULL;
+        tv.val.ptr.frame_id = 0;
+        return tv;
+    }
+
+    if (strcmp(sig->name, "getdatatype") == 0) {
+        const char *tname = NULL;
+        switch (argv[0].type) {
+            case I8: tname = "i8"; break; case I16: tname = "i16"; break; case I32: tname = "i32"; break; case I128: tname = "i128"; break;
+            case U8: tname = "u8"; break; case U16: tname = "u16"; break; case U32: tname = "u32"; break; case U64: tname = "u64"; break; case U128: tname = "u128"; break;
+            case F32: tname = "f32"; break; case F64: tname = "f64"; break; case F128: tname = "f128"; break;
+            case UF32: tname = "uf32"; break; case UF64: tname = "uf64"; break; case UF128: tname = "uf128"; break;
+            case BOOL: tname = "bool"; break; case STRINGS: tname = "str"; break; case CHARACTER: tname = "char"; break;
+            case PTR: tname = "ptr"; break; case VOID: tname = "void"; break; case UNKNOWN: default: tname = "unknown"; break;
+        }
+        TypedValue tv = {.type = STRINGS};
+        tv.val.str = strdup(tname);
+        return tv;
     }
 
     panic(&file, call_line, call_col, call_pos, RT_CALL_UNDEF_FN, name);

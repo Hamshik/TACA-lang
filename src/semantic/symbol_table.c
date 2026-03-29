@@ -68,8 +68,8 @@ exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t ptr_to) {
         Symboltable_t *v = NULL;
         HASH_FIND_STR(it->symbols, name, v);
         if (!v) continue;
-        if (v->type != type) return TYPE_MISMATCH;
-        if (type == PTR && v->ptr_to != ptr_to) return TYPE_MISMATCH;
+        if (v->type != type && !is_numeric(v->type) && !is_numeric(type)) return TYPE_MISMATCH;
+        if (type == PTR && v->ptr_to != ptr_to && !is_numeric(v->type) && !is_numeric(type)) return TYPE_MISMATCH;
         return SUCCESS;
     }
     return NOT_DECLARED;
@@ -102,6 +102,15 @@ exitcode_t assign_check(const char* name, DataTypes_t rhs_t, DataTypes_t rhs_ptr
         return SUCCESS;
     }
     return NOT_DECLARED;
+}
+
+bool is_mutable_symbol(const char *name) {
+    for (Scope_t *it = scope_top(); it; it = it->parent) {
+        Symboltable_t *v = NULL;
+        HASH_FIND_STR(it->symbols, name, v);
+        if (v) return v->is_mutable;
+    }
+    return false;
 }
 
 void clear_symbols(void) {
@@ -145,4 +154,16 @@ void clear_fns(void) {
         free(cur);
     }
     g_fns = NULL;
+}
+
+DataTypes_t update_datatype(const char* name, DataTypes_t want){
+    for (Scope_t *it = scope_top(); it; it = it->parent) {
+        Symboltable_t *v = NULL;
+        HASH_FIND_STR(it->symbols, name, v);
+        if (v) {
+            v->type = want;
+            return v->type;
+        }
+    }
+    return UNKNOWN;
 }

@@ -42,6 +42,7 @@ bool declare(const char* name, DataTypes_t type, DataTypes_t ptr_to, const bool 
 exitcode_t exists(const char* name, DataTypes_t type, DataTypes_t ptr_to);
 exitcode_t assign_check(const char* name, DataTypes_t rhs_type, DataTypes_t rhs_ptr_to);
 void clear_symbols(void);
+bool is_mutable_symbol(const char *name);
 
 void scope_push(void);
 void scope_pop(void);
@@ -54,5 +55,6 @@ void type_error(ASTNode_t *n,const char* msg);
 bool is_numeric(DataTypes_t t);
 DataTypes_t promote(DataTypes_t a, DataTypes_t b);
 void force_numeric_type(ASTNode_t *n, DataTypes_t t);
+DataTypes_t update_datatype(const char* name, DataTypes_t want);
 
 #endif

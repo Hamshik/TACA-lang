@@ -6,7 +6,31 @@
 #include "../utils/error_handler/error_msg.h"
 #include "../utils/colors.h"
 #include "../builtin/builtin.h"
+#include "../dataspecifier/NumericTypeSpecifier.h"
 #include <limits.h>
+#include <float.h>
+#include <string.h>
+#include <math.h>
+
+static bool literal_fits_type(const ASTNode_t *lit, DataTypes_t t) {
+    if (!lit || lit->kind != AST_NUM || !lit->literal.raw) return false;
+    const char *raw = lit->literal.raw;
+    switch (t) {
+        case I8:   return is_i8(raw);
+        case I16:  return is_i16(raw);
+        case I32:  return is_i32(raw);
+        case I128: return is_i128(raw);
+        case U8:   return is_u8(raw);
+        case U16:  return is_u16(raw);
+        case U32:  return is_u32(raw);
+        case U64:  return is_u64(raw);
+        case U128: return is_u128(raw);
+        case F32:  return is_f32(raw);
+        case F64:  return is_f64(raw) || is_f32(raw);
+        case F128: return is_f128(raw) || is_f64(raw) || is_f32(raw);
+        default:   return false;
+    }
+}
 
 extern bool isError;
 extern size_t err_no;
@@ -46,16 +70,11 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
     switch (n->kind) {
     case AST_BOOL:
+        return n->datatype;
+
     case AST_NUM:
-        if (n->datatype == UNKNOWN) {
-            warn(&file, n->line, n->col, n->pos, SEM_UNKNOWN_TYPE, "defaulting numeric literal to i32");
-            if (strchr(n->literal.raw, '.')) {
-                n->datatype = F32; // or F64
-            } else {
-                n->datatype = I32;
-            }
-        }
-    return n->datatype;
+        /* Keep unknown here; we decide during declaration binding. */
+        return n->datatype;
 
     case AST_STR:
         return STRINGS;
@@ -215,9 +234,6 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 lhs_ptr_to = n->ptr_to;
                 n->assign.lhs->datatype = lhs_t;
                 n->assign.lhs->ptr_to = lhs_ptr_to;
-
-                if (!declare(n->assign.lhs->var, lhs_t, lhs_ptr_to, n->assign.is_mutable))
-                    panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
             } else {
                 lhs_t = lookup(n->assign.lhs->var);
                 lhs_ptr_to = lookup_ptr_to(n->assign.lhs->var);
@@ -243,9 +259,88 @@ DataTypes_t check_expr(ASTNode_t *n) {
         /* ✅ FIX 2: evaluate RHS BEFORE assign_check */
         DataTypes_t rhs_t = check_expr(n->assign.rhs);
 
+        /* Declaration path: lock type on first assignment. */
+        if (n->assign.is_declaration) {
+            if (lhs_ptr_to == UNKNOWN) lhs_ptr_to = n->assign.rhs ? n->assign.rhs->ptr_to : UNKNOWN;
+
+            if (lhs_t == UNKNOWN && n->assign.rhs && n->assign.rhs->kind == AST_NUM) {
+                DataTypes_t inferred = infer_smallest_numeric(n->assign.rhs->literal.raw);
+                if (inferred == UNKNOWN) {
+                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
+                    return UNKNOWN;
+                }
+                lhs_t = rhs_t = inferred;
+                n->assign.rhs->datatype = inferred;
+            } else if (lhs_t != UNKNOWN && n->assign.rhs && n->assign.rhs->kind == AST_NUM) {
+                if (!literal_fits_type(n->assign.rhs, lhs_t)) {
+                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
+                    return UNKNOWN;
+                }
+                rhs_t = lhs_t;
+                n->assign.rhs->datatype = lhs_t;
+            } else if (lhs_t == UNKNOWN) {
+                lhs_t = rhs_t;
+            }
+
+            n->assign.lhs->datatype = lhs_t;
+            n->assign.lhs->ptr_to = lhs_ptr_to;
+            n->datatype = lhs_t;
+            n->ptr_to = lhs_ptr_to;
+
+            if (!declare(n->assign.lhs->var, lhs_t, lhs_ptr_to, n->assign.is_mutable))
+                panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
+        } else {
+            /* Reassignment path: may auto-widen if mutable and numeric literal doesn't fit. */
+            if (lhs_t == UNKNOWN) {
+                panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
+                return UNKNOWN;
+            }
+            if (n->assign.rhs && n->assign.rhs->kind == AST_NUM) {
+                if (!literal_fits_type(n->assign.rhs, lhs_t)) {
+                    if (is_numeric(lhs_t) && is_mutable_symbol(n->assign.lhs->var)) {
+                        DataTypes_t lit_t = infer_smallest_numeric(n->assign.rhs->literal.raw);
+                        if (lit_t != UNKNOWN) {
+                            DataTypes_t widened = promote(lhs_t, lit_t);
+                            update_datatype(n->assign.lhs->var, widened);
+                            lhs_t = rhs_t = widened;
+                            n->assign.lhs->datatype = widened;
+                            n->datatype = widened;
+                            n->assign.rhs->datatype = widened;
+                        } else {
+                            panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
+                            return UNKNOWN;
+                        }
+                    } else {
+                        panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
+                        return UNKNOWN;
+                    }
+                } else {
+                    n->assign.rhs->datatype = lhs_t;
+                    rhs_t = lhs_t;
+                }
+            }
+        }
+
         /* ✅ FIX 3: now do assign_check with CORRECT types */
         if (n->assign.lhs->kind == AST_VAR && !n->assign.is_declaration) {
-            switch (assign_check(n->assign.lhs->var, rhs_t, n->assign.rhs->ptr_to))
+            exitcode_t ac = assign_check(n->assign.lhs->var, rhs_t, n->assign.rhs->ptr_to);
+            if (ac == TYPE_MISMATCH &&
+                n->assign.rhs && n->assign.rhs->kind == AST_NUM &&
+                is_numeric(lhs_t) && is_mutable_symbol(n->assign.lhs->var)) {
+                /* Auto-widen once for mutable variables: widen to common numeric type that fits literal. */
+                DataTypes_t lit_t = infer_smallest_numeric(n->assign.rhs->literal.raw);
+                if (lit_t != UNKNOWN) {
+                    DataTypes_t widened = promote(lhs_t, lit_t);
+                    update_datatype(n->assign.lhs->var, widened);
+                    n->assign.lhs->datatype = widened;
+                    n->datatype = widened;
+                    n->assign.rhs->datatype = widened;
+                    rhs_t = widened;
+                    lhs_t = widened;
+                    ac = assign_check(n->assign.lhs->var, rhs_t, n->assign.rhs->ptr_to);
+                }
+            }
+            switch (ac)
             {
                 case NOT_DECLARED:
                     panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
@@ -266,7 +361,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
         }
 
         /* ✅ FIX 4: normal type check */
-        if (lhs_t != rhs_t && !(is_numeric(lhs_t) && is_numeric(rhs_t))) {
+        if (lhs_t != rhs_t && !is_numeric(lhs_t) && !is_numeric(rhs_t)) {
             panic(&file, n->line, n->col, n->pos,
                 SEM_ASSIGN_TYPE_MISMATCH,
                 (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);

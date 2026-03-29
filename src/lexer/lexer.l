@@ -82,6 +82,7 @@
 else                         { return ELSE; }
 if                           { return IF; }
 for                          { return FOR; }
+var                          { return VAR; }
 i8                           { yylval->datatype = I8; return DATATYPES; }
 i16                          { yylval->datatype = I16; return DATATYPES; }
 i32                          { yylval->datatype = I32; return DATATYPES; }
@@ -117,8 +118,7 @@ false               {
     yylval->node->end_pos = yylloc->last_pos;
     return BOOL_LITERAL;
 }
-(let|immut)         { return IMMUT; }
-(var|mut)           { return MUT; }
+mut                 { return MUT; }
 fn                  { return FN; }
 (ret|return)        { return RETURN; }
 

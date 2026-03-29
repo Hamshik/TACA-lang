@@ -145,6 +145,7 @@ typedef struct ASTNode {
             struct ASTNode *lhs, *rhs;
             bool is_mutable;
             bool is_declaration;
+            bool is_autotyped;
             OP_kind_t op;
         } assign;
         // sequence of statements
