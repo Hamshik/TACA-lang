@@ -65,9 +65,19 @@ typedef enum errc {
     RT_ASSIGN_TARGET_NOT_VAR = 2010,
     RT_ASSIGN_UNSUPPORTED = 2011,
     RT_DANGLING_PTR = 2012,
+
 } errc_t;
 
+typedef enum warnc {
+    /* Semantic */
+    SEM_VAR_SHADOW = 1101,
+    SEM_UNUSED_VAR = 1102,
+    SEM_UNUSED_FN = 1103,
+    SEM_UNKNOWN_TYPE = 1199
+} warnc_t;
+
 const char *errc_msg(errc_t code);
+const char *warnc_msg(warnc_t code);
 
 extern file_t file;
 extern size_t err_no;
@@ -77,13 +87,13 @@ extern bool isWarning;
 extern bool panic_fatal;
 
 char *logf_msg(const char *fmt, ...);
-void panic(
-    file_t *file,
-    int err_line,
-    int err_col,
-    int ini_pos,
-    errc_t code,
-    const char *detail
-);
+int digits_int(int v);
+int starts_with(const char *s, const char *prefix);
+char *read_entire_path(FILE *file, size_t *out_len);
+
+void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail);
+void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, const char *detail);
+void syserr(const char *context);
+void syswarn(const char *context);
 
 #endif

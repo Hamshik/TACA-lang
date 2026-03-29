@@ -10,6 +10,7 @@ typedef struct symboltable{
     const char* name;
     UT_hash_handle hh;
     bool is_mutable;
+    bool is_used;
 }Symboltable_t;
 
 

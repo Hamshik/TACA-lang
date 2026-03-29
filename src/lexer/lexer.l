@@ -31,6 +31,7 @@
 %%
 "\357\273\277"               { /* skip */ }
 [ \t\r\n]+                   { /* skip */ }
+
 "'''"                        {
     tq_comment_start_line = yylloc->first_line;
     tq_comment_start_col = yylloc->first_column;
@@ -127,6 +128,15 @@ fn                  { return FN; }
     yylval->node->end_pos = yylloc->last_pos;
     return NUMBER;
 }
+\.[0-9]+ {
+    char* buffer = (char*)malloc(strlen(yytext) + 2);
+    snprintf(buffer, strlen(yytext) + 2, "0%s", yytext);
+    yylval->node = new_num(buffer, UNKNOWN, yylloc->first_line, yylloc->first_column);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
+    free(buffer);
+    return NUMBER;
+}
 ","                 { return COMMA; }
 "++"                { return INC; }
 "--"                { return DEC; }
@@ -176,7 +186,7 @@ fn                  { return FN; }
     yylval->node->end_pos = yylloc->last_pos;
     return IDENTIFIER;
 }
-.                   {
+.                  {
     unsigned char b0 = (unsigned char)yytext[0];
     char detail[32];
     snprintf(detail, sizeof(detail), "0x%02X", b0);

@@ -31,12 +31,12 @@ void semantic_check(ASTNode_t *root) {
         fprintf(stderr, BOLD RED "ERROR: " RESET);
         fprintf(stderr, UNDERLINE MAGENTA "Compilation failed with %zu error(s)\n" RESET, err_no);
         exit(EXIT_FAILURE);
-	    } else if (isWarning) {
-	        fprintf(stderr, BOLD YELLOW "WARNING: " RESET);
-	        fprintf(stderr, UNDERLINE MAGENTA "Compilation succeeded with %zu warning(s)\n" RESET, warn_no);
-	    } else {
-	        fprintf(stderr, BOLD GREEN "SUCCESS: Compilation succeeded with no errors or warnings\n" RESET);
-	    }
+	} else if (isWarning) {
+	    fprintf(stderr, BOLD YELLOW "WARNING: " RESET);
+	    fprintf(stderr, UNDERLINE MAGENTA "Compilation succeeded with %zu warning(s)\n" RESET, warn_no);
+	} else {
+	    fprintf(stderr, BOLD GREEN "SUCCESS: Compilation succeeded with no errors or warnings\n" RESET);
+	}
 }
 
 /* Main recursive checker */
@@ -47,7 +47,15 @@ DataTypes_t check_expr(ASTNode_t *n) {
     switch (n->kind) {
     case AST_BOOL:
     case AST_NUM:
-        return n->datatype;
+        if (n->datatype == UNKNOWN) {
+            warn(&file, n->line, n->col, n->pos, SEM_UNKNOWN_TYPE, "defaulting numeric literal to i32");
+            if (strchr(n->literal.raw, '.')) {
+                n->datatype = F32; // or F64
+            } else {
+                n->datatype = I32;
+            }
+        }
+    return n->datatype;
 
     case AST_STR:
         return STRINGS;
@@ -89,12 +97,17 @@ DataTypes_t check_expr(ASTNode_t *n) {
             lt = rt = I32;
         }
 
+        if (lt == PTR || rt == PTR) {
+            panic(&file, n->line, n->col, n->pos,
+                SEM_NUMOP_NEEDS_NUM,
+                "pointer arithmetic not supported");
+        }
         /* string ops */
         if (lt == STRINGS || rt == STRINGS) {
             if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
                 panic(&file, n->line, n->col, n->pos, SEM_STRING_OP_INVALID, NULL);
-                 
             }
+
             n->datatype = STRINGS;
             return STRINGS;
         }
@@ -209,22 +222,6 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 lhs_t = lookup(n->assign.lhs->var);
                 lhs_ptr_to = lookup_ptr_to(n->assign.lhs->var);
 
-                switch (assign_check(n->assign.lhs->var, n->assign.rhs->datatype, n->assign.rhs->ptr_to))
-                {
-                case NOT_DECLARED:
-                    panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
-                    return UNKNOWN;
-                case TYPE_MISMATCH:
-                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
-                    return UNKNOWN;
-                case IMMUTABLE_TYPING:
-                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_IMMUTABLE, n->assign.lhs->var);
-                    return UNKNOWN;
-                case SUCCESS:
-                default:
-                    break;
-                }
-
                 n->assign.lhs->datatype = lhs_t;
                 n->assign.lhs->ptr_to = lhs_ptr_to;
                 n->datatype = lhs_t;
@@ -239,20 +236,62 @@ DataTypes_t check_expr(ASTNode_t *n) {
             panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
         }
 
-        if (is_numeric(lhs_t)) force_numeric_type(n->assign.rhs, lhs_t);
+        /* ✅ FIX 1: force numeric BEFORE evaluating RHS */
+        if (is_numeric(lhs_t))
+            force_numeric_type(n->assign.rhs, lhs_t);
+
+        /* ✅ FIX 2: evaluate RHS BEFORE assign_check */
         DataTypes_t rhs_t = check_expr(n->assign.rhs);
 
-        if (lhs_t != rhs_t)
-            panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+        /* ✅ FIX 3: now do assign_check with CORRECT types */
+        if (n->assign.lhs->kind == AST_VAR && !n->assign.is_declaration) {
+            switch (assign_check(n->assign.lhs->var, rhs_t, n->assign.rhs->ptr_to))
+            {
+                case NOT_DECLARED:
+                    panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
+                    return UNKNOWN;
+
+                case TYPE_MISMATCH:
+                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, n->assign.lhs->var);
+                    return UNKNOWN;
+
+                case IMMUTABLE_TYPING:
+                    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_IMMUTABLE, n->assign.lhs->var);
+                    return UNKNOWN;
+
+                case SUCCESS:
+                default:
+                    break;
+            }
+        }
+
+        /* ✅ FIX 4: normal type check */
+        if (lhs_t != rhs_t && !(is_numeric(lhs_t) && is_numeric(rhs_t))) {
+            panic(&file, n->line, n->col, n->pos,
+                SEM_ASSIGN_TYPE_MISMATCH,
+                (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+        }
+
+        /* ✅ FIX 5: strict pointer validation */
         if (lhs_t == PTR) {
+            if (rhs_t != PTR) {
+                panic(&file, n->line, n->col, n->pos,
+                    SEM_ASSIGN_TYPE_MISMATCH,
+                    (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+            }
+
             DataTypes_t rhs_ptr_to = n->assign.rhs->ptr_to;
-            if (lhs_ptr_to != rhs_ptr_to)
-                panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH, (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+
+            if (lhs_ptr_to != rhs_ptr_to &&
+                !(is_numeric(lhs_ptr_to) && is_numeric(rhs_ptr_to))) {
+                panic(&file, n->line, n->col, n->pos,
+                    SEM_ASSIGN_TYPE_MISMATCH,
+                    (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
+            }
         }
 
         return lhs_t;
     }
-
     case AST_SEQ:
         check_expr(n->seq.a);
         return check_expr(n->seq.b);

@@ -61,6 +61,15 @@ const char *errc_msg(errc_t code) {
     }
 }
 
+const char *warnc_msg(warnc_t code) {
+    switch (code) {
+        case SEM_VAR_SHADOW: return "variable shadows another variable";
+        case SEM_UNUSED_VAR: return "unused variable";
+        case SEM_UNUSED_FN: return "unused function";
+        default: return "warning";
+    }
+}
+
 char *logf_msg(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -78,4 +87,46 @@ char *logf_msg(const char *fmt, ...) {
     va_end(ap);
 
     return buf;
+}
+
+char *read_entire_path(FILE *f, size_t *out_len) {
+    if (!f) return NULL;
+
+    long saved = ftell(f);
+    if (saved < 0) saved = 0;
+
+    if (fseek(f, 0, SEEK_END) != 0) return NULL;
+    long n = ftell(f);
+    if (n < 0) {
+        (void)fseek(f, saved, SEEK_SET);
+        return NULL;
+    }
+    rewind(f);
+
+    char *buf = malloc((size_t)n + 1);
+    if (!buf) {
+        (void)fseek(f, saved, SEEK_SET);
+        return NULL;
+    }
+
+    size_t got = fread(buf, 1, (size_t)n, f);
+    buf[got] = '\0';
+    if (out_len) *out_len = got;
+
+    (void)fseek(f, saved, SEEK_SET);
+    return buf;
+}
+
+int digits_int(int v) {
+    int d = 1;
+    while (v >= 10) { v /= 10; d++; }
+    return d;
+}
+
+int starts_with(const char *s, const char *prefix) {
+    if (!s || !prefix) return 0;
+    while (*prefix) {
+        if (*s++ != *prefix++) return 0;
+    }
+    return 1;
 }

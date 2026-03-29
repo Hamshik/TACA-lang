@@ -9,7 +9,7 @@
 	            "type": "cppdbg",
 	            "request": "launch",
 	            "program": "${workspaceFolder}/bin/Complier",
-	            "args": ["${file}"],
+	            "args": ["${workspaceFolder}/examples/source/test.tq"],
 	            "cwd": "${workspaceFolder}",
 	            "stopAtEntry": false,
 	            "externalConsole": false,

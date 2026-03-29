@@ -28,9 +28,9 @@ bool is_numeric(DataTypes_t t) {
         case UF32:
         case UF64:
         case UF128:
-            return 1;
+            return true;
         default:
-            return 0;
+            return false;
     }
 }
 
@@ -91,7 +91,6 @@ DataTypes_t promote(DataTypes_t a, DataTypes_t b) {
 
 void force_numeric_type(ASTNode_t *n, DataTypes_t t) {
     if (!n || t == UNKNOWN) return;
-
     switch (n->kind) {
     case AST_NUM:
         if (n->datatype == UNKNOWN) n->datatype = t;

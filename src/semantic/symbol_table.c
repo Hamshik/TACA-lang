@@ -96,7 +96,7 @@ exitcode_t assign_check(const char* name, DataTypes_t rhs_t, DataTypes_t rhs_ptr
         Symboltable_t *v = NULL;
         HASH_FIND_STR(it->symbols, name, v);
         if (!v) continue;
-        if (rhs_t != UNKNOWN && v->type != rhs_t) return TYPE_MISMATCH;
+        if (rhs_t != UNKNOWN && v->type != rhs_t && !is_numeric(rhs_t) && !is_numeric(v->type)) return TYPE_MISMATCH;
         if (rhs_t == PTR && v->ptr_to != rhs_ptr_to) return TYPE_MISMATCH;
         if (!v->is_mutable) return IMMUTABLE_TYPING;
         return SUCCESS;

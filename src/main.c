@@ -36,21 +36,28 @@ FILE* open_file(const char *filename, char **resolved_path_out){
 int main(int argc, char **argv) {
     FILE *input = NULL;
     panic_fatal = true; /* lexer/parser should stop immediately */
-    if (argc == 1) {
-        input = stdin;
-        file.filename = "<stdin>";
-        file.source = stdin;
-    } else if (argc == 2) {
-        char *resolved_path = NULL;
-        input = open_file(argv[1], &resolved_path);
-        if (!input) return EXIT_FAILURE;
-        file.filename = resolved_path ? resolved_path : (char *)argv[1];
-        file.source = input;
-    } else {
-        fprintf(stderr, "Usage: %s [path]\n Use --help for more information", argv[0]);
-        return EXIT_FAILURE;
-    }
 
+    switch (argc) {
+        case 1:{
+            input = stdin;
+            file.filename = "<stdin>";
+            file.source = stdin;
+            break;
+        }
+        case 2: {
+            char *resolved_path = NULL;
+            input = open_file(argv[1], &resolved_path);
+            if (!input) return EXIT_FAILURE;
+            file.filename = resolved_path ? resolved_path : (char *)argv[1];
+            file.source = input;
+            break;
+        }
+        default:{
+            syserr("Too many arguments\nUsage: tarkiq [source_file]");
+            return EXIT_FAILURE;
+        }
+    }
+    
     yyin = input;
     yyrestart(yyin);
 
