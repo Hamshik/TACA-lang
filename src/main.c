@@ -67,8 +67,8 @@ int main(int argc, char **argv) {
         panic_fatal = false; /* collect semantic errors like Rust */
         semantic_check(root);
         panic_fatal = true;  /* runtime errors should still stop */
-        ast_eval(root);
         codegen(root);
+        ast_eval(root);
         ast_free(root);
         env_clear_all();
     }
