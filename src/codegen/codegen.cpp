@@ -30,22 +30,6 @@ static bool is_unsigned_dtype(DataTypes_t t) {
     }
 }
 
-static Type* llvm_type_for(DataTypes_t t, LLVMContext &ctx) {
-    switch (t) {
-        case I8:  case U8:   return Type::getInt8Ty(ctx);
-        case I16: case U16:  return Type::getInt16Ty(ctx);
-        case I32: case U32:  return Type::getInt32Ty(ctx);
-        case I64: case U64:  return Type::getInt64Ty(ctx);
-        case I128:case U128: return IntegerType::get(ctx, 128);
-        case F32: case UF32: return Type::getFloatTy(ctx);
-        case F64: case UF64: return Type::getDoubleTy(ctx);
-        case F128:case UF128:return Type::getFP128Ty(ctx);
-        case BOOL:           return Type::getInt1Ty(ctx);
-        case CHARACTER:      return Type::getInt8Ty(ctx);
-        default:             return Type::getInt32Ty(ctx);
-    }
-}
-
 static llvm::Value* emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b) {
     if (!n) return nullptr;
     switch (n->kind) {
