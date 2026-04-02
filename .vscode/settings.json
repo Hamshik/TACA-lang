@@ -1,8 +1,8 @@
 {
-    "C_Cpp.errorSquiggles": "enabledIfIncludesResolve",
+    "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/**/*"
     ],
-    "editor.fontLigatures": false
-    
+    "editor.fontLigatures": false,
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
 }

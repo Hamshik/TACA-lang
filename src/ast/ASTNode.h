@@ -28,6 +28,7 @@ typedef enum DataTypes{
     I8,
     I16,
     I32,
+    I64,
     I128,
 
     F32,
@@ -77,6 +78,7 @@ typedef union {
     int8_t i8;
     short i16;
     int i32;
+    long int i64;
     __int128 i128;
 
     float f32;

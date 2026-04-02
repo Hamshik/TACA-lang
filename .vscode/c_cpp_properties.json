@@ -5,7 +5,9 @@
             "includePath": [
                 "${workspace}/src/**/**/*",
                 "${workspace}/examples/**/*",
-                "${default}"
+                "${default}",
+                "/usr/llvm/include/**/*",
+                "/usr/llvm/include/*"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
@@ -17,17 +19,6 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true
             }
-        },
-        {
-            "name": "b",
-            "includePath": [
-                "${default}"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "linux-clang-x64"
         }
     ],
     "version": 4

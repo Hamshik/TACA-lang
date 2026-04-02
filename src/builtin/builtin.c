@@ -169,7 +169,7 @@ TypedValue tq_std_call(
     if (strcmp(sig->name, "type") == 0) {
         const char *tname = NULL;
         switch (argv[0].type) {
-            case I8: tname = "i8"; break; case I16: tname = "i16"; break; case I32: tname = "i32"; break; case I128: tname = "i128"; break;
+            case I8: tname = "i8"; break; case I16: tname = "i16"; break; case I32: tname = "i32"; break; case I64: tname = "i64"; break; case I128: tname = "i128"; break;
             case U8: tname = "u8"; break; case U16: tname = "u16"; break; case U32: tname = "u32"; break; case U64: tname = "u64"; break; case U128: tname = "u128"; break;
             case F32: tname = "f32"; break; case F64: tname = "f64"; break; case F128: tname = "f128"; break;
             case UF32: tname = "uf32"; break; case UF64: tname = "uf64"; break; case UF128: tname = "uf128"; break;

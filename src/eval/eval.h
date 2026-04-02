@@ -70,5 +70,6 @@ Value add_step_for(DataTypes_t type, Value cur, Value step);
 DataTypes_t tq_promote_runtime(DataTypes_t a, DataTypes_t b);
 TypedValue tq_cast_typed(TypedValue v, DataTypes_t target, int line, int col, int pos);
 Value tq_eval_binop_numeric(OP_kind_t op, DataTypes_t type, Value a, Value b);
-
+unsigned __int128 tq_parse_u128(const char *s, int *ok);
+__int128 tq_parse_i128(const char *s, int *ok);
 #endif

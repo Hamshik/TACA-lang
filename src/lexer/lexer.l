@@ -86,6 +86,7 @@ var                          { return VAR; }
 i8                           { yylval->datatype = I8; return DATATYPES; }
 i16                          { yylval->datatype = I16; return DATATYPES; }
 i32                          { yylval->datatype = I32; return DATATYPES; }
+i64                          { yylval->datatype = I64; return DATATYPES; }
 i128                         { yylval->datatype = I128; return DATATYPES; }
 
 u8                           { yylval->datatype = U8; return DATATYPES; }

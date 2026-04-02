@@ -17,6 +17,7 @@ bool is_numeric(DataTypes_t t) {
         case I8:
         case I16:
         case I32:
+        case I64:
         case I128:
         case U8:
         case U16:

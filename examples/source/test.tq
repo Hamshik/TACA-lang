@@ -1,3 +1,5 @@
 var mut x = -10;
+var mut y = -10;
+var mut i16 z = x + 100000000000000000000000000000000000 - y;
 
-println(type(x));
+println(z);

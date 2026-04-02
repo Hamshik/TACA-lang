@@ -19,7 +19,7 @@ static FnEntry_t *g_fns = NULL;
 static int g_returning = 0;
 static TypedValue g_return_value = (TypedValue){0};
 
-static unsigned __int128 tq_parse_u128(const char *s, int *ok) {
+unsigned __int128 tq_parse_u128(const char *s, int *ok){
     if (ok) *ok = 0;
     if (!s || !*s) return 0;
     unsigned __int128 v = 0;
@@ -31,7 +31,7 @@ static unsigned __int128 tq_parse_u128(const char *s, int *ok) {
     return v;
 }
 
-static __int128 tq_parse_i128(const char *s, int *ok) {
+__int128 tq_parse_i128(const char *s, int *ok) {
     if (ok) *ok = 0;
     if (!s || !*s) return 0;
     int neg = 0;
@@ -77,6 +77,8 @@ TypedValue ast_eval(ASTNode_t *node) {
                 v.val.i16 = (short)strtol(node->literal.raw, NULL, 10); break;
             case I32:
                 v.val.i32 = (int)strtol(node->literal.raw, NULL, 10); break;
+            case I64:
+                v.val.i64 = (long)strtol(node->literal.raw, NULL, 10); break;
             case I128: {
                 int ok = 0;
                 v.val.i128 = tq_parse_i128(node->literal.raw, &ok);

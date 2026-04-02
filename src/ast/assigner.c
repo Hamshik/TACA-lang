@@ -12,6 +12,7 @@ void assign_value(DataTypes_t dt, Value *dst, Value src) {
         case I8:     dst->i8 = src.i8; break;
         case I16:    dst->i16 = src.i16; break;
         case I32:    dst->i32 = src.i32; break;
+        case I64:    dst->i64 = src.i64; break;
         case I128:   dst->i128 = src.i128; break;
         case U8:     dst->u8 = src.u8; break;
         case U16:    dst->u16 = src.u16; break;

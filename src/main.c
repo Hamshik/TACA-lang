@@ -10,6 +10,7 @@
 #include "semantic/semantic.h"
 #include "eval/eval.h"
 #include "utils/error_handler/error_msg.h"
+#include "codegen/codegen.h"
 
 extern FILE *yyin;
 void yyrestart(FILE *input_file);
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
         semantic_check(root);
         panic_fatal = true;  /* runtime errors should still stop */
         ast_eval(root);
+        codegen(root);
         ast_free(root);
         env_clear_all();
     }

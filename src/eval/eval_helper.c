@@ -11,7 +11,7 @@ static bool tq_is_unsigned_int(DataTypes_t t) {
 }
 
 static bool tq_is_signed_int(DataTypes_t t) {
-    return t == I8 || t == I16 || t == I32 || t == I128;
+    return t == I8 || t == I16 || t == I32 || t == I64 ||t == I128 ;
 }
 
 static DataTypes_t tq_norm(DataTypes_t t) {
@@ -51,6 +51,7 @@ DataTypes_t tq_promote_runtime(DataTypes_t a, DataTypes_t b) {
     }
 
     if (a == I128 || b == I128) return I128;
+    if (a == I64 || b == I64) return I32;
     if (a == I32 || b == I32) return I32;
     if (a == I16 || b == I16) return I16;
     return I8;
@@ -65,6 +66,7 @@ static long double tq_as_f128(Value v, DataTypes_t t) {
         case I8: return (long double)v.i8;
         case I16: return (long double)v.i16;
         case I32: return (long double)v.i32;
+        case I64: return (long double)v.i32;
         case I128: return (long double)v.i128;
         case U8: return (long double)v.u8;
         case U16: return (long double)v.u16;
@@ -82,6 +84,7 @@ static __int128 tq_as_i128(Value v, DataTypes_t t) {
         case I8: return (__int128)v.i8;
         case I16: return (__int128)v.i16;
         case I32: return (__int128)v.i32;
+        case I64: return (__int128)v.i64;
         case I128: return v.i128;
         case U8: return (__int128)v.u8;
         case U16: return (__int128)v.u16;
@@ -143,6 +146,7 @@ static Value tq_from_i128(__int128 x, DataTypes_t t) {
         case I8: out.i8 = (int8_t)x; break;
         case I16: out.i16 = (short)x; break;
         case I32: out.i32 = (int)x; break;
+        case I64: out.i64 = (long)x; break;
         case I128: out.i128 = x; break;
         default: break;
     }
@@ -238,6 +242,13 @@ void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kin
                 UNOP_CASES(i32, operand);
                 case OP_BITNOT: result->i32 = ~operand->i32; break;
                 default: DIE("Invalid i32 unary operator");
+            }
+            break;
+        case I64:
+            switch (op) {
+                UNOP_CASES(i64, operand);
+                case OP_BITNOT: result->i64 = ~operand->i64; break;
+                default: DIE("Invalid nnary operator");
             }
             break;
         case I128:

@@ -12,8 +12,35 @@
 #include <string.h>
 #include <math.h>
 
+static int numeric_bits(DataTypes_t t) {
+    switch (t) {
+        case I8: case U8:   return 8;
+        case I16: case U16: return 16;
+        case I32: case U32: return 32;
+        case I64: case U64: return 64;
+        case I128: case U128: return 128;
+        case F32: case UF32: return 32;
+        case F64: case UF64: return 64;
+        case F128: case UF128: return 128;
+        default: return 0;
+    }
+}
+
 static bool literal_fits_type(const ASTNode_t *lit, DataTypes_t t) {
-    if (!lit || lit->kind != AST_NUM || !lit->literal.raw) return false;
+    if (!lit) return false;
+    switch (lit->kind)
+    {
+    case AST_UNOP:
+        return literal_fits_type(lit->unop.operand, t);
+    case AST_BINOP:
+        return literal_fits_type(lit->bin.right, t) && literal_fits_type(lit->bin.left, t);
+    case AST_ASSIGN:
+        return literal_fits_type(lit->assign.rhs, t) && literal_fits_type(lit->assign.lhs, t);
+    case AST_VAR:
+        return numeric_bits(lit->datatype) >= numeric_bits(t);
+    default:
+    }
+
     const char *raw = lit->literal.raw;
     switch (t) {
         case I8:   return is_i8(raw);
@@ -31,6 +58,22 @@ static bool literal_fits_type(const ASTNode_t *lit, DataTypes_t t) {
         default:   return false;
     }
 }
+
+static bool is_unsigned_numeric(DataTypes_t t) {
+    switch (t) {
+        case U8: case U16: case U32: case U64: case U128:
+        case UF32: case UF64: case UF128:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool is_signed_numeric(DataTypes_t t) {
+    return is_numeric(t) && !is_unsigned_numeric(t);
+}
+
+
 
 extern bool isError;
 extern size_t err_no;
@@ -172,7 +215,6 @@ DataTypes_t check_expr(ASTNode_t *n) {
         if (!is_numeric(lt) || !is_numeric(rt)) 
             panic(&file, n->line, n->col, n->pos, SEM_BINOP_INVALID, NULL);
         
-
         n->datatype = promote(lt, rt);
         return n->datatype;
     }
@@ -245,6 +287,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 n->assign.lhs->ptr_to = lhs_ptr_to;
                 n->datatype = lhs_t;
                 n->ptr_to = lhs_ptr_to;
+
             }
         } else if (n->assign.lhs->kind == AST_UNOP && n->assign.lhs->unop.op == OP_DEREF) {
             if (n->assign.is_declaration)
@@ -261,7 +304,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
         /* ✅ FIX 2: evaluate RHS BEFORE assign_check */
         DataTypes_t rhs_t = check_expr(n->assign.rhs);
-
+        
         /* Declaration path: lock type on first assignment. */
         if (n->assign.is_declaration) {
             if (lhs_ptr_to == UNKNOWN) lhs_ptr_to = n->assign.rhs ? n->assign.rhs->ptr_to : UNKNOWN;
@@ -285,6 +328,15 @@ DataTypes_t check_expr(ASTNode_t *n) {
                 n->datatype = STRINGS;
             } else if(n->kind == AST_CHAR && n->datatype == UNKNOWN) {
                 n->datatype = CHARACTER;
+            }
+
+            /* Final fit check for explicitly typed declarations against expression result. */
+            if (lhs_t != UNKNOWN && is_numeric(lhs_t) && is_numeric(rhs_t)) {
+                if (!literal_fits_type(n->assign.rhs, lhs_t) ||
+                    (is_signed_numeric(rhs_t) && is_unsigned_numeric(lhs_t))) {
+                    panic(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW, n->assign.lhs->var);
+                    return UNKNOWN;
+                }
             }
 
             n->assign.lhs->datatype = lhs_t;

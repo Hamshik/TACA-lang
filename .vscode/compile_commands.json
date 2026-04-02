@@ -1,0 +1,370 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-Wall",
+      "-Wextra",
+      "-Wno-unused-parameter",
+      "-g",
+      "-Isrc",
+      "-I/usr/include/llvm/include",
+      "-std=c++17",
+      "-D_GNU_SOURCE",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-fno-exceptions",
+      "-fno-rtti",
+      "-c",
+      "-o",
+      "bin/codegen.o",
+      "src/codegen/codegen.cpp"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/codegen/codegen.cpp",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/codegen.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/parser.o",
+      "src/parser/parser.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/parser/parser.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/parser.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/parser_helpers.o",
+      "src/parser/parser_helpers.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/parser/parser_helpers.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/parser_helpers.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/lexer.o",
+      "src/lexer/lexer.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/lexer/lexer.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/lexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/lexer_helpers.o",
+      "src/lexer/lexer_helpers.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/lexer/lexer_helpers.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/lexer_helpers.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/eval.o",
+      "src/eval/eval.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/eval/eval.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/eval.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/ASTNode.o",
+      "src/ast/ASTNode.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/ast/ASTNode.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/ASTNode.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/ASTHelper.o",
+      "src/ast/ASTHelper.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/ast/ASTHelper.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/ASTHelper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/assigner.o",
+      "src/ast/assigner.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/ast/assigner.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/assigner.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/env.o",
+      "src/ast/env.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/ast/env.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/env.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/semanic.o",
+      "src/semantic/semanic.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/semantic/semanic.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/semanic.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/symbol_table.o",
+      "src/semantic/symbol_table.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/semantic/symbol_table.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/symbol_table.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/error.o",
+      "src/utils/error_handler/error.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/utils/error_handler/error.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/error.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/error_msg.o",
+      "src/utils/error_handler/error_msg.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/utils/error_handler/error_msg.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/error_msg.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/stepper.o",
+      "src/eval/stepper.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/eval/stepper.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/stepper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/eval_helper.o",
+      "src/eval/eval_helper.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/eval/eval_helper.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/eval_helper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/semantic_helper.o",
+      "src/semantic/semantic_helper.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/semantic/semantic_helper.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/semantic_helper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/builtin.o",
+      "src/builtin/builtin.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/builtin/builtin.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/builtin.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/typecheck.o",
+      "src/typechecker/typecheck.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/typechecker/typecheck.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/typecheck.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-Wunused-function",
+      "-Wunused-variable",
+      "-c",
+      "-o",
+      "bin/main.o",
+      "src/main.c"
+    ],
+    "directory": "/home/innovation_hub/Documents/Tarkiq-lang",
+    "file": "/home/innovation_hub/Documents/Tarkiq-lang/src/main.c",
+    "output": "/home/innovation_hub/Documents/Tarkiq-lang/bin/main.o"
+  }
+]
