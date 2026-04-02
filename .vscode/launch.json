@@ -8,7 +8,7 @@
 	            "name": "Launch MyComplier",
 	            "type": "cppdbg",
 	            "request": "launch",
-	            "program": "${workspaceFolder}/bin/Complier",
+	            "program": "${workspaceFolder}/TQc",
 	            "args": ["${workspaceFolder}/examples/source/test.tq"],
 	            "cwd": "${workspaceFolder}",
 	            "stopAtEntry": false,

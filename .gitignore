@@ -1,2 +1,5 @@
 bin
 out.ll
+examples/source/out
+tarkiq-out
+out

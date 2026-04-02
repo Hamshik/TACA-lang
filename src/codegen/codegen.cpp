@@ -202,9 +202,9 @@ extern "C" int codegen(ASTNode_t* root) {
     IRBuilder<> entryBuilder(ctx); /* keeps insert point at entry for allocas */
     LocalMap locals;
 
-    // define i32 @tq_main()
+    // define i32 @main()
     FunctionType *ft = FunctionType::get(b.getInt32Ty(), false);
-    Function *fn = Function::Create(ft, Function::ExternalLinkage, "tq_main", mod);
+    Function *fn = Function::Create(ft, Function::ExternalLinkage, "main", mod);
     BasicBlock *entry = BasicBlock::Create(ctx, "entry", fn);
     b.SetInsertPoint(entry);
     entryBuilder.SetInsertPoint(entry, entry->begin());
