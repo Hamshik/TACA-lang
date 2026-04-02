@@ -37,25 +37,32 @@ static bool literal_fits_type(const ASTNode_t *lit, DataTypes_t t) {
     case AST_ASSIGN:
         return literal_fits_type(lit->assign.rhs, t) && literal_fits_type(lit->assign.lhs, t);
     case AST_VAR:
-        return numeric_bits(lit->datatype) >= numeric_bits(t);
+        if (!is_numeric(lit->datatype) || !is_numeric(t)) return false;
+        if (numeric_bits(lit->datatype) > numeric_bits(t)) return false;
+        /* Allow widening signed->unsigned; actual sign is checked at runtime elsewhere. */
+        return true;
+    case AST_NUM:
+        {
+            const char *raw = lit->literal.raw;
+            if (!raw) return false;
+            switch (t) {
+                case I8:   return is_i8(raw);
+                case I16:  return is_i16(raw);
+                case I32:  return is_i32(raw);
+                case I128: return is_i128(raw);
+                case U8:   return is_u8(raw);
+                case U16:  return is_u16(raw);
+                case U32:  return is_u32(raw);
+                case U64:  return is_u64(raw);
+                case U128: return is_u128(raw);
+                case F32:  return is_f32(raw);
+                case F64:  return is_f64(raw) || is_f32(raw);
+                case F128: return is_f128(raw) || is_f64(raw) || is_f32(raw);
+                default:   return false;
+            }
+        }
     default:
-    }
-
-    const char *raw = lit->literal.raw;
-    switch (t) {
-        case I8:   return is_i8(raw);
-        case I16:  return is_i16(raw);
-        case I32:  return is_i32(raw);
-        case I128: return is_i128(raw);
-        case U8:   return is_u8(raw);
-        case U16:  return is_u16(raw);
-        case U32:  return is_u32(raw);
-        case U64:  return is_u64(raw);
-        case U128: return is_u128(raw);
-        case F32:  return is_f32(raw);
-        case F64:  return is_f64(raw) || is_f32(raw);
-        case F128: return is_f128(raw) || is_f64(raw) || is_f32(raw);
-        default:   return false;
+        return false;
     }
 }
 
