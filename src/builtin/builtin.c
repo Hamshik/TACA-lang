@@ -78,7 +78,7 @@ static const tq_std_sig_t g_builtins[] = {
     { "alloc",     g_alloc_params,   1, PTR  },
     { "calloc",    g_calloc_params,  2, PTR  },
     { "realloc",   g_realloc_params, 2, PTR  },
-    { "getdatatype", g_getdt_params, 1, STRINGS },
+    { "type", g_getdt_params, 1, STRINGS },
 };
 
 const tq_std_sig_t *tq_std_sig(const char *name) {
@@ -96,7 +96,7 @@ TypedValue tq_std_call(
     int call_line,
     int call_col,
     int call_pos,
-    int *ok
+    bool *ok
 ) {
     if (ok) *ok = 0;
     const tq_std_sig_t *sig = tq_std_sig(name);
@@ -166,7 +166,7 @@ TypedValue tq_std_call(
         return tv;
     }
 
-    if (strcmp(sig->name, "getdatatype") == 0) {
+    if (strcmp(sig->name, "type") == 0) {
         const char *tname = NULL;
         switch (argv[0].type) {
             case I8: tname = "i8"; break; case I16: tname = "i16"; break; case I32: tname = "i32"; break; case I128: tname = "i128"; break;

@@ -1,5 +1,6 @@
 #include "semantic.h"
 #include <stdio.h>
+#include "../typechecker/typecheck.h"
 #include "../utils/error_handler/error_msg.h"
 
 extern file_t file;
@@ -74,15 +75,13 @@ DataTypes_t promote(DataTypes_t a, DataTypes_t b) {
     bool a_unsigned = (a == U8 || a == U16 || a == U32 || a == U64 || a == U128);
     bool b_unsigned = (b == U8 || b == U16 || b == U32 || b == U64 || b == U128);
     bool want_unsigned = a_unsigned || b_unsigned;
-
     if (want_unsigned) {
-        if (a == U128 || b == U128 || a == I128 || b == I128) return U128;
+        if (a == U128 || b == U128) return U128;
         if (a == U64 || b == U64) return U64;
-        if (a == U32 || b == U32 || a == I32 || b == I32) return U32;
-        if (a == U16 || b == U16 || a == I16 || b == I16) return U16;
+        if (a == U32 || b == U32) return U32;
+        if (a == U16 || b == U16) return U16;
         return U8;
     }
-
     if (a == I128 || b == I128) return I128;
     if (a == I32 || b == I32) return I32;
     if (a == I16 || b == I16) return I16;
@@ -97,7 +96,11 @@ void force_numeric_type(ASTNode_t *n, DataTypes_t t) {
         break;
     case AST_UNOP:
         force_numeric_type(n->unop.operand, t);
-        if (n->datatype == UNKNOWN) n->datatype = t;
+        if (n->datatype == UNKNOWN) {
+            n->datatype = (n->unop.operand && n->unop.operand->datatype != UNKNOWN)
+                          ? n->unop.operand->datatype
+                          : t;
+        }
         break;
     case AST_BINOP:
         force_numeric_type(n->bin.left, t);

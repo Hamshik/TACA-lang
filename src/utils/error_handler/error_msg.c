@@ -42,6 +42,7 @@ const char *errc_msg(errc_t code) {
         case SEM_ARG_TYPE_MISMATCH: return "argument type mismatch";
         case SEM_RETURN_OUTSIDE_FN: return "return outside of function";
         case SEM_RETURN_TYPE_MISMATCH: return "return type mismatch";
+        case SEM_NUMERIC_LITERAL_OVERFLOW: return "numeric literal overflow";
         case SEM_UNKNOWN_AST: return "unknown AST node in semantic analysis";
 
         case RT_NUM_LITERAL_UNSUPPORTED: return "unsupported numeric literal type";
@@ -57,7 +58,7 @@ const char *errc_msg(errc_t code) {
         case RT_ASSIGN_UNSUPPORTED: return "unsupported assignment type (runtime)";
         case RT_DANGLING_PTR: return "dangling pointer (runtime)";
 
-        default: return "error";
+        default: return "?error?";
     }
 }
 
@@ -66,6 +67,7 @@ const char *warnc_msg(warnc_t code) {
         case SEM_VAR_SHADOW: return "variable shadows another variable";
         case SEM_UNUSED_VAR: return "unused variable";
         case SEM_UNUSED_FN: return "unused function";
+        case SEM_TYPE_WIDENED: return "type widened to fit literal";
         default: return "warning";
     }
 }

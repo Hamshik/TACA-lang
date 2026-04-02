@@ -20,6 +20,7 @@ bool is_f32(const char* raw_num);
 bool is_f64(const char* raw_num);
 bool is_f128(const char* raw_num);
 
-ASTNode_t* enforce_numeric_type(ASTNode_t* n, DataTypes_t want);
 DataTypes_t infer_smallest_numeric(const char *raw_num);
+bool has_max_numeric_type(const ASTNode_t *n);
+
 #endif

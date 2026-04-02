@@ -26,6 +26,21 @@ ASTNode_t *new_str(char *rawval, int line, int col)
     return node;
 }
 
+ASTNode_t *new_char(char c, int line, int col)
+{
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_CHAR;
+    node->datatype = CHARACTER;
+    node->line = line;
+    node->col = col;
+    node->literal.raw = malloc(2);
+    if (node->literal.raw) {
+        node->literal.raw[0] = c;
+        node->literal.raw[1] = '\0';
+    }
+    return node;
+}
+
 ASTNode_t* new_var(const char *name, DataTypes_t datatype, int line, int col) {
     ASTNode_t *node = ast_alloc();
     node->kind = AST_VAR;

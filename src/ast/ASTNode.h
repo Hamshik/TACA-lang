@@ -166,6 +166,7 @@ typedef struct ASTNode {
 /* Constructors */
 ASTNode_t *new_num(char *rawval, DataTypes_t datatype, int line, int col);
 ASTNode_t *new_str(char *rawval, int line, int col);
+ASTNode_t *new_char(char c, int line, int col);
 ASTNode_t *new_var(const char *name, DataTypes_t datatype, int line, int col);
 ASTNode_t *new_binop(ASTNode_t *l, ASTNode_t *r, int line, int col, OP_kind_t op);
 ASTNode_t *new_unop(ASTNode_t *e, int line, int col, OP_kind_t op);

@@ -50,6 +50,7 @@ typedef enum errc {
     SEM_ARG_TYPE_MISMATCH = 1024,
     SEM_RETURN_OUTSIDE_FN = 1025,
     SEM_RETURN_TYPE_MISMATCH = 1026,
+    SEM_NUMERIC_LITERAL_OVERFLOW = 1027,
     SEM_UNKNOWN_AST = 1099,
 
     /* Runtime/Eval */
@@ -73,6 +74,7 @@ typedef enum warnc {
     SEM_VAR_SHADOW = 1101,
     SEM_UNUSED_VAR = 1102,
     SEM_UNUSED_FN = 1103,
+    SEM_TYPE_WIDENED = 1104,
     SEM_UNKNOWN_TYPE = 1199
 } warnc_t;
 

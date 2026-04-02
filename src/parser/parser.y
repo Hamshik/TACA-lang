@@ -88,7 +88,7 @@
     int yyparse(void);
 }
 
-%token <node> IDENTIFIER NUMBER STRING_LITERAL BOOL_LITERAL
+%token <node> IDENTIFIER NUMBER STRING_LITERAL BOOL_LITERAL CHAR_LITERAL
 
 %token PLUS MINUS STAR SLASH MOD POWER
 %token INC DEC
@@ -341,6 +341,7 @@ expr
     : NUMBER                    {$$ = $1;}
 	| IDENTIFIER				{$$ = $1;}
     | STRING_LITERAL            {$$ = $1;}
+    | CHAR_LITERAL              {$$ = $1;}
     | BOOL_LITERAL              {$$ = $1;}
 
     | expr PLUS expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_ADD); TQ_SET_NODE_LOC($$, @$); }

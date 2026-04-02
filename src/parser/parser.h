@@ -80,62 +80,63 @@ extern int yydebug;
     NUMBER = 259,                  /* NUMBER  */
     STRING_LITERAL = 260,          /* STRING_LITERAL  */
     BOOL_LITERAL = 261,            /* BOOL_LITERAL  */
-    PLUS = 262,                    /* PLUS  */
-    MINUS = 263,                   /* MINUS  */
-    STAR = 264,                    /* STAR  */
-    SLASH = 265,                   /* SLASH  */
-    MOD = 266,                     /* MOD  */
-    POWER = 267,                   /* POWER  */
-    INC = 268,                     /* INC  */
-    DEC = 269,                     /* DEC  */
-    LSHIFT = 270,                  /* LSHIFT  */
-    RSHIFT = 271,                  /* RSHIFT  */
-    AMP = 272,                     /* AMP  */
-    PIPE = 273,                    /* PIPE  */
-    BITXOR = 274,                  /* BITXOR  */
-    BITNOT = 275,                  /* BITNOT  */
-    LPAREN = 276,                  /* LPAREN  */
-    RPAREN = 277,                  /* RPAREN  */
-    LBRACE = 278,                  /* LBRACE  */
-    RBRACE = 279,                  /* RBRACE  */
-    SEMICOLON = 280,               /* SEMICOLON  */
-    LSQUARE = 281,                 /* LSQUARE  */
-    RSQUARE = 282,                 /* RSQUARE  */
-    ASSIGN = 283,                  /* ASSIGN  */
-    PLUS_ASSIGN = 284,             /* PLUS_ASSIGN  */
-    MINUS_ASSIGN = 285,            /* MINUS_ASSIGN  */
-    STAR_ASSIGN = 286,             /* STAR_ASSIGN  */
-    SLASH_ASSIGN = 287,            /* SLASH_ASSIGN  */
-    MOD_ASSIGN = 288,              /* MOD_ASSIGN  */
-    POWER_ASSIGN = 289,            /* POWER_ASSIGN  */
-    LSHIFT_ASSIGN = 290,           /* LSHIFT_ASSIGN  */
-    RSHIFT_ASSIGN = 291,           /* RSHIFT_ASSIGN  */
-    COLON = 292,                   /* COLON  */
-    COMMA = 293,                   /* COMMA  */
-    AND = 294,                     /* AND  */
-    OR = 295,                      /* OR  */
-    NOT = 296,                     /* NOT  */
-    EQ = 297,                      /* EQ  */
-    NEQ = 298,                     /* NEQ  */
-    LT = 299,                      /* LT  */
-    LE = 300,                      /* LE  */
-    GT = 301,                      /* GT  */
-    GE = 302,                      /* GE  */
-    IF = 303,                      /* IF  */
-    ELSE = 304,                    /* ELSE  */
-    FOR = 305,                     /* FOR  */
-    WHILE = 306,                   /* WHILE  */
-    MUT = 307,                     /* MUT  */
-    VAR = 308,                     /* VAR  */
-    FN = 309,                      /* FN  */
-    RETURN = 310,                  /* RETURN  */
-    DATATYPES = 311,               /* DATATYPES  */
-    UPLUS = 312,                   /* UPLUS  */
-    UMINUS = 313,                  /* UMINUS  */
-    UADDR = 314,                   /* UADDR  */
-    UDEREF = 315,                  /* UDEREF  */
-    POSTFIX = 316,                 /* POSTFIX  */
-    LOWER_THAN_ELSE = 317          /* LOWER_THAN_ELSE  */
+    CHAR_LITERAL = 262,            /* CHAR_LITERAL  */
+    PLUS = 263,                    /* PLUS  */
+    MINUS = 264,                   /* MINUS  */
+    STAR = 265,                    /* STAR  */
+    SLASH = 266,                   /* SLASH  */
+    MOD = 267,                     /* MOD  */
+    POWER = 268,                   /* POWER  */
+    INC = 269,                     /* INC  */
+    DEC = 270,                     /* DEC  */
+    LSHIFT = 271,                  /* LSHIFT  */
+    RSHIFT = 272,                  /* RSHIFT  */
+    AMP = 273,                     /* AMP  */
+    PIPE = 274,                    /* PIPE  */
+    BITXOR = 275,                  /* BITXOR  */
+    BITNOT = 276,                  /* BITNOT  */
+    LPAREN = 277,                  /* LPAREN  */
+    RPAREN = 278,                  /* RPAREN  */
+    LBRACE = 279,                  /* LBRACE  */
+    RBRACE = 280,                  /* RBRACE  */
+    SEMICOLON = 281,               /* SEMICOLON  */
+    LSQUARE = 282,                 /* LSQUARE  */
+    RSQUARE = 283,                 /* RSQUARE  */
+    ASSIGN = 284,                  /* ASSIGN  */
+    PLUS_ASSIGN = 285,             /* PLUS_ASSIGN  */
+    MINUS_ASSIGN = 286,            /* MINUS_ASSIGN  */
+    STAR_ASSIGN = 287,             /* STAR_ASSIGN  */
+    SLASH_ASSIGN = 288,            /* SLASH_ASSIGN  */
+    MOD_ASSIGN = 289,              /* MOD_ASSIGN  */
+    POWER_ASSIGN = 290,            /* POWER_ASSIGN  */
+    LSHIFT_ASSIGN = 291,           /* LSHIFT_ASSIGN  */
+    RSHIFT_ASSIGN = 292,           /* RSHIFT_ASSIGN  */
+    COLON = 293,                   /* COLON  */
+    COMMA = 294,                   /* COMMA  */
+    AND = 295,                     /* AND  */
+    OR = 296,                      /* OR  */
+    NOT = 297,                     /* NOT  */
+    EQ = 298,                      /* EQ  */
+    NEQ = 299,                     /* NEQ  */
+    LT = 300,                      /* LT  */
+    LE = 301,                      /* LE  */
+    GT = 302,                      /* GT  */
+    GE = 303,                      /* GE  */
+    IF = 304,                      /* IF  */
+    ELSE = 305,                    /* ELSE  */
+    FOR = 306,                     /* FOR  */
+    WHILE = 307,                   /* WHILE  */
+    MUT = 308,                     /* MUT  */
+    VAR = 309,                     /* VAR  */
+    FN = 310,                      /* FN  */
+    RETURN = 311,                  /* RETURN  */
+    DATATYPES = 312,               /* DATATYPES  */
+    UPLUS = 313,                   /* UPLUS  */
+    UMINUS = 314,                  /* UMINUS  */
+    UADDR = 315,                   /* UADDR  */
+    UDEREF = 316,                  /* UDEREF  */
+    POSTFIX = 317,                 /* POSTFIX  */
+    LOWER_THAN_ELSE = 318          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -157,7 +158,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 161 "src/parser/parser.h"
+#line 162 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

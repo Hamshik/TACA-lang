@@ -78,7 +78,7 @@
     free(s);
     return STRING_LITERAL;
 }
-
+'([^"\\\n]|\\.)'             { yylval->node = new_char(yytext[1], yylloc->first_line, yylloc->first_column); yylval->node->pos = yylloc->first_pos; yylval->node->end_pos = yylloc->last_pos; return CHAR_LITERAL; }
 else                         { return ELSE; }
 if                           { return IF; }
 for                          { return FOR; }

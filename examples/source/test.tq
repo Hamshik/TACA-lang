@@ -1,7 +1,3 @@
-var mut x = 10;
+var mut x = -10;
 
-x = -100000000000000000000000000000000000000;
-
-
-println(getdatatype(x));
-println(x);
+println(type(x));

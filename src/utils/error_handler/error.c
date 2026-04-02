@@ -131,7 +131,7 @@ void syserr(const char *context)
     if (saved_errno != 0) {
         fprintf(stderr, BOLD DIM " note:" RESET " %s\n", strerror(saved_errno));
     }
-    if (panic_fatal) exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);
 }
 
 void syswarn(const char *context)

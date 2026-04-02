@@ -317,7 +317,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         }
 
         if (!fn) {
-            int ok = 0;
+            bool ok = 0;
             TypedValue out = tq_std_call(node->call.name, argv, argc, node->line, node->col, node->pos, &ok);
             free(argv);
             if (!ok) panic(&file, node->line, node->col, node->pos, RT_CALL_UNDEF_FN, node->call.name);

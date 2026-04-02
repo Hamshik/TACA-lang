@@ -9,6 +9,8 @@ typedef struct symboltable{
     DataTypes_t ptr_to; /* for PTR only */
     const char* name;
     UT_hash_handle hh;
+    DataTypes_t max_type; /* for type inference: has this symbol been assigned a value with a known type yet? */
+    DataTypes_t last_maxed_type; /* for type inference: if so, what's the max type it's been assigned so far? */
     bool is_mutable;
     bool is_used;
 }Symboltable_t;
@@ -57,4 +59,8 @@ DataTypes_t promote(DataTypes_t a, DataTypes_t b);
 void force_numeric_type(ASTNode_t *n, DataTypes_t t);
 DataTypes_t update_datatype(const char* name, DataTypes_t want);
 
+void set_max_type(const char* name, DataTypes_t t);
+void update_max_type(const char* name, DataTypes_t t);
+bool is_maxed(const char* name, DataTypes_t t);
+char* data_type_to_str(DataTypes_t t);
 #endif

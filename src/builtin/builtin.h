@@ -23,7 +23,7 @@ TypedValue tq_std_call(
     int call_line,
     int call_col,
     int call_pos,
-    int *ok
+    bool *ok
 );
 
 #endif
