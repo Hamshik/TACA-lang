@@ -1,9 +1,10 @@
 #include "../ast/ASTNode.h"
 #include "eval.h"
 #include <stdio.h>
+#include <math.h>
 
-Value default_step(DataTypes_t type) {
-    Value step = {0};
+TQValue default_step(DataTypes_t type) {
+    TQValue step = {0};
     switch (type) {
         case I8: step.i8 = 1; break;
         case I16: step.i16 = 1; break;
@@ -27,7 +28,7 @@ Value default_step(DataTypes_t type) {
     return step;
 }
 
-bool step_is_positive(DataTypes_t type, Value step) {
+bool step_is_positive(DataTypes_t type, TQValue step) {
     switch (type) {
         case I8: return step.i8 > 0;
         case I16: return step.i16 > 0;
@@ -48,7 +49,7 @@ bool step_is_positive(DataTypes_t type, Value step) {
     }
 }
 
-bool step_is_zero(DataTypes_t type, Value step) {
+bool step_is_zero(DataTypes_t type, TQValue step) {
     switch (type) {
         case I8: return step.i8 == 0;
         case I16: return step.i16 == 0;
@@ -69,7 +70,7 @@ bool step_is_zero(DataTypes_t type, Value step) {
     }
 }
 
-bool should_continue_for(DataTypes_t type, Value cur, Value end, Value step) {
+bool should_continue_for(DataTypes_t type, TQValue cur, TQValue end, TQValue step) {
     if (step_is_positive(type, step)) {
         switch (type) {
             case I8: return cur.i8 < end.i8;
@@ -111,8 +112,8 @@ bool should_continue_for(DataTypes_t type, Value cur, Value end, Value step) {
     }
 }
 
-Value add_step_for(DataTypes_t type, Value cur, Value step) {
-    Value next = cur;
+TQValue add_step_for(DataTypes_t type, TQValue cur, TQValue step) {
+    TQValue next = cur;
     switch (type) {
         case I8: next.i8 = (int8_t)(next.i8 + step.i8); break;
         case I16: next.i16 += step.i16; break;

@@ -1,8 +1,11 @@
 {
-    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.errorSquiggles": "disabled",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/**/*"
     ],
     "editor.fontLigatures": false,
     "C_Cpp.default.compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
+    "clangd.arguments": [
+        "--compile-commands-dir=build"
+    ]
 }

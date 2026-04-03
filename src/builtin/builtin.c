@@ -10,6 +10,8 @@
 #include "../utils/error_handler/error_msg.h"
 
 extern file_t file;
+extern bool isWarning;
+extern size_t warn_no;
 
 static void tq_write_u128(FILE *out, unsigned __int128 x) {
     char buf[64];
@@ -36,7 +38,7 @@ static void tq_write_i128(FILE *out, __int128 x) {
     tq_write_u128(out, (unsigned __int128)x);
 }
 
-static void tq_write_value(FILE *out, Value v, DataTypes_t t) {
+static void tq_write_value(FILE *out, TQValue v, DataTypes_t t) {
     switch (t) {
         case I8:        fprintf(out, "%d", (int)v.i8); break;
         case I32:       fprintf(out, "%d", v.i32); break;
@@ -71,6 +73,9 @@ static const DataTypes_t g_alloc_params[]  = { UNKNOWN };
 static const DataTypes_t g_calloc_params[] = { UNKNOWN, UNKNOWN };
 static const DataTypes_t g_realloc_params[] = { PTR, UNKNOWN };
 static const DataTypes_t g_getdt_params[]  = { UNKNOWN };
+static const DataTypes_t g_rm_params[]     = { PTR };
+static const DataTypes_t g_memncpy_params[] = { PTR, UNKNOWN, PTR, UNKNOWN };
+static const DataTypes_t g_memcpy_params[]  = { PTR, PTR, UNKNOWN };
 
 static const tq_std_sig_t g_builtins[] = {
     { "print",     g_print_params,   1, VOID },
@@ -79,6 +84,9 @@ static const tq_std_sig_t g_builtins[] = {
     { "calloc",    g_calloc_params,  2, PTR  },
     { "realloc",   g_realloc_params, 2, PTR  },
     { "type", g_getdt_params, 1, STRINGS },
+    { "rm",   g_rm_params,     1, VOID },
+    { "memncpy", g_memncpy_params, 4, VOID },
+    { "memcpy",  g_memcpy_params,  3, VOID },
 };
 
 const tq_std_sig_t *tq_std_sig(const char *name) {
@@ -179,6 +187,26 @@ TypedValue tq_std_call(
         TypedValue tv = {.type = STRINGS};
         tv.val.str = strdup(tname);
         return tv;
+    }
+
+    if (strcmp(sig->name, "rm") == 0) {
+        /* Placeholder: no tracked raw pointer, so just succeed. */
+        return (TypedValue){.type = VOID};
+    }
+
+    if (strcmp(sig->name, "memncpy") == 0) {
+        /* Safer copy placeholder: emit warning but no raw pointer manipulation. */
+        fprintf(stderr, "warning: memncpy not implemented; no-op performed\n");
+        isWarning = true; warn_no++;
+        return (TypedValue){.type = VOID};
+    }
+
+    if (strcmp(sig->name, "memcpy") == 0) {
+        /* Unsafe copy placeholder: warn explicitly. */
+        fprintf(stderr, "warning: unsafe memcpy called; no-op performed\n"); 
+        isWarning = true; warn_no++;
+        isWarning = true; warn_no++;
+        return (TypedValue){.type = VOID};
     }
 
     panic(&file, call_line, call_col, call_pos, RT_CALL_UNDEF_FN, name);

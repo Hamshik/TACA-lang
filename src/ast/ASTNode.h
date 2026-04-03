@@ -97,11 +97,11 @@ typedef union {
     bool bval;
     char chars;
     char* str;
-} Value;
+} TQValue;
 
 typedef struct {
     DataTypes_t type;
-    Value val;
+    TQValue val;
 } TypedValue;
 
 typedef struct {
@@ -187,17 +187,17 @@ void ast_free(ASTNode_t *n);
 ASTNode_t *ast_alloc(void);
 
 /* Env */
-void set_var(const char *name, Value *val, DataTypes_t datatype);
-void set_var_current(const char *name, Value *val, DataTypes_t datatype);
-Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos);
+void set_var(const char *name, TQValue *val, DataTypes_t datatype);
+void set_var_current(const char *name, TQValue *val, DataTypes_t datatype);
+TQValue getvar(const char *name, DataTypes_t datatype, int line, int col, int pos);
 void env_push(void);
 void env_pop(void);
 void env_clear_all(void);
-void assign_value(DataTypes_t datatype, Value *dest, Value src);
-Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
+void assign_value(DataTypes_t datatype, TQValue *dest, TQValue src);
+TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
 TypedValue *getvar_ref(const char *name, int line, int col, int pos);
 int env_frame_id_of(const char *name, int line, int col, int pos);
 TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int pos);
-void set_var_at(int frame_id, const char *name, Value *val, DataTypes_t datatype, int line, int col, int pos);
+void set_var_at(int frame_id, const char *name, TQValue *val, DataTypes_t datatype, int line, int col, int pos);
 
 #endif

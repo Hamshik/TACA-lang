@@ -87,6 +87,7 @@ extern size_t err_no;
 extern size_t warn_no;
 extern bool isWarning;
 
+static bool g_has_user_main = false;
 
 static DataTypes_t g_fn_ret = UNKNOWN;
 static int g_in_fn = 0;
@@ -97,6 +98,9 @@ void semantic_check(ASTNode_t *root) {
     check_expr(root);
     scope_pop();
     clear_fns();
+    if (!g_has_user_main) {
+        panic(&file, 1, 1, 0, SEM_CALL_UNDEF_FN, "main");
+    }
     if (isError && isWarning) {
         fprintf(stderr, BOLD RED "ERROR: " RESET);
         fprintf(stderr, UNDERLINE MAGENTA "Compilation failed with %zu error(s) and %zu warning(s)\n" RESET, err_no, warn_no);
@@ -476,6 +480,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
     }
 
     case AST_FN: {
+        if (n->fn_def.name && strcmp(n->fn_def.name, "main") == 0) g_has_user_main = true;
         if (!fn_declare(n->fn_def.name, n->fn_def.params, n->fn_def.param_count, n->fn_def.ret)) {
             panic(&file, n->line, n->col, n->pos, SEM_FN_REDECL, n->fn_def.name);
         }

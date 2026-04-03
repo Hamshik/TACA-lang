@@ -1,5 +1,6 @@
 #include "eval.h"
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 
 static bool tq_is_float(DataTypes_t t) {
@@ -57,7 +58,7 @@ DataTypes_t tq_promote_runtime(DataTypes_t a, DataTypes_t b) {
     return I8;
 }
 
-static long double tq_as_f128(Value v, DataTypes_t t) {
+static long double tq_as_f128(TQValue v, DataTypes_t t) {
     t = tq_norm(t);
     switch (t) {
         case F32: return (long double)v.f32;
@@ -78,7 +79,7 @@ static long double tq_as_f128(Value v, DataTypes_t t) {
     }
 }
 
-static __int128 tq_as_i128(Value v, DataTypes_t t) {
+static __int128 tq_as_i128(TQValue v, DataTypes_t t) {
     t = tq_norm(t);
     switch (t) {
         case I8: return (__int128)v.i8;
@@ -99,7 +100,7 @@ static __int128 tq_as_i128(Value v, DataTypes_t t) {
     }
 }
 
-static unsigned __int128 tq_as_u128(Value v, DataTypes_t t) {
+static unsigned __int128 tq_as_u128(TQValue v, DataTypes_t t) {
     t = tq_norm(t);
     switch (t) {
         case U8: return (unsigned __int128)v.u8;
@@ -119,8 +120,8 @@ static unsigned __int128 tq_as_u128(Value v, DataTypes_t t) {
     }
 }
 
-static Value tq_from_f128(long double x, DataTypes_t t) {
-    Value out = {0};
+static TQValue tq_from_f128(long double x, DataTypes_t t) {
+    TQValue out = {0};
     switch (t) {
         case F32:
         case UF32:
@@ -140,8 +141,8 @@ static Value tq_from_f128(long double x, DataTypes_t t) {
     return out;
 }
 
-static Value tq_from_i128(__int128 x, DataTypes_t t) {
-    Value out = {0};
+static TQValue tq_from_i128(__int128 x, DataTypes_t t) {
+    TQValue out = {0};
     switch (t) {
         case I8: out.i8 = (int8_t)x; break;
         case I16: out.i16 = (short)x; break;
@@ -153,8 +154,8 @@ static Value tq_from_i128(__int128 x, DataTypes_t t) {
     return out;
 }
 
-static Value tq_from_u128(unsigned __int128 x, DataTypes_t t) {
-    Value out = {0};
+static TQValue tq_from_u128(unsigned __int128 x, DataTypes_t t) {
+    TQValue out = {0};
     switch (t) {
         case U8: out.u8 = (uint8_t)x; break;
         case U16: out.u16 = (uint16_t)x; break;
@@ -174,7 +175,7 @@ TypedValue tq_cast_typed(TypedValue v, DataTypes_t target, int line, int col, in
 
     if (target == BOOL) {
         if (v.type == BOOL) return v;
-        return (TypedValue){.type = BOOL, .val = (Value){.bval = tq_as_f128(v.val, v.type) != 0.0L}};
+        return (TypedValue){.type = BOOL, .val = (TQValue){.bval = tq_as_f128(v.val, v.type) != 0.0L}};
     }
 
     if (tq_is_float(target)) {
@@ -193,7 +194,7 @@ TypedValue tq_cast_typed(TypedValue v, DataTypes_t target, int line, int col, in
     return v;
 }
 
-static Value tq_pow_i128(__int128 a, __int128 b) {
+static TQValue tq_pow_i128(__int128 a, __int128 b) {
     if (b < 0) DIE("negative exponent");
     unsigned __int128 exp = (unsigned __int128)b;
     __int128 base = a;
@@ -203,10 +204,10 @@ static Value tq_pow_i128(__int128 a, __int128 b) {
         exp >>= 1;
         if (exp) base *= base;
     }
-    return (Value){.i128 = result};
+    return (TQValue){.i128 = result};
 }
 
-static Value tq_pow_u128(unsigned __int128 a, unsigned __int128 b) {
+static TQValue tq_pow_u128(unsigned __int128 a, unsigned __int128 b) {
     unsigned __int128 exp = b;
     unsigned __int128 base = a;
     unsigned __int128 result = 1;
@@ -215,10 +216,10 @@ static Value tq_pow_u128(unsigned __int128 a, unsigned __int128 b) {
         exp >>= 1;
         if (exp) base *= base;
     }
-    return (Value){.u128 = result};
+    return (TQValue){.u128 = result};
 }
 
-void do_unop_operation(Value *result, Value *operand,DataTypes_t datatype,OP_kind_t op) {
+void do_unop_operation(TQValue *result, TQValue *operand,DataTypes_t datatype,OP_kind_t op) {
     switch (datatype) {
         case I8:
             switch (op) {
@@ -364,7 +365,7 @@ OP_kind_t get_assign_op(OP_kind_t op) {
     }
 }
 
-Value eval_binop_int(OP_kind_t op, bool isShort, int a, int b) {
+TQValue eval_binop_int(OP_kind_t op, bool isShort, int a, int b) {
     if (isShort) {
         CHECK_INT_ZERO(op, b);
         if (op == OP_POW) {
@@ -377,7 +378,7 @@ Value eval_binop_int(OP_kind_t op, bool isShort, int a, int b) {
                 exp >>= 1;
                 if (exp) base = (short)(base * base);
             }
-            return (Value){.i16 = result};
+            return (TQValue){.i16 = result};
         }
         switch (op) { INT_CASES(i16, (short)a, (short)b); default: DIE("Invalid short binary op"); }
     }
@@ -392,17 +393,17 @@ Value eval_binop_int(OP_kind_t op, bool isShort, int a, int b) {
             exp >>= 1;
             if (exp) base = base * base;
         }
-        return (Value){.i32 = result};
+        return (TQValue){.i32 = result};
     }
     switch (op) { INT_CASES(i32, a, b); default: DIE("Invalid int binary op"); }
 }
 
-Value eval_binop_float(OP_kind_t op, float a, float b) {
+TQValue eval_binop_float(OP_kind_t op, float a, float b) {
     if (op == OP_DIV && fabsf(b) < 1e-12f) DIE("division by zero");
     switch (op) { FP_CASES(f32, a, b, powf, fmodf); default: DIE("Invalid float binary op"); }
 }
 
-Value eval_binop_double(OP_kind_t op, double a, double b) {
+TQValue eval_binop_double(OP_kind_t op, double a, double b) {
     if (op == OP_DIV && fabs(b) < 1e-12) DIE("division by zero");
     switch (op) { FP_CASES(f64, a, b, pow, fmod); default: DIE("Invalid double binary op"); }
 }
@@ -422,14 +423,14 @@ bool isBoolOP(OP_kind_t op){
     }
 }
 
-Value eval_bool(OP_kind_t op, DataTypes_t type, Value a, Value b) {
+TQValue eval_bool(OP_kind_t op, DataTypes_t type, TQValue a, TQValue b) {
     type = tq_norm(type);
     if (type == BOOL) {
         switch (op) {
-            case OP_AND: return (Value){.bval = a.bval && b.bval};
-            case OP_OR:  return (Value){.bval = a.bval || b.bval};
-            case OP_EQ:  return (Value){.bval = a.bval == b.bval};
-            case OP_NEQ: return (Value){.bval = a.bval != b.bval};
+            case OP_AND: return (TQValue){.bval = a.bval && b.bval};
+            case OP_OR:  return (TQValue){.bval = a.bval || b.bval};
+            case OP_EQ:  return (TQValue){.bval = a.bval == b.bval};
+            case OP_NEQ: return (TQValue){.bval = a.bval != b.bval};
             default: DIE("Invalid boolean operator");
         }
     }
@@ -438,12 +439,12 @@ Value eval_bool(OP_kind_t op, DataTypes_t type, Value a, Value b) {
         long double x = tq_as_f128(a, type);
         long double y = tq_as_f128(b, type);
         switch (op) {
-            case OP_EQ: return (Value){.bval = x == y};
-            case OP_NEQ: return (Value){.bval = x != y};
-            case OP_GT: return (Value){.bval = x > y};
-            case OP_LT: return (Value){.bval = x < y};
-            case OP_GE: return (Value){.bval = x >= y};
-            case OP_LE: return (Value){.bval = x <= y};
+            case OP_EQ: return (TQValue){.bval = x == y};
+            case OP_NEQ: return (TQValue){.bval = x != y};
+            case OP_GT: return (TQValue){.bval = x > y};
+            case OP_LT: return (TQValue){.bval = x < y};
+            case OP_GE: return (TQValue){.bval = x >= y};
+            case OP_LE: return (TQValue){.bval = x <= y};
             default: DIE("Invalid float comparison operator");
         }
     }
@@ -452,12 +453,12 @@ Value eval_bool(OP_kind_t op, DataTypes_t type, Value a, Value b) {
         unsigned __int128 x = tq_as_u128(a, type);
         unsigned __int128 y = tq_as_u128(b, type);
         switch (op) {
-            case OP_EQ: return (Value){.bval = x == y};
-            case OP_NEQ: return (Value){.bval = x != y};
-            case OP_GT: return (Value){.bval = x > y};
-            case OP_LT: return (Value){.bval = x < y};
-            case OP_GE: return (Value){.bval = x >= y};
-            case OP_LE: return (Value){.bval = x <= y};
+            case OP_EQ: return (TQValue){.bval = x == y};
+            case OP_NEQ: return (TQValue){.bval = x != y};
+            case OP_GT: return (TQValue){.bval = x > y};
+            case OP_LT: return (TQValue){.bval = x < y};
+            case OP_GE: return (TQValue){.bval = x >= y};
+            case OP_LE: return (TQValue){.bval = x <= y};
             default: DIE("Invalid integer comparison operator");
         }
     }
@@ -466,12 +467,12 @@ Value eval_bool(OP_kind_t op, DataTypes_t type, Value a, Value b) {
         __int128 x = tq_as_i128(a, type);
         __int128 y = tq_as_i128(b, type);
         switch (op) {
-            case OP_EQ: return (Value){.bval = x == y};
-            case OP_NEQ: return (Value){.bval = x != y};
-            case OP_GT: return (Value){.bval = x > y};
-            case OP_LT: return (Value){.bval = x < y};
-            case OP_GE: return (Value){.bval = x >= y};
-            case OP_LE: return (Value){.bval = x <= y};
+            case OP_EQ: return (TQValue){.bval = x == y};
+            case OP_NEQ: return (TQValue){.bval = x != y};
+            case OP_GT: return (TQValue){.bval = x > y};
+            case OP_LT: return (TQValue){.bval = x < y};
+            case OP_GE: return (TQValue){.bval = x >= y};
+            case OP_LE: return (TQValue){.bval = x <= y};
             default: DIE("Invalid integer comparison operator");
         }
     }
@@ -479,7 +480,7 @@ Value eval_bool(OP_kind_t op, DataTypes_t type, Value a, Value b) {
     DIE("Invalid datatype for boolean operation");
 }
 
-Value tq_eval_binop_numeric(OP_kind_t op, DataTypes_t type, Value a, Value b) {
+TQValue tq_eval_binop_numeric(OP_kind_t op, DataTypes_t type, TQValue a, TQValue b) {
     type = tq_norm(type);
 
     if (tq_is_float(type)) {

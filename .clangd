@@ -1,0 +1,9 @@
+If:
+  PathMatch: .*\.c
+  
+CompileFlags:
+  Add: 
+    [-xc]
+
+  Remove:
+    - -w

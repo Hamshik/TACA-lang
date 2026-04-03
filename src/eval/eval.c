@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +47,20 @@ static FnEntry_t *fn_lookup_runtime(const char *name) {
     FnEntry_t *e = NULL;
     HASH_FIND_STR(g_fns, name, e);
     return e;
+}
+
+TypedValue ast_eval_main(ASTNode_t *root) {
+    /* first pass: register all function definitions */
+    if (root) ast_eval(root); /* ast_eval registers functions on AST_FN */
+    FnEntry_t *main_fn = fn_lookup_runtime("main");
+    if (!main_fn) {
+        panic(&file, 1, 1, 0, SEM_CALL_UNDEF_FN, "main");
+        return (TypedValue){0};
+    }
+    ASTNode_t *call = new_fn_call("main", NULL, 0, 0);
+    TypedValue ret = ast_eval(call);
+    ast_free(call);
+    return ret;
 }
 
 static void fn_register_runtime(ASTNode_t *fn) {
@@ -145,7 +158,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
         if (node->datatype == STRINGS) {
             v.type = STRINGS;
-            v.val = (Value){.str = do_operation_str(l.val.str, r.val.str, node->bin.op)};
+            v.val = (TQValue){.str = do_operation_str(l.val.str, r.val.str, node->bin.op)};
             return v;
         }
 
@@ -181,7 +194,7 @@ TypedValue ast_eval(ASTNode_t *node) {
                 return (TypedValue){0};
             }
             int fid = env_frame_id_of(node->unop.operand->var, node->line, node->col, node->pos);
-            Value pv = {0};
+            TQValue pv = {0};
             pv.ptr.frame_id = fid;
             pv.ptr.name = node->unop.operand->var;
             return (TypedValue){ .type = PTR, .val = pv };
@@ -214,7 +227,7 @@ TypedValue ast_eval(ASTNode_t *node) {
             return (TypedValue){.val = rt.val, .type = node->datatype};
         }
 
-        Value val = eval_assign(node->assign.lhs,
+        TQValue val = eval_assign(node->assign.lhs,
                                 node->assign.rhs,
                                 node->assign.op,
                                 node->datatype,
@@ -255,11 +268,11 @@ TypedValue ast_eval(ASTNode_t *node) {
         const char *loop_name = node->fornode.init->assign.lhs->var;
 
         TypedValue endt = tq_cast_typed(ast_eval(node->fornode.end), loop_type, node->line, node->col, node->pos);
-        Value endv_cast = endt.val;
+        TQValue endv_cast = endt.val;
         TypedValue stept = node->fornode.step
             ? tq_cast_typed(ast_eval(node->fornode.step), loop_type, node->line, node->col, node->pos)
             : (TypedValue){.type = loop_type, .val = default_step(loop_type)};
-        Value stepv = stept.val;
+        TQValue stepv = stept.val;
 
         if (step_is_zero(loop_type, stepv)) {
             panic(&file, node->line, node->col, node->pos, RT_FOR_STEP_ZERO, NULL);
@@ -271,8 +284,8 @@ TypedValue ast_eval(ASTNode_t *node) {
         while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col, node->pos), endv_cast, stepv)) {
             last = ast_eval(node->fornode.body);
             if (g_returning) return g_return_value;
-            Value cur = getvar(loop_name, loop_type, node->line, node->col, node->pos);
-            Value next = add_step_for(loop_type, cur, stepv);
+            TQValue cur = getvar(loop_name, loop_type, node->line, node->col, node->pos);
+            TQValue next = add_step_for(loop_type, cur, stepv);
             set_var(loop_name, &next, loop_type);
         }
 
@@ -289,7 +302,7 @@ TypedValue ast_eval(ASTNode_t *node) {
     }
 
     case AST_BOOL:
-        return (TypedValue){.type = BOOL, .val = node->literal.raw[0] == 't' ? (Value){.bval = true} : (Value){.bval = false}};
+        return (TypedValue){.type = BOOL, .val = node->literal.raw[0] == 't' ? (TQValue){.bval = true} : (TQValue){.bval = false}};
 
     case AST_FN:
         fn_register_runtime(node);
@@ -336,7 +349,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         env_push();
         for (int i = 0; i < fn->fn_def.param_count; i++) {
             TypedValue casted = tq_cast_typed(argv[i], fn->fn_def.params[i].type, node->line, node->col, node->pos);
-            Value vv = casted.val;
+            TQValue vv = casted.val;
             set_var_current(fn->fn_def.params[i].name, &vv, fn->fn_def.params[i].type);
         }
 

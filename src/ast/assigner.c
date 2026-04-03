@@ -7,7 +7,7 @@
 
 extern file_t file;
 
-void assign_value(DataTypes_t dt, Value *dst, Value src) {
+void assign_value(DataTypes_t dt, TQValue *dst, TQValue src) {
     switch (dt) {
         case I8:     dst->i8 = src.i8; break;
         case I16:    dst->i16 = src.i16; break;
@@ -47,16 +47,16 @@ void assign_value(DataTypes_t dt, Value *dst, Value src) {
     }
 }
 
-Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
+TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
     int line, int col, int pos) {
     TypedValue rt0 = ast_eval(rhs);
     TypedValue rt = tq_cast_typed(rt0, datatypes, line, col, pos);
-    Value r = rt.val;
-    Value v = {0};
+    TQValue r = rt.val;
+    TQValue v = {0};
 
     if (!lhs) {
         panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
-        return (Value){0};
+        return (TQValue){0};
     }
 
     /* Assignment to variable */
@@ -66,7 +66,7 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
             return r;
         }
 
-        Value cur = getvar(lhs->var, datatypes, line, col, pos);
+        TQValue cur = getvar(lhs->var, datatypes, line, col, pos);
         OP_kind_t operation = get_assign_op(op);
         switch (datatypes) {
             case I8: case I16: case I32: case I128:
@@ -79,17 +79,17 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
                 v = eval_bool(operation, BOOL, cur, r);
                 break;
             case STRINGS:
-                v = (Value){.str = do_operation_str(cur.str, r.str, operation)};
+                v = (TQValue){.str = do_operation_str(cur.str, r.str, operation)};
                 break;
             case CHARACTER:
                 v.chars = r.chars;
                 break;
             case PTR:
                 panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "pointer compound assignment not supported");
-                return (Value){0};
+                return (TQValue){0};
             default:
                 panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
-                return (Value){0};
+                return (TQValue){0};
         }
         set_var(lhs->var, &v, datatypes);
         return v;
@@ -100,13 +100,13 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
         TypedValue pv = ast_eval(lhs->unop.operand);
         if (pv.type != PTR || pv.val.ptr.name == NULL) {
             panic(&file, line, col, pos, RT_DANGLING_PTR, NULL);
-            return (Value){0};
+            return (TQValue){0};
         }
         TypedValue *target = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, line, col, pos);
-        if (!target) return (Value){0};
+        if (!target) return (TQValue){0};
         if (target->type != datatypes) {
             panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, pv.val.ptr.name);
-            return (Value){0};
+            return (TQValue){0};
         }
 
         if (op == OP_ASSIGN) {
@@ -114,7 +114,7 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
             return r;
         }
 
-        Value cur = target->val;
+        TQValue cur = target->val;
         OP_kind_t operation = get_assign_op(op);
         switch (datatypes) {
             case I8: case I16: case I32: case I128:
@@ -125,12 +125,12 @@ Value eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t data
                 break;
             default:
                 panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "unsupported deref assignment type");
-                return (Value){0};
+                return (TQValue){0};
         }
         assign_value(datatypes, &target->val, v);
         return v;
     }
 
     panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
-    return (Value){0};
+    return (TQValue){0};
 }

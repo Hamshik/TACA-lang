@@ -71,7 +71,7 @@ void env_clear_all(void) {
     }
 }
 
-void set_var(const char *name, Value *val, DataTypes_t datatype) {
+void set_var(const char *name, TQValue *val, DataTypes_t datatype) {
     // Assign to nearest existing binding; otherwise create in current scope.
     EnvFrame_t *f = env_top();
     for (EnvFrame_t *it = f; it; it = it->parent) {
@@ -86,7 +86,7 @@ void set_var(const char *name, Value *val, DataTypes_t datatype) {
     set_var_current(name, val, datatype);
 }
 
-void set_var_current(const char *name, Value *val, DataTypes_t datatype) {
+void set_var_current(const char *name, TQValue *val, DataTypes_t datatype) {
     EnvFrame_t *f = env_top();
     VarEntry *v = NULL;
     HASH_FIND_STR(f->vars, name, v);
@@ -100,25 +100,25 @@ void set_var_current(const char *name, Value *val, DataTypes_t datatype) {
     if (!v) { perror("malloc"); exit(1); }
     v->name = strdup(name);
     v->typedval.type = datatype;
-    v->typedval.val = (Value){0};
+    v->typedval.val = (TQValue){0};
     assign_value(datatype, &v->typedval.val, *val);
     HASH_ADD_KEYPTR(hh, f->vars, v->name, strlen(v->name), v);
 }
 
-Value getvar(const char *name, DataTypes_t datatype, int line, int col, int pos) {
+TQValue getvar(const char *name, DataTypes_t datatype, int line, int col, int pos) {
     for (EnvFrame_t *it = env_top(); it; it = it->parent) {
         VarEntry *v = NULL;
         HASH_FIND_STR(it->vars, name, v);
         if (!v) continue;
         if (v->typedval.type != datatype && !is_numeric(v->typedval.type) && !is_numeric(datatype)) {
             panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
-            return (Value){0};
+            return (TQValue){0};
         }
         return v->typedval.val;
     }
 
     panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
-    return (Value){0};
+    return (TQValue){0};
 }
 
 TypedValue *getvar_ref(const char *name, int line, int col, int pos) {
@@ -166,7 +166,7 @@ TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int
     return &v->typedval;
 }
 
-void set_var_at(int frame_id, const char *name, Value *val, DataTypes_t datatype, int line, int col, int pos) {
+void set_var_at(int frame_id, const char *name, TQValue *val, DataTypes_t datatype, int line, int col, int pos) {
     EnvFrame_t *f = env_find_frame(frame_id);
     if (!f) {
         panic(&file, line, col, pos, RT_DANGLING_PTR, name);

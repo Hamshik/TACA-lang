@@ -100,7 +100,7 @@
 %token AND OR NOT EQ NEQ LT LE GT GE
 %token IF ELSE FOR WHILE MUT VAR FN RETURN
 
-%type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt
+%type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt paren_chain
 %type <node> fn_def param return_stmt opt_args args
 %type <node> lvalue
 %type <node> MUT_block decl_block_items decl_item_untyped decl_item_typed
@@ -336,13 +336,21 @@ decl
         : decl       { $$ = $1; }
         | assignment { $$ = $1; }
         ;
-    
+/* Juxtaposed parenthesized expressions: (a)(b)(c) => a*b*c */
+paren_chain
+    : LPAREN expr RPAREN LPAREN expr RPAREN
+        { $$ = new_binop($2, $5, @$.first_line, @$.first_column, OP_MUL); TQ_SET_NODE_LOC($$, @$); }
+    | paren_chain LPAREN expr RPAREN
+        { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_MUL); TQ_SET_NODE_LOC($$, @$); }
+    ;
+
 expr
     : NUMBER                    {$$ = $1;}
 	| IDENTIFIER				{$$ = $1;}
     | STRING_LITERAL            {$$ = $1;}
     | CHAR_LITERAL              {$$ = $1;}
     | BOOL_LITERAL              {$$ = $1;}
+    | paren_chain               {$$ = $1;}
 
     | expr PLUS expr            { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_ADD); TQ_SET_NODE_LOC($$, @$); }
     | expr MINUS expr           { $$ = new_binop($1, $3, @$.first_line, @$.first_column, OP_SUB); TQ_SET_NODE_LOC($$, @$); }

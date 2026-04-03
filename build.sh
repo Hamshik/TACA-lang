@@ -12,6 +12,7 @@ BIN_DIR="bin"
 BUILTIN="src/builtin"
 DATASPEC="src/typechecker"
 CODEGEN="src/codegen"
+STDLIBS="src/stdlibs"
 
 LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
 if command -v "$LLVM_CONFIG" >/dev/null 2>&1; then
@@ -28,15 +29,28 @@ bison -d -o "$PARSER_DIR/parser.c" "$PARSER_DIR/parser.y"
 echo "Running flex to generate the lexer..."
 flex -o "$LEXER_DIR/lexer.c" "$LEXER_DIR/lexer.l"
 
-echo "Compiling..."
 mkdir -p "$BIN_DIR"
 
+echo "Compling[1/3] C++ Files"
+
+CPP_SRCS=(
+    "$CODEGEN/codegen.cpp"
+    "$CODEGEN/helper.cpp"
+    "$STDLIBS/printer.cpp"
+    "$CODEGEN/handle_loops.cpp"
+    "$CODEGEN/emit_expr.cpp"
+    "$CODEGEN/handle_fn.cpp"
+    "$CODEGEN/op_handler.cpp"
+)
+
 # C++ (LLVM/backend)
-g++ -Wall -Wextra -Wno-unused-parameter -g -Isrc $LLVM_CXXFLAGS \
-    -c $CODEGEN/codegen.cpp \
-    -o "$BIN_DIR/codegen.o"
+for src in "${CPP_SRCS[@]}"; do
+    obj="$BIN_DIR/$(basename "${src%.*}").o"
+    g++ -Wall -Wextra -g -Isrc -w $LLVM_CXXFLAGS -c "$src" -o "$obj"
+done
 
 # C sources
+echo "Compling[2/3] C Files"
 C_SRCS=(
     "$PARSER_DIR/parser.c"
     "$PARSER_DIR/parser_helpers.c"
@@ -64,10 +78,10 @@ for src in "${C_SRCS[@]}"; do
     gcc -Wall -Wextra -g -Isrc -Wunused-function -Wunused-variable -c "$src" -o "$obj"
 done
 
-echo "Linking..."
-g++ -o "$BIN_DIR/Complier" "$BIN_DIR"/*.o -lm $LLVM_LDFLAGS
+echo "Linking[3/3] Files..."
+g++ -o "$BIN_DIR/TQC" "$BIN_DIR"/*.o -lm $LLVM_LDFLAGS
 
 echo "Cleaning up object files..."
 rm -f "$BIN_DIR"/*.o
 
-echo "Compiled successfully: $BIN_DIR/Complier"
+echo "Compiled successfully: $BIN_DIR/TQC"

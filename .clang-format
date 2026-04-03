@@ -1,0 +1,34 @@
+BasedOnStyle: LLVM
+IndentWidth: 20
+ColumnLimit: 200   # no aggressive wrapping, but still readable
+
+# 🔥 Keep function params in one line (your main requirement)
+BinPackParameters: true
+BinPackArguments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# 🔥 Clean braces (compact but readable)
+BreakBeforeBraces: Attach
+
+# 🔥 Control spacing
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInAngles: false
+
+# 🔥 Allow short constructs in one line
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+
+# 🔥 THIS is what you want for block separation
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# 🔥 Encourage visual separation
+SeparateDefinitionBlocks: Always
+
+# 🔥 Cleaner formatting
+SortIncludes: false
+
+MaxEmptyLinesToKeep: 1
+SeparateDefinitionBlocks: Always
