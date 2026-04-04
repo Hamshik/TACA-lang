@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C"
 {
-    #endif
+#endif
     #include "../ast/ASTNode.h"
     #include "../utils/error_handler/error_msg.h"
     #include "../eval/eval.h"
@@ -29,6 +29,7 @@ extern "C"
 
 using namespace llvm;
 using LocalMap = std::unordered_map<std::string, AllocaInst*>;
+using argvec = std::vector<llvm::Value*>;
 
 bool is_unsigned_dtype(DataTypes_t t);
 bool is_float_dtype(DataTypes_t t);
@@ -49,11 +50,13 @@ llvm::Value* emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilde
 llvm::Value* emit_unop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,IRBuilder<> &entryBuilder, LocalMap &locals);
 llvm::Value* emit_assing(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,IRBuilder<> &entryBuilder, LocalMap &locals);
 llvm::Value* emit_call(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals);
+llvm::Value* emit_if(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals);
 
 __int128 parse_i128(const char *s, int *ok);
 __int128 parse_i128(const char *s, int *ok);
 
 bool blockTerminated(IRBuilder<> &b);
+int utf8_decode(const unsigned char *s, uint32_t *out);
 
 #endif
 #endif

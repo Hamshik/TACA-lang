@@ -63,7 +63,7 @@ Type* ir_type(DataTypes_t t, LLVMContext &ctx) {
         case F128: case UF128: return Type::getFP128Ty(ctx);
         case BOOL: return Type::getInt1Ty(ctx);
         case STRINGS: return PointerType::get(ctx, 0);
-        case CHARACTER: return Type::getInt8Ty(ctx);
+        case CHARACTER: return Type::getInt32Ty(ctx);
         default: return Type::getVoidTy(ctx); /* fallback */
     }
 }
@@ -130,4 +130,61 @@ AllocaInst* get_or_create_alloca(const std::string &name, DataTypes_t t,
 
 bool blockTerminated(IRBuilder<> &b) {
     return b.GetInsertBlock()->getTerminator() != nullptr;
+}
+
+llvm::Value* emit_if(ASTNode_t *n,
+                     LLVMContext &ctx,
+                     IRBuilder<> &b,
+                     IRBuilder<> &entryBuilder,
+                     LocalMap &locals) {
+
+    // 1. Emit condition
+    llvm::Value *condV = emit_expr(n->ifnode.cond, ctx, b, entryBuilder, locals);
+    if (!condV) return nullptr;
+
+    // Ensure condition is i1 (bool)
+    if (condV->getType()->isIntegerTy() && condV->getType()->getIntegerBitWidth() != 1) {
+        condV = b.CreateICmpNE(condV, ConstantInt::get(condV->getType(), 0), "ifcond");
+    }
+
+    Function *fn = b.GetInsertBlock()->getParent();
+
+    // 2. Create basic blocks
+    BasicBlock *thenBB  = BasicBlock::Create(ctx, "then", fn);
+    BasicBlock *elseBB  = BasicBlock::Create(ctx, "else");
+    BasicBlock *mergeBB = BasicBlock::Create(ctx, "ifcont");
+
+    // 3. Branch
+    if (n->ifnode.else_branch)
+        b.CreateCondBr(condV, thenBB, elseBB);
+    else
+        b.CreateCondBr(condV, thenBB, mergeBB);
+
+    // ---- THEN BLOCK ----
+    b.SetInsertPoint(thenBB);
+    emit_expr(n->ifnode.then_branch, ctx, b, entryBuilder, locals);
+
+    if (!blockTerminated(b))
+        b.CreateBr(mergeBB);
+
+    thenBB = b.GetInsertBlock(); // update
+
+    // ---- ELSE BLOCK ----
+    if (n->ifnode.else_branch) {
+        fn->insert(fn->end(), elseBB);
+        b.SetInsertPoint(elseBB);
+
+        emit_expr(n->ifnode.else_branch, ctx, b, entryBuilder, locals);
+
+        if (!blockTerminated(b))
+            b.CreateBr(mergeBB);
+
+        elseBB = b.GetInsertBlock();
+    }
+
+    // ---- MERGE BLOCK ----
+    fn->insert(fn->end(), mergeBB);
+    b.SetInsertPoint(mergeBB);
+
+    return nullptr;
 }

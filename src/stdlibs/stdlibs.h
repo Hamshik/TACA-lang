@@ -16,6 +16,8 @@ extern "C" {
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>   // ✅ REQUIRED
+#include "../ast/ASTNode.h"
+#include "../codegen/codegen.h"
 
 using namespace llvm;
 
@@ -25,6 +27,9 @@ llvm::Value* emit_print_like(const char *fmt, llvm::Value *v, LLVMContext &ctx, 
 
 llvm::Value* emit_println(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx, IRBuilder<> &b);
 
+llvm::Value* print(ASTNode_t *n, argvec args, LLVMContext &ctx, IRBuilder<> &b);
+
+Function *get_exit(Module &mod, LLVMContext &ctx);
 #endif
 
 #endif

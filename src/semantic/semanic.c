@@ -480,7 +480,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
     }
 
     case AST_FN: {
-        if (n->fn_def.name && strcmp(n->fn_def.name, "main") == 0) g_has_user_main = true;
+        if (n->fn_def.name && strcmp(n->fn_def.name, "main") == 0){ 
+            g_has_user_main = true;
+            n->fn_def.ret = I32;
+        }
         if (!fn_declare(n->fn_def.name, n->fn_def.params, n->fn_def.param_count, n->fn_def.ret)) {
             panic(&file, n->line, n->col, n->pos, SEM_FN_REDECL, n->fn_def.name);
         }

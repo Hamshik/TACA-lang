@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
     semantic_check(root);
     panic_fatal = true; /* runtime errors should still stop */
     char *ir_text = NULL;
+    
     if (codegen(root, emit_ll_file ? "out.ll" : NULL, &ir_text))
       return 1;
     ast_eval_main(root);
@@ -146,7 +147,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    char *clang_argv[] = {"clang", "-Wl,-e,entrypoint", "-no-pie", "out/out.o",
+    char *clang_argv[] = {"clang", "-Wl,-e,entrypoint", "-no-pie", "out/out.o", "-g", "-O0",
                           "-o",    "out/tq.out",    NULL};
     if (run_exec(clang_argv[0], clang_argv)) {
       if (!emit_ll_file)

@@ -1,7 +1,5 @@
 
-var x = 10;
-var y = 20;
 fn main(){
-    var mut z = x * y;
-    println(z);
+    println("🔥🔥🔥🔥🔥");
+    hlt(0);
 }

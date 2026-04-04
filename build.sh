@@ -34,13 +34,15 @@ mkdir -p "$BIN_DIR"
 echo "Compling[1/3] C++ Files"
 
 CPP_SRCS=(
+    "$STDLIBS/printer.cpp"
+    "$STDLIBS/exits.cpp"
     "$CODEGEN/codegen.cpp"
     "$CODEGEN/helper.cpp"
-    "$STDLIBS/printer.cpp"
     "$CODEGEN/handle_loops.cpp"
     "$CODEGEN/emit_expr.cpp"
     "$CODEGEN/handle_fn.cpp"
     "$CODEGEN/op_handler.cpp"
+    "$CODEGEN/str_handler.cpp"
 )
 
 # C++ (LLVM/backend)

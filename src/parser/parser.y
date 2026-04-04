@@ -184,11 +184,11 @@ while_stmt
     ;
 
 fn_def
-  : FN IDENTIFIER LPAREN opt_params RPAREN COLON DATATYPES block
+  : FN DATATYPES IDENTIFIER LPAREN opt_params RPAREN  block
       {
-          $$ = new_fn_def($2->var, $4.params, $4.count, $7, $8, @1.first_line, @1.first_column);
+          $$ = new_fn_def($3->var, $5.params, $5.count, $2, $7, @1.first_line, @1.first_column);
           TQ_SET_NODE_LOC($$, @$);
-          ast_free($2);
+          ast_free($3);
       }
   | FN IDENTIFIER LPAREN opt_params RPAREN block
       {

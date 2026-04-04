@@ -45,6 +45,8 @@ const char *errc_msg(errc_t code) {
         case SEM_NUMERIC_LITERAL_OVERFLOW: return "numeric literal overflow";
         case SEM_UNKNOWN_AST: return "unknown AST node in semantic analysis";
 
+        case INVAILD_UTF8_CHAR: return "invalid UTF-8 character literal";
+        
         case RT_NUM_LITERAL_UNSUPPORTED: return "unsupported numeric literal type";
         case RT_BINOP_UNSUPPORTED: return "unsupported type for binary operation";
         case RT_FOR_INIT_INVALID: return "invalid for loop init";

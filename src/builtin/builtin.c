@@ -8,6 +8,7 @@
 
 #include "../semantic/semantic.h"
 #include "../utils/error_handler/error_msg.h"
+#include "ast/ASTNode.h"
 
 extern file_t file;
 extern bool isWarning;
@@ -76,6 +77,8 @@ static const DataTypes_t g_getdt_params[]  = { UNKNOWN };
 static const DataTypes_t g_rm_params[]     = { PTR };
 static const DataTypes_t g_memncpy_params[] = { PTR, UNKNOWN, PTR, UNKNOWN };
 static const DataTypes_t g_memcpy_params[]  = { PTR, PTR, UNKNOWN };
+static const DataTypes_t g_exit_params[]  = {I32};
+
 
 static const tq_std_sig_t g_builtins[] = {
     { "print",     g_print_params,   1, VOID },
@@ -87,6 +90,7 @@ static const tq_std_sig_t g_builtins[] = {
     { "rm",   g_rm_params,     1, VOID },
     { "memncpy", g_memncpy_params, 4, VOID },
     { "memcpy",  g_memcpy_params,  3, VOID },
+    {"hlt", g_exit_params, 1, VOID}
 };
 
 const tq_std_sig_t *tq_std_sig(const char *name) {
@@ -206,6 +210,11 @@ TypedValue tq_std_call(
         fprintf(stderr, "warning: unsafe memcpy called; no-op performed\n"); 
         isWarning = true; warn_no++;
         isWarning = true; warn_no++;
+        return (TypedValue){.type = VOID};
+    }
+
+    if(strcmp(sig->name, "hlt") == 0){
+        exit(argv[0].val.i32);
         return (TypedValue){.type = VOID};
     }
 
