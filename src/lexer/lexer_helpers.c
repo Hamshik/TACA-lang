@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 /* Bison %locations: Flex does not maintain columns for you.
    Track (line, column) ourselves and update it for every match,
@@ -57,6 +59,34 @@ void tq_lexer_get_cursor(int *line, int *col, int *pos) {
     if (line) *line = tq_lex_line;
     if (col) *col = tq_lex_col;
     if (pos) *pos = tq_lex_pos;
+}
+
+bool tq_utf8_single(const char *bytes, size_t len)
+{
+    if (!bytes || len == 0) return false;
+    const unsigned char *s = (const unsigned char *)bytes;
+    size_t i = 0;
+    uint32_t cp = 0;
+    if (s[i] < 0x80) { cp = s[i]; i += 1; }
+    else if ((s[i] & 0xE0) == 0xC0) {
+        if (len < 2) return false;
+        cp = ((s[i] & 0x1F) << 6) | (s[i+1] & 0x3F);
+        if ((s[i+1] & 0xC0) != 0x80 || cp < 0x80) return false;
+        i += 2;
+    } else if ((s[i] & 0xF0) == 0xE0) {
+        if (len < 3) return false;
+        cp = ((s[i] & 0x0F) << 12) | ((s[i+1] & 0x3F) << 6) | (s[i+2] & 0x3F);
+        if ((s[i+1] & 0xC0) != 0x80 || (s[i+2] & 0xC0) != 0x80 || cp < 0x800) return false;
+        i += 3;
+    } else if ((s[i] & 0xF8) == 0xF0) {
+        if (len < 4) return false;
+        cp = ((s[i] & 0x07) << 18) | ((s[i+1] & 0x3F) << 12) | ((s[i+2] & 0x3F) << 6) | (s[i+3] & 0x3F);
+        if ((s[i+1] & 0xC0) != 0x80 || (s[i+2] & 0xC0) != 0x80 || (s[i+3] & 0xC0) != 0x80 || cp < 0x10000 || cp > 0x10FFFF) return false;
+        i += 4;
+    } else {
+        return false;
+    }
+    return i == len;
 }
 
 char *tq_unescape_string(const char *in, size_t in_len, size_t *out_len, int *err_index, const char **err_msg) {

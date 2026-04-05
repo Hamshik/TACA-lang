@@ -59,8 +59,8 @@
             }                                        \
         } while (0)
 
-    #define TQ_PANIC_LOC(loc, code, detail) \
-        panic(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
+    #define TQ_error_LOC(loc, code, detail) \
+        error(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
     
 %}
 
@@ -145,9 +145,9 @@ stmt_list
 
 stmt
     : assignment SEMICOLON      { $$ = $1; }
-    | assignment error          { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
+    | assignment error          { TQ_error_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
     | expr SEMICOLON            { $$ = $1; }
-    | expr error                { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
+    | expr error                { TQ_error_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
     | if_stmt                   { $$ = $1; }
     | for_stmt                  { $$ = $1; }
     | block                     { $$ = $1; }
@@ -156,8 +156,8 @@ stmt
     | decl_stmt                 { $$ = $1; }
     | fn_def                    { $$ = $1; }
     | return_stmt SEMICOLON     { $$ = $1; }
-    | return_stmt error         { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
-    | error SEMICOLON           { panic(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
+    | return_stmt error         { TQ_error_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
+    | error SEMICOLON           { error(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
     ;
 
 block
@@ -229,8 +229,8 @@ params
 type_spec
   : DATATYPES
       { $$.type = $1; $$.ptr_to = UNKNOWN; }
-  | STAR DATATYPES %prec UDEREF
-      { $$.type = PTR; $$.ptr_to = $2; }
+  | DATATYPES AMP %prec UDEREF
+      { $$.type = PTR; $$.ptr_to = $1; }
   ;
 
 param
@@ -258,7 +258,7 @@ MUT_block
     : MUT LBRACE decl_block_items RBRACE
         { tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
     | MUT LBRACE decl_block_items error
-        { TQ_PANIC_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
+        { TQ_error_LOC(@4, PARSE_UNCLOSED_BRACE, NULL); yyerrok; tq_annotate_decl_list($3, UNKNOWN, UNKNOWN, true); $$ = $3; }
     ;
 
 decl_block_items
@@ -329,7 +329,7 @@ decl
 
     decl_stmt
         : decl SEMICOLON { $$ = $1; }
-        | decl error     { TQ_PANIC_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
+        | decl error     { TQ_error_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
         ;
 
     for_init
@@ -389,9 +389,9 @@ expr
         { $$ = new_unop($1, @$.first_line, @$.first_column, OP_DEC); TQ_SET_NODE_LOC($$, @$); }
 
     | LPAREN expr RPAREN         { $$ = $2; }
-    | LPAREN expr error          { TQ_PANIC_LOC(@3, PARSE_UNCLOSED_PAREN, NULL); yyerrok; $$ = $2; }
+    | LPAREN expr error          { TQ_error_LOC(@3, PARSE_UNCLOSED_PAREN, NULL); yyerrok; $$ = $2; }
     | LSQUARE expr RSQUARE       { $$ = $2; }
-    | LSQUARE expr error         { TQ_PANIC_LOC(@3, PARSE_UNCLOSED_BRACKET, NULL); yyerrok; $$ = $2; }
+    | LSQUARE expr error         { TQ_error_LOC(@3, PARSE_UNCLOSED_BRACKET, NULL); yyerrok; $$ = $2; }
     | IDENTIFIER LPAREN opt_args RPAREN
       {
           $$ = new_fn_call($1->var, $3, @1.first_line, @1.first_column);

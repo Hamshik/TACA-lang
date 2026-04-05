@@ -59,7 +59,7 @@ FILE *open_file(const char *filename, char **resolved_path_out) {
 
 int main(int argc, char **argv) {
   FILE *input = NULL;
-  panic_fatal = true; /* lexer/parser should stop immediately */
+  error_fatal = true; /* lexer/parser should stop immediately */
   bool emit_ll_file = false;
 
   switch (argc) {
@@ -100,9 +100,9 @@ int main(int argc, char **argv) {
 
   yyparse();
   if (root != NULL) {
-    panic_fatal = false; /* collect semantic errors like Rust */
+    error_fatal = false; /* collect semantic errors like Rust */
     semantic_check(root);
-    panic_fatal = true; /* runtime errors should still stop */
+    error_fatal = true; /* runtime errors should still stop */
     char *ir_text = NULL;
     
     if (codegen(root, emit_ll_file ? "out.ll" : NULL, &ir_text))

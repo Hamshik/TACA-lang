@@ -78,7 +78,7 @@ llvm::Value* emit_number(ASTNode_t *n, LLVMContext &ctx) {
             int ok = 0;
             __int128 v = parse_i128(n->literal.raw, &ok);
             if (!ok) {
-                panic(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                error(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
                 return nullptr;
             }
             uint64_t words[2];
@@ -97,7 +97,7 @@ llvm::Value* emit_number(ASTNode_t *n, LLVMContext &ctx) {
             int ok = 0;
             unsigned __int128 v = parse_u128(n->literal.raw, &ok);
             if (!ok) {
-                panic(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                error(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
                 return nullptr;
             }
             uint64_t words[2];
@@ -113,7 +113,7 @@ llvm::Value* emit_number(ASTNode_t *n, LLVMContext &ctx) {
         case UF64: return ConstantFP::get(Type::getDoubleTy(ctx), strtod(n->literal.raw, NULL));
         case UF128:return ConstantFP::get(Type::getFP128Ty(ctx),  strtold(n->literal.raw, NULL));
         default:
-            panic(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+            error(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
             return nullptr;
     }
 }

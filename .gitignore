@@ -2,4 +2,4 @@ bin
 *ll
 out
 *.out
-.codex
+.cache

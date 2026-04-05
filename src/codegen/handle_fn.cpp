@@ -1,6 +1,7 @@
 #include "../ast/ASTNode.h"
 #include "../stdlibs/stdlibs.h"
 #include "codegen.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -46,10 +47,12 @@ void emit_function(ASTNode_t *fn_ast, Module &mod, LLVMContext &ctx) {
 
   emit_expr(fn_ast->fn_def.body, ctx, b, entryBuilder, locals);
   if (!blockTerminated(b)) {
-    if (fn->getReturnType()->isVoidTy())
+    if (fn->getReturnType()->isVoidTy()) 
       b.CreateRetVoid();
-    else
-      b.CreateRet(ConstantInt::get(fn->getReturnType(), 0));
+    else if(strcmp(fn_ast->fn_def.name, "main") == 0)
+      b.CreateRet(ConstantInt::get(Type::getInt32Ty(ctx), 0));
+    else 
+      error(&file, fn_ast->line, fn_ast->col, fn_ast->pos, RET_NOT_DECLARED, fn_ast->fn_def.name);
   }
 }
 

@@ -10,7 +10,7 @@ size_t err_no = 0;
 size_t warn_no = 0;
 bool isError = false;
 bool isWarning = false;
-bool panic_fatal = true;
+bool error_fatal = true;
 
 
 void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail)
@@ -36,7 +36,7 @@ void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, co
     if (!src || src_len == 0) {
         free(src);
         fprintf(stderr, BOLD DIM " note:" RESET " could not read source to show caret\n");
-        if (panic_fatal) exit(EXIT_FAILURE);
+        if (error_fatal) exit(EXIT_FAILURE);
         return;
     }
 
@@ -65,7 +65,7 @@ void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, co
     fprintf(stderr, BOLD RED "^\n" RESET);
 
     free(src);
-    if (panic_fatal) exit(EXIT_FAILURE);
+    if (error_fatal) exit(EXIT_FAILURE);
 }
 
 void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, const char *detail)

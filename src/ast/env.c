@@ -111,13 +111,13 @@ TQValue getvar(const char *name, DataTypes_t datatype, int line, int col, int po
         HASH_FIND_STR(it->vars, name, v);
         if (!v) continue;
         if (v->typedval.type != datatype && !is_numeric(v->typedval.type) && !is_numeric(datatype)) {
-            panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+            error(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
             return (TQValue){0};
         }
         return v->typedval.val;
     }
 
-    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    error(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
     return (TQValue){0};
 }
 
@@ -129,7 +129,7 @@ TypedValue *getvar_ref(const char *name, int line, int col, int pos) {
         return &v->typedval;
     }
 
-    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    error(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
     return (TypedValue *){0};
 }
 
@@ -140,7 +140,7 @@ int env_frame_id_of(const char *name, int line, int col, int pos) {
         if (!v) continue;
         return it->id;
     }
-    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    error(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
     return -1;
 }
 
@@ -154,13 +154,13 @@ static EnvFrame_t *env_find_frame(int frame_id) {
 TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int pos) {
     EnvFrame_t *f = env_find_frame(frame_id);
     if (!f) {
-        panic(&file, line, col, pos, RT_DANGLING_PTR, name);
+        error(&file, line, col, pos, RT_DANGLING_PTR, name);
         return (TypedValue *){0};
     }
     VarEntry *v = NULL;
     HASH_FIND_STR(f->vars, name, v);
     if (!v) {
-        panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+        error(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
         return (TypedValue *){0};
     }
     return &v->typedval;
@@ -169,17 +169,17 @@ TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int
 void set_var_at(int frame_id, const char *name, TQValue *val, DataTypes_t datatype, int line, int col, int pos) {
     EnvFrame_t *f = env_find_frame(frame_id);
     if (!f) {
-        panic(&file, line, col, pos, RT_DANGLING_PTR, name);
+        error(&file, line, col, pos, RT_DANGLING_PTR, name);
         return;
     }
     VarEntry *v = NULL;
     HASH_FIND_STR(f->vars, name, v);
     if (!v) {
-        panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+        error(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
         return;
     }
     if (v->typedval.type != datatype) {
-        panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+        error(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
         return;
     }
     assign_value(datatype, &v->typedval.val, *val);

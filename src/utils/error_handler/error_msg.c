@@ -46,6 +46,7 @@ const char *errc_msg(errc_t code) {
         case SEM_UNKNOWN_AST: return "unknown AST node in semantic analysis";
 
         case INVAILD_UTF8_CHAR: return "invalid UTF-8 character literal";
+        case RET_NOT_DECLARED: return "return value is not declared in a function";
         
         case RT_NUM_LITERAL_UNSUPPORTED: return "unsupported numeric literal type";
         case RT_BINOP_UNSUPPORTED: return "unsupported type for binary operation";

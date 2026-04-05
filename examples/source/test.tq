@@ -1,5 +1,10 @@
+var x = '🔥';
+
+fn char gstr(){
+    ret '🔥';
+}
 
 fn main(){
-    println("🔥🔥🔥🔥🔥");
-    hlt(0);
+    println(gstr());
+    println(x);
 }

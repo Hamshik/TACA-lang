@@ -1,6 +1,7 @@
 #include "codegen.h"
 #include "../ast/ASTNode.h"
 #include "../stdlibs/stdlibs.h"
+#include "../utils/colors.h"
 #include <iostream>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -9,7 +10,6 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 #include <string>
-
 extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
   LLVMContext ctx;
   Module mod("TQModule", ctx);
@@ -97,7 +97,7 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
   std::string verr;
   raw_string_ostream verrs(verr);
   if (verifyModule(mod, &verrs)) {
-    std::cerr << "LLVM verify error: " << verrs.str() << std::endl;
+    std::cerr << BOLD RED "LLVM verify error: " RESET << verrs.str() << std::endl;
     return 1;
   }
 
@@ -120,6 +120,9 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
     out.flush();
     std::cout << "LLVM IR written to " << ll_path << std::endl;
   }
+
+  printf(BOLD GREEN
+         "SUCCESS: Compilation succeeded with no errors or warnings\n" RESET);
 
   if (ir_out) {
     *ir_out = (char *)malloc(ir.size() + 1);

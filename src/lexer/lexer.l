@@ -42,7 +42,7 @@
 <COMMENT3>\n                  { /* skip */ }
 <COMMENT3>.                   { /* skip */ }
 <COMMENT3><<EOF>>             {
-    panic(&file,
+    error(&file,
           tq_comment_start_line,
           tq_comment_start_col,
           tq_comment_start_pos,
@@ -63,7 +63,7 @@
     char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
     if (!s) {
         int off = (err_i >= 0) ? err_i : 0;
-        panic(&file,
+        error(&file,
               yylloc->first_line,
               yylloc->first_column + 1 + off,
               yylloc->first_pos + 1 + off,
@@ -78,7 +78,39 @@
     free(s);
     return STRING_LITERAL;
 }
-\'([^\'\\]|\\.)+\'             { yylval->node = new_char(yytext[1], yylloc->first_line, yylloc->first_column); yylval->node->pos = yylloc->first_pos; yylval->node->end_pos = yylloc->last_pos; return CHAR_LITERAL; }
+\'([^\'\\\n]|\\.)+\'            {
+    const char *inner = yytext + 1;          /* skip leading quote */
+    size_t inner_len = (size_t)yyleng - 2;   /* exclude quotes */
+    size_t out_len = 0;
+    int err_i = -1;
+    const char *err_msg = NULL;
+
+    char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
+    if (!s || out_len == 0) {
+        int off = (err_i >= 0) ? err_i : 0;
+        error(&file,
+              yylloc->first_line,
+              yylloc->first_column + 1 + off,
+              yylloc->first_pos + 1 + off,
+              LEX_INVALID_ESCAPE,
+              err_msg ? err_msg : "invalid character literal");
+        free(s);
+        return 0;
+    }
+
+    /* enforce exactly one UTF-8 codepoint */
+    if (!tq_utf8_single(s, out_len)) {
+        error(&file, yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1, INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
+        free(s);
+        return 0;
+    }
+
+    yylval->node = new_char_bytes(s, out_len, yylloc->first_line, yylloc->first_column);
+    free(s);
+    yylval->node->pos = yylloc->first_pos;
+    yylval->node->end_pos = yylloc->last_pos;
+    return CHAR_LITERAL;
+}
 else                         { return ELSE; }
 if                           { return IF; }
 for                          { return FOR; }
@@ -191,13 +223,21 @@ fn                  { return FN; }
     unsigned char b0 = (unsigned char)yytext[0];
     char detail[32];
     snprintf(detail, sizeof(detail), "0x%02X", b0);
-    panic(&file, yylloc->first_line, yylloc->first_column, yylloc->first_pos, LEX_UNKNOWN_CHAR, detail);
+    int line = 0, col = 0, pos = 0;
+    if (yylloc) {
+        line = yylloc->first_line;
+        col  = yylloc->first_column;
+        pos  = yylloc->first_pos;
+    } else {
+        tq_lexer_get_cursor(&line, &col, &pos);
+    }
+    error(&file, line, col, pos, LEX_UNKNOWN_CHAR, detail);
 }
 <<EOF>>             {
     if (tq_brace_depth > 0) {
         int line = 0, col = 0, pos = 0;
         tq_lexer_get_cursor(&line, &col, &pos);
-        panic(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
+        error(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
     }
     return 0;
 }

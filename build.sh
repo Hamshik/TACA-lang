@@ -48,7 +48,7 @@ CPP_SRCS=(
 # C++ (LLVM/backend)
 for src in "${CPP_SRCS[@]}"; do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    g++ -Wall -Wextra -g -Isrc -w $LLVM_CXXFLAGS -c "$src" -o "$obj"
+    clang++ -fcxx-exceptions -Wall -Wextra -g -Isrc -Isrc/utils/utf-8_lib -w $LLVM_CXXFLAGS -c "$src" -o "$obj"
 done
 
 # C sources
@@ -65,6 +65,8 @@ C_SRCS=(
     "$AST_DIR/env.c"
     "$SEMAN/semanic.c"
     "$SEMAN/symbol_table.c"
+    "$SEMAN/semanic_fn.c"
+    "$SEMAN/semanic_op.c"
     "$UTILS/error_handler/error.c"
     "$UTILS/error_handler/error_msg.c"
     "$EVAL_DIR/stepper.c"
@@ -77,7 +79,7 @@ C_SRCS=(
 
 for src in "${C_SRCS[@]}"; do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    gcc -Wall -Wextra -g -Isrc -Wunused-function -Wunused-variable -c "$src" -o "$obj"
+    gcc -Wall -Wextra -g -Isrc -Isrc/utils/utf-8_lib -Wunused-function -Wunused-variable -c "$src" -o "$obj"
 done
 
 echo "Linking[3/3] Files..."

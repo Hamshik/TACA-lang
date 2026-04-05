@@ -15,10 +15,16 @@ extern "C"
     int codegen(ASTNode_t* root, const char *ll_path, char **ir_out);
     unsigned __int128 tq_parse_u128(const char *s, int *ok);
     __int128         tq_parse_i128(const char *s, int *ok);
-    void panic(file_t *file, int line, int col, int pos, errc_t code, const char *detail);
+    void error(file_t *file, int line, int col, int pos, errc_t code, const char *detail);
 
 #ifdef __cplusplus
 }
+enum class Utf8Error {
+    None = 0,
+    Empty,         // ''
+    InvalidUtf8,   // Bad bytes
+    MultiCharacter // '67'
+};
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -56,7 +62,7 @@ __int128 parse_i128(const char *s, int *ok);
 __int128 parse_i128(const char *s, int *ok);
 
 bool blockTerminated(IRBuilder<> &b);
-int utf8_decode(const unsigned char *s, uint32_t *out);
+uint32_t decode_utf8(const char* raw_ptr, size_t raw_len, size_t* byte_len, Utf8Error* error) ;
 
 #endif
 #endif

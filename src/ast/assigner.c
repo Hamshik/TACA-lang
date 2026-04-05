@@ -55,7 +55,7 @@ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t da
     TQValue v = {0};
 
     if (!lhs) {
-        panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
+        error(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
         return (TQValue){0};
     }
 
@@ -85,10 +85,10 @@ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t da
                 v.chars = r.chars;
                 break;
             case PTR:
-                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "pointer compound assignment not supported");
+                error(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "pointer compound assignment not supported");
                 return (TQValue){0};
             default:
-                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
+                error(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
                 return (TQValue){0};
         }
         set_var(lhs->var, &v, datatypes);
@@ -99,13 +99,13 @@ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t da
     if (lhs->kind == AST_UNOP && lhs->unop.op == OP_DEREF) {
         TypedValue pv = ast_eval(lhs->unop.operand);
         if (pv.type != PTR || pv.val.ptr.name == NULL) {
-            panic(&file, line, col, pos, RT_DANGLING_PTR, NULL);
+            error(&file, line, col, pos, RT_DANGLING_PTR, NULL);
             return (TQValue){0};
         }
         TypedValue *target = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, line, col, pos);
         if (!target) return (TQValue){0};
         if (target->type != datatypes) {
-            panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, pv.val.ptr.name);
+            error(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, pv.val.ptr.name);
             return (TQValue){0};
         }
 
@@ -124,13 +124,13 @@ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t da
                 v = tq_eval_binop_numeric(operation, datatypes, cur, r);
                 break;
             default:
-                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "unsupported deref assignment type");
+                error(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "unsupported deref assignment type");
                 return (TQValue){0};
         }
         assign_value(datatypes, &target->val, v);
         return v;
     }
 
-    panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
+    error(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
     return (TQValue){0};
 }

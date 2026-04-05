@@ -55,6 +55,7 @@ typedef enum errc {
 
     /*LLVM ERROR*/
     INVAILD_UTF8_CHAR = 2000,
+    RET_NOT_DECLARED = 2001,
 
     /* Runtime/Eval */
     RT_NUM_LITERAL_UNSUPPORTED = 3001,
@@ -89,14 +90,14 @@ extern size_t err_no;
 extern size_t warn_no;
 extern bool isError;
 extern bool isWarning;
-extern bool panic_fatal;
+extern bool error_fatal;
 
 char *logf_msg(const char *fmt, ...);
 int digits_int(int v);
 int starts_with(const char *s, const char *prefix);
 char *read_entire_path(FILE *file, size_t *out_len);
 
-void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail);
+void error(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail);
 void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, const char *detail);
 void syserr(const char *context);
 void syswarn(const char *context);

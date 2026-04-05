@@ -23,12 +23,122 @@ llvm::Value *emit_print_like(const char *fmt, llvm::Value *v, LLVMContext &ctx,
   return b.CreateCall(printfFn, argv);
 }
 
+/* Internal helper added to the generated module to print a codepoint as UTF-8
+ * without relying on locale/%lc. */
+static Function *get_or_create_tq_print_cp(Module *m, LLVMContext &ctx) {
+    if (Function *f = m->getFunction("tq_print_cp")) return f;
+
+    Type *i1  = Type::getInt1Ty(ctx);
+    Type *i8  = Type::getInt8Ty(ctx);
+    Type *i32 = Type::getInt32Ty(ctx);
+
+    FunctionType *ft = FunctionType::get(Type::getVoidTy(ctx), {i32, i1}, false);
+    Function *f = Function::Create(ft, Function::InternalLinkage, "tq_print_cp", m);
+
+    BasicBlock *entry = BasicBlock::Create(ctx, "entry", f);
+    BasicBlock *one   = BasicBlock::Create(ctx, "one", f);
+    BasicBlock *two   = BasicBlock::Create(ctx, "two", f);
+    BasicBlock *twoDo = BasicBlock::Create(ctx, "two.do", f);
+    BasicBlock *three = BasicBlock::Create(ctx, "three", f);
+    BasicBlock *threeDo = BasicBlock::Create(ctx, "three.do", f);
+    BasicBlock *four  = BasicBlock::Create(ctx, "four", f);
+    BasicBlock *done  = BasicBlock::Create(ctx, "done", f);
+
+    IRBuilder<> b(entry);
+    auto args = f->arg_begin();
+    Value *cp = args++;
+    cp->setName("cp");
+    Value *nl = args;
+    nl->setName("nl");
+
+    Function *putcharF = cast<Function>(m->getOrInsertFunction(
+        "putchar", FunctionType::get(i32, {i32}, false)).getCallee());
+    auto emit_byte = [&](IRBuilder<> &ib, Value *byte32) {
+        Value *b8 = ib.CreateTrunc(byte32, i8);
+        Value *b32 = ib.CreateZExt(b8, i32);
+        ib.CreateCall(putcharF, {b32});
+    };
+
+    Value *is1 = b.CreateICmpULE(cp, b.getInt32(0x7F));
+    b.CreateCondBr(is1, one, two);
+
+    // 1 byte
+    b.SetInsertPoint(one);
+    emit_byte(b, cp);
+    b.CreateBr(done);
+
+    // 2-byte decision
+    b.SetInsertPoint(two);
+    Value *is2 = b.CreateICmpULE(cp, b.getInt32(0x7FF));
+    b.CreateCondBr(is2, twoDo, three);
+
+    b.SetInsertPoint(twoDo);
+    {
+        Value *b1 = b.CreateOr(b.getInt32(0xC0), b.CreateLShr(cp, 6));
+        Value *b2 = b.CreateOr(b.getInt32(0x80), b.CreateAnd(cp, b.getInt32(0x3F)));
+        emit_byte(b, b1);
+        emit_byte(b, b2);
+        b.CreateBr(done);
+    }
+
+    // 3-byte decision
+    b.SetInsertPoint(three);
+    Value *is3 = b.CreateICmpULE(cp, b.getInt32(0xFFFF));
+    b.CreateCondBr(is3, threeDo, four);
+
+    b.SetInsertPoint(threeDo);
+    {
+        Value *b1 = b.CreateOr(b.getInt32(0xE0), b.CreateLShr(cp, 12));
+        Value *b2 = b.CreateOr(b.getInt32(0x80), b.CreateAnd(b.CreateLShr(cp, 6), b.getInt32(0x3F)));
+        Value *b3 = b.CreateOr(b.getInt32(0x80), b.CreateAnd(cp, b.getInt32(0x3F)));
+        emit_byte(b, b1);
+        emit_byte(b, b2);
+        emit_byte(b, b3);
+        b.CreateBr(done);
+    }
+
+    // 4-byte
+    b.SetInsertPoint(four);
+    {
+        Value *b1 = b.CreateOr(b.getInt32(0xF0), b.CreateLShr(cp, 18));
+        Value *b2 = b.CreateOr(b.getInt32(0x80), b.CreateAnd(b.CreateLShr(cp, 12), b.getInt32(0x3F)));
+        Value *b3 = b.CreateOr(b.getInt32(0x80), b.CreateAnd(b.CreateLShr(cp, 6), b.getInt32(0x3F)));
+        Value *b4 = b.CreateOr(b.getInt32(0x80), b.CreateAnd(cp, b.getInt32(0x3F)));
+        emit_byte(b, b1);
+        emit_byte(b, b2);
+        emit_byte(b, b3);
+        emit_byte(b, b4);
+        b.CreateBr(done);
+    }
+
+    b.SetInsertPoint(done);
+    BasicBlock *retbb = BasicBlock::Create(ctx, "ret", f);
+    b.CreateCondBr(nl, retbb, retbb);
+    b.SetInsertPoint(retbb);
+    b.CreateRetVoid();
+
+    return f;
+}
+
 llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
                           LLVMContext &ctx, IRBuilder<> &b) {
   // choose format by datatype
   switch (argNode->datatype) {
   case STRINGS:
+    {
+      Type *i8ptr = PointerType::get(ctx, 0);
+      if (argV->getType() != i8ptr) {
+        argV = b.CreatePointerCast(argV, i8ptr);
+      }
+    }
     return emit_print_like("%s\n", argV, ctx, b);
+  case CHARACTER: {
+    llvm::Value *cp = b.CreateSExtOrBitCast(argV, Type::getInt32Ty(ctx));
+    Module *m = b.GetInsertBlock()->getModule();
+    Function *helper = get_or_create_tq_print_cp(m, ctx);
+    b.CreateCall(helper, {cp, b.getInt1(true)});
+    return nullptr;
+  }
   case BOOL: {
     llvm::Value *i = b.CreateZExt(argV, Type::getInt32Ty(ctx));
     return emit_print_like("%d\n", i, ctx, b);
@@ -68,10 +178,21 @@ llvm::Value* print(ASTNode_t *n, argvec args, LLVMContext &ctx, IRBuilder<> &b) 
   switch (argNode ? argNode->datatype : STRINGS) {
   case STRINGS:
     fmt = b.CreateGlobalString("%s", "fmt");
-    // Convert [N x i8]* -> i8*
-    argV = b.CreateInBoundsGEP(argV->getType(), argV,
-                               {b.getInt32(0), b.getInt32(0)}, "strptr");
+    {
+      Type *i8ptr = PointerType::get(ctx, 0);
+      if (argV->getType() != i8ptr) {
+        argV = b.CreatePointerCast(argV, i8ptr);
+      }
+    }
     break;
+  case CHARACTER:
+    {
+      llvm::Value *cp = b.CreateSExtOrBitCast(argV, Type::getInt32Ty(ctx));
+      Module *m2 = b.GetInsertBlock()->getModule();
+      Function *helper2 = get_or_create_tq_print_cp(m2, ctx);
+      b.CreateCall(helper2, {cp, b.getInt1(false)});
+      return nullptr;
+    }
   case BOOL:
     fmt = b.CreateGlobalString("%d", "fmt");
     if (!argV->getType()->isIntegerTy(32))

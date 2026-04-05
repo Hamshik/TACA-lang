@@ -21,7 +21,8 @@ typedef enum ASTKind {
     AST_WHILE,
     AST_FN,
     AST_CALL,
-    AST_RETURN
+    AST_RETURN,
+    AST_BLOCK
 } ASTKind_t;
 
 typedef enum DataTypes{
@@ -131,6 +132,7 @@ typedef struct ASTNode {
         // literals
         struct {
             char *raw;     // e.g. "123", "3.14", "true", "hello"
+            size_t len;
         } literal;
         // binary operations
         struct {
@@ -161,6 +163,11 @@ typedef struct ASTNode {
         struct { char *name; Param_t *params; int param_count; DataTypes_t ret; struct ASTNode *body; } fn_def;
         struct { char *name; struct ASTNode *args; } call;
         struct { struct ASTNode *value; } ret_stmt;
+        //block
+        struct {
+            struct ASTNode *stmts;
+            struct ASTNode *last_expr;  // 🔥 THIS is the Rust trick
+        } block;
         
     };
 } ASTNode_t;
@@ -168,7 +175,7 @@ typedef struct ASTNode {
 /* Constructors */
 ASTNode_t *new_num(char *rawval, DataTypes_t datatype, int line, int col);
 ASTNode_t *new_str(char *rawval, int line, int col);
-ASTNode_t *new_char(char c, int line, int col);
+ASTNode_t *new_char_bytes(const char *bytes, size_t len, int line, int col);
 ASTNode_t *new_var(const char *name, DataTypes_t datatype, int line, int col);
 ASTNode_t *new_binop(ASTNode_t *l, ASTNode_t *r, int line, int col, OP_kind_t op);
 ASTNode_t *new_unop(ASTNode_t *e, int line, int col, OP_kind_t op);
@@ -181,7 +188,6 @@ ASTNode_t* new_bool(bool val, int line, int col);
 ASTNode_t* new_fn_def(const char *name, Param_t *params, int param_count, DataTypes_t ret_type, ASTNode_t *body, int line, int col);
 ASTNode_t* new_fn_call(const char *name, ASTNode_t *args, int line, int col);
 ASTNode_t* new_return(ASTNode_t *value, int line, int col);
-
 /* Eval + memory */
 void ast_free(ASTNode_t *n);
 ASTNode_t *ast_alloc(void);

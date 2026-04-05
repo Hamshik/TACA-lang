@@ -116,7 +116,7 @@ TypedValue tq_std_call(
     if (ok) *ok = 1;
 
     if (argc != sig->param_count) {
-        panic(&file, call_line, call_col, call_pos, RT_ARGC_MISMATCH, name);
+        error(&file, call_line, call_col, call_pos, RT_ARGC_MISMATCH, name);
         return (TypedValue){.type = VOID};
     }
 
@@ -128,7 +128,7 @@ TypedValue tq_std_call(
 
     if (strcmp(sig->name, "alloc") == 0) {
         if (!is_numeric(argv[0].type)) {
-            panic(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
+            error(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
             return (TypedValue){.type = VOID};
         }
         size_t sz = (size_t)argv[0].val.u64;
@@ -145,7 +145,7 @@ TypedValue tq_std_call(
 
     if (strcmp(sig->name, "calloc") == 0) {
         if (!is_numeric(argv[0].type) || !is_numeric(argv[1].type)) {
-            panic(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
+            error(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
             return (TypedValue){.type = VOID};
         }
         size_t n = (size_t)argv[0].val.u64;
@@ -163,7 +163,7 @@ TypedValue tq_std_call(
 
     if (strcmp(sig->name, "realloc") == 0) {
         if (argv[0].type != PTR || !is_numeric(argv[1].type)) {
-            panic(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
+            error(&file, call_line, call_col, call_pos, SEM_ARG_TYPE_MISMATCH, name);
             return (TypedValue){.type = VOID};
         }
         size_t sz = (size_t)argv[1].val.u64;
@@ -218,6 +218,6 @@ TypedValue tq_std_call(
         return (TypedValue){.type = VOID};
     }
 
-    panic(&file, call_line, call_col, call_pos, RT_CALL_UNDEF_FN, name);
+    error(&file, call_line, call_col, call_pos, RT_CALL_UNDEF_FN, name);
     return (TypedValue){.type = VOID};
 }

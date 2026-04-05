@@ -4,9 +4,11 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Value.h"
+#include <codecvt>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <vector>
 
 llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                        IRBuilder<> &entryBuilder, LocalMap &locals) {
@@ -25,28 +27,33 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
     return ConstantInt::get(Type::getInt1Ty(ctx), n->datatype == BOOL ? 1 : 0);
   case AST_STR:
     return b.CreateGlobalString(n->literal.raw ? n->literal.raw : "", "strlit");
+
   case AST_CHAR: {
     if (!n->literal.raw) {
-      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, nullptr);
+      error(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, nullptr);
       return nullptr;
     }
 
-    uint32_t codepoint;
-    int len = utf8_decode((unsigned char *)n->literal.raw, &codepoint);
+    size_t len = 0;
+    Utf8Error err = Utf8Error::None;
+    uint32_t codepoint = decode_utf8(n->literal.raw, n->literal.len, &len, &err);
 
-    // invalid UTF-8
-    if (len <= 0) {
-      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, nullptr);
+    // Error Handling
+    if (err != Utf8Error::None) {
+      const char *msg = nullptr;
+      if (err == Utf8Error::MultiCharacter)
+        msg = "Character literal must be a single UTF-8 character (e.g., 'a' or 'π')";
+      else if (err == Utf8Error::Empty)
+        msg = "Character literal cannot be empty";
+
+      else if (err == Utf8Error::InvalidUtf8)
+        msg = n->literal.raw;
+
+      error(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, msg ? msg : "unknown");
       return nullptr;
     }
 
-    // more than one character
-    if (n->literal.raw[len] != '\0') {
-      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR,
-            "char must be a single UTF-8 character");
-      return nullptr;
-    }
-
+    // This now receives a single uint32_t, which LLVM ConstantInt accepts
     return ConstantInt::get(ir_type(CHARACTER, ctx), codepoint);
   }
 
@@ -81,7 +88,7 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
 
   case NODE_IF:
     return emit_if(n, ctx, b, entryBuilder, locals);
-  case AST_SEQ:
+  case AST_SEQ: {
     emit_expr(n->seq.a, ctx, b, entryBuilder, locals);
 
     // 🔥 STOP if block already terminated
@@ -89,6 +96,7 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
       return nullptr;
 
     return emit_expr(n->seq.b, ctx, b, entryBuilder, locals);
+  }
 
   case AST_RETURN: {
     llvm::Value *v = emit_expr(n->ret_stmt.value, ctx, b, entryBuilder, locals);
@@ -99,9 +107,21 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
       else
         b.CreateRetVoid();
     }
-
     return v;
   }
+
+  case AST_BLOCK: {
+    emit_expr(n->block.stmts, ctx, b, entryBuilder, locals);
+
+    if (blockTerminated(b))
+      return nullptr;
+
+    if (n->block.last_expr)
+      return emit_expr(n->block.last_expr, ctx, b, entryBuilder, locals);
+
+    return nullptr;
+  }
+
   default:
     return nullptr;
   }

@@ -1,8 +1,5 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
-#include <ctype.h>
 #include "ASTNode.h"
 
 ASTNode_t* new_num(char *rawval, DataTypes_t datatype, int line, int col) {
@@ -26,17 +23,18 @@ ASTNode_t *new_str(char *rawval, int line, int col)
     return node;
 }
 
-ASTNode_t *new_char(char c, int line, int col)
+ASTNode_t *new_char_bytes(const char *bytes, size_t len, int line, int col)
 {
     ASTNode_t *node = ast_alloc();
     node->kind = AST_CHAR;
     node->datatype = CHARACTER;
     node->line = line;
     node->col = col;
-    node->literal.raw = malloc(2);
-    if (node->literal.raw) {
-        node->literal.raw[0] = c;
-        node->literal.raw[1] = '\0';
+    node->literal.len = len;
+    node->literal.raw = malloc(len + 1);
+    if (node->literal.raw && bytes) {
+        memcpy(node->literal.raw, bytes, len);
+        node->literal.raw[len] = '\0'; /* keep NUL-terminated copy */
     }
     return node;
 }
@@ -169,6 +167,16 @@ ASTNode_t *new_return(ASTNode_t *value, int line, int col){
     ASTNode_t *node = ast_alloc();
     node->kind = AST_RETURN;
     node->ret_stmt.value = value;
+    node->line = line;
+    node->col = col;
+    return node;
+}
+
+ASTNode_t *new_block(ASTNode_t* a, ASTNode_t* b, int line, int col){
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_BLOCK;
+    node->block.stmts = a;
+    node->block.last_expr = b;
     node->line = line;
     node->col = col;
     return node;
