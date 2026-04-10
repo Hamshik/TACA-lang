@@ -1,5 +1,5 @@
 # Tarkiq-lang
-# ! not artifacted to TarkIQ(Gujarat) !
+! not artifacted to TarkIQ(Gujarat) !
 
 The word  `Tarkiq`  is derived from  `Tulu (or Sanskrit)`  means  `Smart Optimizer`
 
