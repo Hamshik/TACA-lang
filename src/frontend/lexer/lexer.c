@@ -1,6 +1,6 @@
-#line 2 "src/frontend/lexer/lexer.c"
+#line 1 "src/frontend/lexer/lexer.c"
 
-#line 4 "src/frontend/lexer/lexer.c"
+#line 3 "src/frontend/lexer/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -602,9 +602,9 @@ char *yytext;
 
     #define YY_USER_INIT tq_lexer_reset_loc();
     #define YY_USER_ACTION tq_lexer_update_loc(yylloc, yytext, (int)yyleng);
-#line 606 "src/frontend/lexer/lexer.c"
+#line 605 "src/frontend/lexer/lexer.c"
 
-#line 608 "src/frontend/lexer/lexer.c"
+#line 607 "src/frontend/lexer/lexer.c"
 
 #define INITIAL 0
 #define COMMENT3 1
@@ -840,7 +840,7 @@ YY_DECL
 	{
 #line 31 "src/frontend/lexer/lexer.l"
 
-#line 844 "src/frontend/lexer/lexer.c"
+#line 843 "src/frontend/lexer/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1449,7 +1449,7 @@ YY_RULE_SETUP
 #line 244 "src/frontend/lexer/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1453 "src/frontend/lexer/lexer.c"
+#line 1452 "src/frontend/lexer/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
