@@ -4,15 +4,9 @@ set -euo pipefail
 
 PARSER_DIR="src/parser"
 LEXER_DIR="src/lexer"
-AST_DIR="src/ast"
-EVAL_DIR="src/eval"
-SEMAN="src/semantic"
-UTILS="src/utils"
 BIN_DIR="bin"
-BUILTIN="src/builtin"
-DATASPEC="src/typechecker"
-CODEGEN="src/codegen"
-STDLIBS="src/stdlibs"
+
+LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
 
 LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
 if command -v "$LLVM_CONFIG" >/dev/null 2>&1; then
@@ -31,61 +25,24 @@ flex -o "$LEXER_DIR/lexer.c" "$LEXER_DIR/lexer.l"
 
 mkdir -p "$BIN_DIR"
 
-echo "Compling[1/3] C++ Files"
-
-CPP_SRCS=(
-    "$STDLIBS/printer.cpp"
-    "$STDLIBS/exits.cpp"
-    "$CODEGEN/codegen.cpp"
-    "$CODEGEN/helper.cpp"
-    "$CODEGEN/handle_loops.cpp"
-    "$CODEGEN/emit_expr.cpp"
-    "$CODEGEN/handle_fn.cpp"
-    "$CODEGEN/op_handler.cpp"
-    "$CODEGEN/str_handler.cpp"
-)
-
 # C++ (LLVM/backend)
-for src in "${CPP_SRCS[@]}"; do
+echo "Compiling [1/3] C++ Files"
+
+for src in $(find src -type f -iname "*.cpp"); do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    clang++ -fcxx-exceptions -Wall -Wextra -g -Isrc -Isrc/utils/utf-8_lib -w $LLVM_CXXFLAGS -c "$src" -o "$obj"
+    clang++ -fcxx-exceptions -Wall -Wextra -g -Isrc -c "$src" -o "$obj"
 done
 
 # C sources
-echo "Compling[2/3] C Files"
-C_SRCS=(
-    "$PARSER_DIR/parser.c"
-    "$PARSER_DIR/parser_helpers.c"
-    "$LEXER_DIR/lexer.c"
-    "$LEXER_DIR/lexer_helpers.c"
-    "$EVAL_DIR/eval.c"
-    "$AST_DIR/ASTNode.c"
-    "$AST_DIR/ASTHelper.c"
-    "$AST_DIR/assigner.c"
-    "$AST_DIR/env.c"
-    "$SEMAN/semanic.c"
-    "$SEMAN/symbol_table.c"
-    "$SEMAN/semanic_fn.c"
-    "$SEMAN/semanic_op.c"
-    "$UTILS/error_handler/error.c"
-    "$UTILS/error_handler/error_msg.c"
-    "$EVAL_DIR/stepper.c"
-    "$EVAL_DIR/eval_helper.c"
-    "$SEMAN/semantic_helper.c"
-    "$BUILTIN/builtin.c"
-    "$DATASPEC/typecheck.c"
-    "src/main.c"
-)
+echo "Compiling [2/3] C Files"
 
-for src in "${C_SRCS[@]}"; do
+for src in $(find src -type f -iname "*.c"); do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    gcc -Wall -Wextra -g -Isrc -Isrc/utils/utf-8_lib -Wunused-function -Wunused-variable -c "$src" -o "$obj"
+    gcc -Wall -Wextra -g -Isrc -Isrc/utils/utf-8_lib -c "$src" -o "$obj"
 done
 
-echo "Linking[3/3] Files..."
+echo "Linking [3/3] Files..."
 g++ -o "$BIN_DIR/TQC" "$BIN_DIR"/*.o -lm $LLVM_LDFLAGS
 
 echo "Cleaning up object files..."
 rm -f "$BIN_DIR"/*.o
-
-echo "Compiled successfully: $BIN_DIR/TQC"
