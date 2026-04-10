@@ -1,7 +1,7 @@
-# Tarkiq
+# Tarkiq-lang
 # ! not artifacted to TarkIQ(Gujarat) !
 
-# The word  `Tarkiq`  is derived from  `Tulu (or Sanskrit)`  means  `Smart Optimizer`
+The word  `Tarkiq`  is derived from  `Tulu (or Sanskrit)`  means  `Smart Optimizer`
 
 Build:
     `./build.sh`
