@@ -5,13 +5,17 @@ body {
 }
 
 /* Header */
-header {
-    font-family: 'Algerian', serif;
-    text-align: center;
-    font-size: xx-large;
-    color: #af1212;
-    padding: 20px;
-    border-bottom: 1px solid black;
+
+.ltnav {
+    font-family: 'Algerian';
+    text-align: end;
+    padding-left: 100%;
+}
+
+.rtnav {
+    font-family: 'Algerian';
+    text-align: start;
+    padding-right: 100%;
 }
 
 /* Navigation */
@@ -47,18 +51,6 @@ p, ul {
     font-family: monospace, cursive;
     font-size: x-large;
     text-decoration: underline;
-}
-
-/* Form */
-.iform {
-    margin: 20px auto;
-    max-width: 400px;
-}
-
-.iform input {
-    width: 70%;
-    padding: 8px;
-    font-size: 1em;
 }
 
 .iform button {
