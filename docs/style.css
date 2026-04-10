@@ -1,33 +1,99 @@
+/* General layout */
 body {
-    font-family: Arial;
     margin: 0;
-    background: #0f172a;
-    color: white;
+    font-family: Arial, sans-serif;
 }
 
+/* Header */
 header {
-    background: #1e293b;
-    padding: 20px;
+    font-family: 'Algerian', serif;
     text-align: center;
+    font-size: xx-large;
+    color: #af1212;
+    padding: 20px;
+    border-bottom: 1px solid black;
 }
 
+/* Navigation */
 nav {
-    background: #334155;
+    background-color: antiquewhite;
+    display: flex;
     padding: 10px;
+}
+
+.lform {
+    margin: 5px 10px;
+}
+
+.lform a {
+    text-decoration: none;
+    font-size: 1.2em;
+    color: blue;
+}
+
+.lform a:hover {
+    font-size: larger;
+    color: #af1212;
+    text-decoration: underline;
+}
+
+/* Content */
+.content {
+    padding: 20px;
     text-align: center;
 }
 
-nav a {
-    margin: 10px;
-    color: #38bdf8;
-    text-decoration: none;
+p, ul {
+    font-family: monospace, cursive;
+    font-size: x-large;
+    text-decoration: underline;
 }
 
-section {
-    padding: 20px;
+/* Form */
+.iform {
+    margin: 20px auto;
+    max-width: 400px;
 }
 
-pre {
-    background: black;
-    padding: 10px;
+.iform input {
+    width: 70%;
+    padding: 8px;
+    font-size: 1em;
+}
+
+.iform button {
+    padding: 8px 15px;
+    font-size: 1em;
+    background: #af1212;
+    color: white;
+    border: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    header {
+        font-family: 'Algerian', serif;
+        text-align: center;
+        font-size: xx-large;
+        color: #af1212;
+        padding: 20px; 
+        border-bottom: 1px solid black;
+    }
+
+    nav {
+        background-color: antiquewhite;
+	    display: flex;
+     	flex-wrap: wrap; /* allows wrapping on small screens */
+     	padding: 10px;
+    }
+
+
+    p, ul, .main-section, section {
+        font-size: large;
+        display: block;
+    }
+    .nav-links{
+    	font-size: 0.7em;
+    	display:inline-block;
+    }
 }
