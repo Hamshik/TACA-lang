@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "../ast/ASTNode.h"
 #include "stdlibs.h"
 #include "llvm/IR/IRBuilder.h"

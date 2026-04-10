@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "../ast/ASTNode.h"
 #include "codegen.h"
 #include "utils/error_handler/error_msg.h"

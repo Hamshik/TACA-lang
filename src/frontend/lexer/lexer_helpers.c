@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "lexer_helpers.h"
 
 #include <stdlib.h>

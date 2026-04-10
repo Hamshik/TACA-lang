@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include <stdlib.h>
 #include <string.h>
 #include "ASTNode.h"

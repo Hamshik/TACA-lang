@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "codegen.h"
 #include "../ast/ASTNode.h"
 #include "../stdlibs/stdlibs.h"

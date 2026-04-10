@@ -1,9 +1,4 @@
-#include "ast/ASTNode.h"
-#include "codegen/codegen.h"
-#include "eval/eval.h"
-#include "parser/parser.h"
-#include "semantic/semantic.h"
-#include "utils/error_handler/error_msg.h"
+#include "tarkiq.h"
 #include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>

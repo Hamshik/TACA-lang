@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "ASTNode.h"
 #include <stdio.h>
 #include "../utils/uhash.h"

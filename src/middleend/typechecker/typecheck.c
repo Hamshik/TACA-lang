@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "typecheck.h"
 #include <stdlib.h>
 #include <string.h>

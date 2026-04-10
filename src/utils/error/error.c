@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "../colors.h"
 #include "error_msg.h"
 #include <stdbool.h>

@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "../ast/ASTNode.h"
 #include "codegen.h"
 #include "llvm/IR/Value.h"

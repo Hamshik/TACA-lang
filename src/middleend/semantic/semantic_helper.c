@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "../typechecker/typecheck.h"
 #include "semantic.h"
 #include <stdio.h>

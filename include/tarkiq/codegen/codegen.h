@@ -5,7 +5,7 @@
 extern "C"
 {
 #endif
-    #include "../ast/ASTNode.h"
+    #include "tarkiq.h"
     #include "../utils/error_handler/error_msg.h"
     #include "../eval/eval.h"
 

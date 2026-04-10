@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "../ast/ASTNode.h"
 #include "../eval/eval.h"
 #include "../utils/colors.h"

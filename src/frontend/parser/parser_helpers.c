@@ -1,3 +1,4 @@
+#include "tarkiq.h"
 #include "parser_helpers.h"
 
 void tq_annotate_decl_list(ASTNode_t *n, DataTypes_t default_t, DataTypes_t default_ptr_to, bool is_mutable) {
