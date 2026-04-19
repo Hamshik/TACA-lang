@@ -53,11 +53,11 @@ DataTypes_t check_expr(ASTNode_t *n) {
     exit_code = exists(n->var, n->datatype, n->ptr_to);
     switch (exit_code) {
     case NOT_DECLARED:
-      error(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->var);
+      panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->var);
       return UNKNOWN;
 
     case TYPE_MISMATCH:
-      error(&file, n->line, n->col, n->pos, SEM_VAR_TYPE_MISMATCH, n->var);
+      panic(&file, n->line, n->col, n->pos, SEM_VAR_TYPE_MISMATCH, n->var);
       return UNKNOWN;
 
     case SUCCESS:
@@ -80,7 +80,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
   case NODE_IF: {
     DataTypes_t ct = check_expr(n->ifnode.cond);
     if (ct != BOOL)
-      error(&file, n->line, n->col, n->pos, SEM_IF_COND_NOT_BOOL, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_IF_COND_NOT_BOOL, NULL);
 
     check_expr(n->ifnode.then_branch);
     if (n->ifnode.else_branch)
@@ -93,22 +93,22 @@ DataTypes_t check_expr(ASTNode_t *n) {
     if (!n->fornode.init || n->fornode.init->kind != AST_ASSIGN ||
         n->fornode.init->assign.lhs->kind != AST_VAR ||
         n->fornode.init->assign.op != OP_ASSIGN)
-      error(&file, n->line, n->col, n->pos, SEM_FOR_INIT_INVALID, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_FOR_INIT_INVALID, NULL);
 
     DataTypes_t init_t = check_expr(n->fornode.init);
     if (!is_numeric(init_t))
-      error(&file, n->line, n->col, n->pos, SEM_FOR_INIT_NOT_NUM, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_FOR_INIT_NOT_NUM, NULL);
 
     force_numeric_type(n->fornode.end, init_t);
     DataTypes_t end_t = check_expr(n->fornode.end);
     if (end_t != init_t)
-      error(&file, n->line, n->col, n->pos, SEM_FOR_END_TYPE_MISMATCH, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_FOR_END_TYPE_MISMATCH, NULL);
 
     if (n->fornode.step) {
       force_numeric_type(n->fornode.step, init_t);
       DataTypes_t step_t = check_expr(n->fornode.step);
       if (step_t != init_t) {
-        error(&file, n->line, n->col, n->pos, SEM_FOR_STEP_TYPE_MISMATCH, NULL);
+        panic(&file, n->line, n->col, n->pos, SEM_FOR_STEP_TYPE_MISMATCH, NULL);
       }
     }
 
@@ -119,7 +119,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
   case AST_WHILE: {
     DataTypes_t ct = check_expr(n->whilenode.cond);
     if (ct != BOOL)
-      error(&file, n->line, n->col, n->pos, SEM_WHILE_COND_NOT_BOOL, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_WHILE_COND_NOT_BOOL, NULL);
 
     check_expr(n->whilenode.body);
     return UNKNOWN;
@@ -150,7 +150,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
   
   default:
 
-    error(&file, n->line, n->col, n->pos, SEM_UNKNOWN_AST, NULL);
+    panic(&file, n->line, n->col, n->pos, SEM_UNKNOWN_AST, NULL);
     return UNKNOWN;
   }
 }

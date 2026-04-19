@@ -49,7 +49,7 @@ TypedValue ast_eval_main(ASTNode_t *root) {
     if (root) ast_eval(root); /* ast_eval registers functions on AST_FN */
     FnEntry_t *main_fn = fn_lookup_runtime("main");
     if (!main_fn) {
-        error(&file, 1, 1, 0, SEM_CALL_UNDEF_FN, "main");
+        panic(&file, 1, 1, 0, SEM_CALL_UNDEF_FN, "main");
         return (TypedValue){0};
     }
     ASTNode_t *call = new_fn_call("main", NULL, 0, 0);
@@ -61,7 +61,7 @@ TypedValue ast_eval_main(ASTNode_t *root) {
 static void fn_register_runtime(ASTNode_t *fn) {
     if (!fn || fn->kind != AST_FN) return;
     if (fn_lookup_runtime(fn->fn_def.name)) {
-        error(&file, fn->line, fn->col, fn->pos, SEM_FN_REDECL, fn->fn_def.name);
+        panic(&file, fn->line, fn->col, fn->pos, SEM_FN_REDECL, fn->fn_def.name);
         return;
     }
     FnEntry_t *e = calloc(1, sizeof(*e));
@@ -91,7 +91,7 @@ TypedValue ast_eval(ASTNode_t *node) {
                 int ok = 0;
                 v.val.i128 = tq_parse_i128(node->literal.raw, &ok);
                 if (!ok) {
-                    error(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                    panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
                     return (TypedValue){0};
                 }
                 break;
@@ -108,7 +108,7 @@ TypedValue ast_eval(ASTNode_t *node) {
                 int ok = 0;
                 v.val.u128 = tq_parse_u128(node->literal.raw, &ok);
                 if (!ok) {
-                    error(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                    panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
                     return (TypedValue){0};
                 }
                 break;
@@ -126,7 +126,7 @@ TypedValue ast_eval(ASTNode_t *node) {
             case UF128:
                 v.val.f128 = strtold(node->literal.raw, NULL); break;
             default:
-                error(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+                panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
                 return (TypedValue){0};
         }
         v.type = node->datatype;
@@ -185,7 +185,7 @@ TypedValue ast_eval(ASTNode_t *node) {
     case AST_UNOP:{
         if (node->unop.op == OP_ADDR) {
             if (!node->unop.operand || node->unop.operand->kind != AST_VAR) {
-                error(&file, node->line, node->col, node->pos, RT_UNKNOWN_AST, "address-of requires a variable");
+                panic(&file, node->line, node->col, node->pos, RT_UNKNOWN_AST, "address-of requires a variable");
                 return (TypedValue){0};
             }
             int fid = env_frame_id_of(node->unop.operand->var, node->line, node->col, node->pos);
@@ -198,7 +198,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         if (node->unop.op == OP_DEREF) {
             TypedValue pv = ast_eval(node->unop.operand);
             if (pv.type != PTR || pv.val.ptr.name == NULL) {
-                error(&file, node->line, node->col, node->pos, RT_DANGLING_PTR, NULL);
+                panic(&file, node->line, node->col, node->pos, RT_DANGLING_PTR, NULL);
                 return (TypedValue){0};
             }
             TypedValue *ref = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, node->line, node->col, node->pos);
@@ -254,7 +254,7 @@ TypedValue ast_eval(ASTNode_t *node) {
     case NODE_FOR: {
         if (!node->fornode.init || node->fornode.init->kind != AST_ASSIGN ||
             node->fornode.init->assign.lhs->kind != AST_VAR || node->fornode.init->assign.op != OP_ASSIGN) {
-            error(&file, node->line, node->col, node->pos, RT_FOR_INIT_INVALID, NULL);
+            panic(&file, node->line, node->col, node->pos, RT_FOR_INIT_INVALID, NULL);
             return (TypedValue){0};
         }
 
@@ -270,7 +270,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         TQValue stepv = stept.val;
 
         if (step_is_zero(loop_type, stepv)) {
-            error(&file, node->line, node->col, node->pos, RT_FOR_STEP_ZERO, NULL);
+            panic(&file, node->line, node->col, node->pos, RT_FOR_STEP_ZERO, NULL);
             return (TypedValue){0};
         }
 
@@ -335,7 +335,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         }
 
         if (argc != fn->fn_def.param_count) {
-            error(&file, node->line, node->col, node->pos, RT_ARGC_MISMATCH, node->call.name);
+            panic(&file, node->line, node->col, node->pos, RT_ARGC_MISMATCH, node->call.name);
             free(argv);
             return (TypedValue){0};
         }
@@ -374,7 +374,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         return r;
     }
     default:
-        error(&file, node ? node->line : 0, node ? node->col : 0, node ? node->pos : 0, RT_UNKNOWN_AST, NULL);
+        panic(&file, node ? node->line : 0, node ? node->col : 0, node ? node->pos : 0, RT_UNKNOWN_AST, NULL);
         return (TypedValue){0};
     }
 }

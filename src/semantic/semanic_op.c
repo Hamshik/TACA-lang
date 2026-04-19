@@ -42,10 +42,10 @@ DataTypes_t unop(ASTNode_t *n) {
   }
 
   if (!is_numeric(t))
-    error(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM, NULL);
+    panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM, NULL);
 
   if (n->unop.op == OP_BITNOT && !is_integer(t)) {
-    error(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM,
+    panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM,
           "bitwise not requires integer type");
   }
 
@@ -75,13 +75,13 @@ DataTypes_t binop(ASTNode_t *n) {
   }
 
   if (lt == PTR || rt == PTR) {
-    error(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,
+    panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,
           "pointer arithmetic not supported");
   }
   /* string ops */
   if (lt == STRINGS || rt == STRINGS) {
     if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
-      error(&file, n->line, n->col, n->pos, SEM_STRING_OP_INVALID, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_STRING_OP_INVALID, NULL);
     }
 
     n->datatype = STRINGS;
@@ -97,7 +97,7 @@ DataTypes_t binop(ASTNode_t *n) {
   case OP_EQ:
   case OP_NEQ:
     if (!is_numeric(lt) || !is_numeric(rt)) {
-      error(&file, n->line, n->col, n->pos, SEM_CMP_NEEDS_NUM, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_CMP_NEEDS_NUM, NULL);
     }
     n->datatype = BOOL;
     return BOOL;
@@ -105,7 +105,7 @@ DataTypes_t binop(ASTNode_t *n) {
   case OP_AND:
   case OP_OR:
     if (lt != BOOL || rt != BOOL)
-      error(&file, n->line, n->col, n->pos, SEM_LOGIC_NEEDS_BOOL, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_LOGIC_NEEDS_BOOL, NULL);
 
     n->datatype = BOOL;
     return BOOL;
@@ -113,13 +113,13 @@ DataTypes_t binop(ASTNode_t *n) {
   default:
     // arithmetic/bitwise path
     if (!is_numeric(lt) || !is_numeric(rt))
-      error(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM, NULL);
+      panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM, NULL);
 
     if (n->bin.op == OP_LSHIFT || n->bin.op == OP_RSHIFT ||
         n->bin.op == OP_BITAND || n->bin.op == OP_BITOR ||
         n->bin.op == OP_BITXOR) {
       if (!is_integer(lt) || !is_integer(rt)) {
-        error(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,
+        panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,
               "bitwise ops require integer types");
       }
     }
@@ -129,7 +129,7 @@ DataTypes_t binop(ASTNode_t *n) {
   }
   /* numeric ops */
   if (!is_numeric(lt) || !is_numeric(rt))
-    error(&file, n->line, n->col, n->pos, SEM_BINOP_INVALID, NULL);
+    panic(&file, n->line, n->col, n->pos, SEM_BINOP_INVALID, NULL);
 
   n->datatype = promote(lt, rt);
   return n->datatype;
@@ -157,12 +157,12 @@ DataTypes_t assign(ASTNode_t *n) {
   } else if (n->assign.lhs->kind == AST_UNOP &&
              n->assign.lhs->unop.op == OP_DEREF) {
     if (n->assign.is_declaration)
-      error(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR,
+      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR,
             "cannot declare through dereference");
     lhs_t = check_expr(n->assign.lhs);
     n->datatype = lhs_t;
   } else {
-    error(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
+    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
   }
 
   /* ✅ FIX 1: force numeric BEFORE evaluating RHS */
@@ -184,7 +184,7 @@ DataTypes_t assign(ASTNode_t *n) {
     } else if (lhs_t != UNKNOWN && n->assign.rhs &&
                n->assign.rhs->kind == AST_NUM) {
       if (!literal_fits_type(n->assign.rhs, lhs_t)) {
-        error(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
+        panic(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
               n->assign.lhs->var);
         return UNKNOWN;
       }
@@ -203,7 +203,7 @@ DataTypes_t assign(ASTNode_t *n) {
     if (lhs_t != UNKNOWN && is_numeric(lhs_t) && is_numeric(rhs_t)) {
       if (!literal_fits_type(n->assign.rhs, lhs_t) ||
           (is_signed_numeric(rhs_t) && is_unsigned_numeric(lhs_t))) {
-        error(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
+        panic(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
               n->assign.lhs->var);
         return UNKNOWN;
       }
@@ -215,17 +215,17 @@ DataTypes_t assign(ASTNode_t *n) {
     n->ptr_to = lhs_ptr_to;
 
     if (!declare(n->assign.lhs->var, lhs_t, lhs_ptr_to, n->assign.is_mutable))
-      error(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
+      panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
   } else {
     /* Reassignment path: may auto-widen if mutable and numeric literal
      * doesn't fit. */
     if (lhs_t == UNKNOWN) {
-      error(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
+      panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
       return UNKNOWN;
     }
     if (n->assign.rhs && n->assign.rhs->kind == AST_NUM) {
       if (!literal_fits_type(n->assign.rhs, lhs_t)) {
-        error(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
+        panic(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
               n->assign.lhs->var);
         return UNKNOWN;
       }
@@ -240,16 +240,16 @@ DataTypes_t assign(ASTNode_t *n) {
         assign_check(n->assign.lhs->var, rhs_t, n->assign.rhs->ptr_to);
     switch (ac) {
     case NOT_DECLARED:
-      error(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
+      panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
       return UNKNOWN;
 
     case TYPE_MISMATCH:
-      error(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
             n->assign.lhs->var);
       return UNKNOWN;
 
     case IMMUTABLE_TYPING:
-      error(&file, n->line, n->col, n->pos, SEM_ASSIGN_IMMUTABLE,
+      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_IMMUTABLE,
             n->assign.lhs->var);
       return UNKNOWN;
 
@@ -261,14 +261,14 @@ DataTypes_t assign(ASTNode_t *n) {
 
   /* ✅ FIX 4: normal type check */
   if (lhs_t != rhs_t && !is_numeric(lhs_t) && !is_numeric(rhs_t)) {
-    error(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
           (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
   }
 
   /* ✅ FIX 5: strict pointer validation */
   if (lhs_t == PTR) {
     if (rhs_t != PTR) {
-      error(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
             (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
     }
 
@@ -276,7 +276,7 @@ DataTypes_t assign(ASTNode_t *n) {
 
     if (lhs_ptr_to != rhs_ptr_to &&
         !(is_numeric(lhs_ptr_to) && is_numeric(rhs_ptr_to))) {
-      error(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
             (n->assign.lhs->kind == AST_VAR) ? n->assign.lhs->var : NULL);
     }
   }

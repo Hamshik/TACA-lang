@@ -8,7 +8,6 @@ extern "C"
     #include "../eval/eval.h"
     #include "../ast/ASTNode.h"
     #include "../utils/error/error.h"
-
     extern file_t file;
     /* If ll_path is non-NULL, writes IR there. If ir_out is non-NULL, allocates a
     * NUL-terminated copy of the textual IR (caller free). Returns 0 on success. */
@@ -34,7 +33,7 @@ enum class Utf8Error {
 #include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;
-using LocalMap = std::unordeRED_map<std::string, AllocaInst*>;
+using LocalMap = std::unordered_map<std::string, AllocaInst*>;
 using argvec = std::vector<llvm::Value*>;
 
 bool is_unsigned_dtype(DataTypes_t t);

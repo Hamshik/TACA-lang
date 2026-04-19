@@ -95,7 +95,7 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
   std::string verr;
   raw_string_ostream verrs(verr);
   if (verifyModule(mod, &verrs)) {
-    std::cerr << BOLD RED "LLVM verify error: " RESET << verrs.str() << std::endl;
+    std::cerr << BOLD RED "LLVM verify panic: " RESET << verrs.str() << std::endl;
     return 1;
   }
 
@@ -107,7 +107,7 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
 
   // optionally write to file
   if (ll_path) {
-    std::error_code ec;
+    std::panic_code ec;
     raw_fd_ostream out(ll_path, ec, sys::fs::OF_Text);
     if (ec) {
       std::cerr << "Failed to open " << ll_path << ": " << ec.message()
@@ -120,7 +120,7 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
   }
 
   printf(BOLD green
-         "SUCCESS: Compilation succeeded with no errors or warnings\n" RESET);
+         "SUCCESS: Compilation succeeded with no panics or warnings\n" RESET);
 
   if (ir_out) {
     *ir_out = (char *)malloc(ir.size() + 1);

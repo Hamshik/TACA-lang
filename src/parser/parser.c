@@ -110,7 +110,7 @@
         } while (0)
 
     #define TQ_error_LOC(loc, code, detail) \
-        error(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
+        panic(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
     
 
 #line 117 "src/parser/parser.c"

@@ -97,7 +97,7 @@ int digits_int(int v);
 int starts_with(const char *s, const char *prefix);
 char *read_entire_path(FILE *file, size_t *out_len);
 
-void error(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail);
+void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail);
 void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, const char *detail);
 void syserr(const char *context);
 void syswarn(const char *context);

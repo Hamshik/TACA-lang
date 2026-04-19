@@ -12,7 +12,7 @@
 
     #include "../parser/parser.h"
     #include "../ast/ASTNode.h"
-    #include "../../utils/error_msg.h"
+    #include "../../utils/panic_msg.h"
     #include "lexer_helpers.h"
     #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
 
@@ -42,7 +42,7 @@
 <COMMENT3>\n                  { /* skip */ }
 <COMMENT3>.                   { /* skip */ }
 <COMMENT3><<EOF>>             {
-    error(&file,
+    panic(&file,
           tq_comment_start_line,
           tq_comment_start_col,
           tq_comment_start_pos,
@@ -63,7 +63,7 @@
     char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
     if (!s) {
         int off = (err_i >= 0) ? err_i : 0;
-        error(&file,
+        panic(&file,
               yylloc->first_line,
               yylloc->first_column + 1 + off,
               yylloc->first_pos + 1 + off,
@@ -88,7 +88,7 @@
     char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
     if (!s || out_len == 0) {
         int off = (err_i >= 0) ? err_i : 0;
-        error(&file,
+        panic(&file,
               yylloc->first_line,
               yylloc->first_column + 1 + off,
               yylloc->first_pos + 1 + off,
@@ -100,7 +100,7 @@
 
     /* enforce exactly one UTF-8 codepoint */
     if (!tq_utf8_single(s, out_len)) {
-        error(&file, yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1, INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
+        panic(&file, yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1, INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
         free(s);
         return 0;
     }
@@ -231,13 +231,13 @@ fn                  { return FN; }
     } else {
         tq_lexer_get_cursor(&line, &col, &pos);
     }
-    error(&file, line, col, pos, LEX_UNKNOWN_CHAR, detail);
+    panic(&file, line, col, pos, LEX_UNKNOWN_CHAR, detail);
 }
 <<EOF>>             {
     if (tq_brace_depth > 0) {
         int line = 0, col = 0, pos = 0;
         tq_lexer_get_cursor(&line, &col, &pos);
-        error(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
+        panic(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
     }
     return 0;
 }
