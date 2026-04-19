@@ -8,14 +8,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "frontend/ast/ASTNode.h"
-#include "backend/codegen/codegen.h"
-#include "utils/error_msg.h"
-#include "middleend/semantic/semantic.h"
+#include "TACA.h"
+
 
 extern FILE *yyin;
 void yyrestart(FILE *input_file);
-file_t file = {0};
+file_t file = {0,0};
 
 static int run_exec(const char *prog, char *const argv[]) {
   pid_t pid = fork();

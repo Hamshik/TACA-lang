@@ -1,4 +1,4 @@
-#include "../tarkiq.h"
+#include "../../TACA.h"
 #include "colors.h"
 #include "error_msg.h"
 #include <stdbool.h>
@@ -81,11 +81,11 @@ void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, 
     if (detail && *detail) {
         /* Avoid "syntax warning: syntax warning, unexpected X" style duplication. */
         if (starts_with(detail, base))
-            fprintf(stderr, BOLD YELLOW "warning[TQ%04d]: %s\n" RESET, (int)code, detail);
+            fprintf(stderr, BOLD yellow "warning[TQ%04d]: %s\n" RESET, (int)code, detail);
         else
-            fprintf(stderr, BOLD YELLOW "warning[TQ%04d]: %s: %s\n" RESET, (int)code, base, detail);
+            fprintf(stderr, BOLD yellow "warning[TQ%04d]: %s: %s\n" RESET, (int)code, base, detail);
     } else {
-        fprintf(stderr, BOLD YELLOW "warning[TQ%04d]: %s\n" RESET, (int)code, base);
+        fprintf(stderr, BOLD yellow "warning[TQ%04d]: %s\n" RESET, (int)code, base);
     }
     fprintf(stderr, BOLD DIM " --> %s:%d:%d\n" RESET, filename, warn_line, warn_col);
 
@@ -117,7 +117,7 @@ void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, 
         char c = src[line_start + i];
         fputc((c == '\t') ? '\t' : ' ', stderr);
     }
-    fprintf(stderr, BOLD YELLOW "^\n" RESET);
+    fprintf(stderr, BOLD yellow "^\n" RESET);
     free(src);
 }
 
@@ -126,9 +126,9 @@ void syserr(const char *context)
     int saved_errno = errno;
     isError = true;
     err_no++;
-    fprintf(stderr,BOLD WHITE "Tarkc:" RESET);
+    fprintf(stderr,BOLD white "Tarkc:" RESET);
     fprintf(stderr, BOLD RED " fatal error:" RESET);
-    fprintf(stderr, BOLD WHITE " %s\n" RESET, (context && *context) ? context : "unknown");
+    fprintf(stderr, BOLD white " %s\n" RESET, (context && *context) ? context : "unknown");
     if (saved_errno != 0) {
         fprintf(stderr, BOLD DIM " note:" RESET " %s\n", strerror(saved_errno));
     }
@@ -140,7 +140,7 @@ void syswarn(const char *context)
     int saved_errno = errno;
     isWarning = true;
     warn_no++;
-    fprintf(stderr, BOLD YELLOW "warning[TQ??]: system warning: %s\n" RESET,
+    fprintf(stderr, BOLD yellow "warning[TQ??]: system warning: %s\n" RESET,
             (context && *context) ? context : "unknown");
     if (saved_errno != 0) {
         fprintf(stderr, BOLD DIM " note:" RESET " %s\n", strerror(saved_errno));

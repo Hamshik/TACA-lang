@@ -1,4 +1,4 @@
-#include "../tarkiq.h"
+#include "../../TACA.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@ const char *errc_msg(errc_t code) {
         case PARSE_UNCLOSED_BRACE: return "missing closing brace";
         case PARSE_UNCLOSED_BRACKET: return "missing closing bracket";
 
-        case SEM_VAR_UNDECL: return "variable not declared";
+        case SEM_VAR_UNDECL: return "variable not declaRED";
         case SEM_VAR_TYPE_MISMATCH: return "variable type mismatch";
         case SEM_BINOP_INVALID: return "invalid operands for binary operator";
         case SEM_STRING_OP_INVALID: return "invalid string operation";
@@ -27,7 +27,7 @@ const char *errc_msg(errc_t code) {
         case SEM_NOT_NEEDS_BOOL: return "operator ! expects bool";
         case SEM_UNARY_NEEDS_NUM: return "unary operator expects numeric operand";
         case SEM_ASSIGN_TARGET_NOT_VAR: return "assignment target must be a variable";
-        case SEM_VAR_REDECL: return "redeclaration of variable";
+        case SEM_VAR_REDECL: return "REDeclaration of variable";
         case SEM_ASSIGN_TYPE_MISMATCH: return "type mismatch in assignment";
         case SEM_ASSIGN_IMMUTABLE: return "cannot assign to immutable variable";
         case SEM_IF_COND_NOT_BOOL: return "if condition must be boolean";
@@ -36,7 +36,7 @@ const char *errc_msg(errc_t code) {
         case SEM_FOR_END_TYPE_MISMATCH: return "for end value must match init type";
         case SEM_FOR_STEP_TYPE_MISMATCH: return "for step value must match init type";
         case SEM_WHILE_COND_NOT_BOOL: return "while condition must be boolean";
-        case SEM_FN_REDECL: return "redeclaration of function";
+        case SEM_FN_REDECL: return "REDeclaration of function";
         case SEM_DUP_PARAM: return "duplicate parameter name";
         case SEM_CALL_UNDEF_FN: return "call to undefined function";
         case SEM_ARGC_MISMATCH: return "argument count mismatch";
@@ -47,7 +47,7 @@ const char *errc_msg(errc_t code) {
         case SEM_UNKNOWN_AST: return "unknown AST node in semantic analysis";
 
         case INVAILD_UTF8_CHAR: return "invalid UTF-8 character literal";
-        case RET_NOT_DECLARED: return "return value is not declared in a function";
+        case RET_NOT_DECLARED: return "return value is not declaRED in a function";
         
         case RT_NUM_LITERAL_UNSUPPORTED: return "unsupported numeric literal type";
         case RT_BINOP_UNSUPPORTED: return "unsupported type for binary operation";

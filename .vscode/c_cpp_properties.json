@@ -7,7 +7,8 @@
                 "${workspace}/examples/**/*",
                 "${default}",
                 "/usr/llvm/include/**/*",
-                "/usr/include/llvm/include"
+                "/usr/include/llvm/include",
+                "/opt/llvm/include/**/*"
             ],
             "defines": [],
             "compilerPath": "/usr/llvm/bin/clang",

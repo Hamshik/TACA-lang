@@ -1,9 +1,22 @@
-If:
-  PathMatch: .*\.c
-  
 CompileFlags:
-  Add: 
-    [-xc]
-
+  Add:
+    - -I/usr/include/llvm
+    - -I/usr/include/llvm/c
+    - -I/opt/llvm
+    - -Isrc
+    - -D_GNU_SOURCE
+    - -D_GLIBCXX_USE_CXX11_ABI=1
+    - -D__STDC_CONSTANT_MACROS
+    - -D__STDC_FORMAT_MACROS
+    - -D__STDC_LIMIT_MACROS
+    - -Wno-error=missing-include-dirs
   Remove:
     - -w
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+  Suppress:
+    - missing-include-dirs
+    - pp_nonexistent_include_file
+    - unknown_include_directive

@@ -2,21 +2,21 @@
 
 #define COLORS_H
 
-#define RESET       "\x1b[0m"
+#define COLOR_RESET       "\x1b[0m"
 
-#define BLACK       "\x1b[30m"
-#define RED         "\x1b[31m"
-#define GREEN       "\x1b[32m"
-#define YELLOW      "\x1b[33m"
-#define BLUE        "\x1b[34m"
-#define MAGENTA     "\x1b[35m"
-#define CYAN        "\x1b[36m"
-#define WHITE       "\x1b[37m"
+#define COLOR_BLACK       "\x1b[30m"
+#define COLOR_RED         "\x1b[31m"
+#define COLOR_GREEN       "\x1b[32m"
+#define COLOR_YELLOW      "\x1b[33m"
+#define COLOR_BLUE        "\x1b[34m"
+#define COLOR_PINK        "\x1b[35m"
+#define COLOR_CYAN        "\x1b[36m"
+#define COLOR_WHITE       "\x1b[37m"
 
-#define BOLD        "\x1b[1m"
-#define DIM         "\x1b[2m"
-#define ITALIC      "\x1b[3m"
-#define UNDERLINE   "\x1b[4m"
+#define COLOR_BOLD        "\x1b[1m"
+#define COLOR_DIM         "\x1b[2m"
+#define COLOR_ITALIC      "\x1b[3m"
+#define COLOR_UNDERLINE   "\x1b[4m"
 
 
 #endif
