@@ -1,4 +1,4 @@
-#include "tarkiq.h"
+#include "../tarkiq.h"
 #include "builtin.h"
 
 #include <inttypes.h>
@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "../semantic/semantic.h"
-#include "../utils/error_handler/error_msg.h"
-#include "ast/ASTNode.h"
+#include "../middleend/semantic/semantic.h"
+#include "../utils/error_msg.h"
+#include "../frontend/ast/ASTNode.h"
 
 extern file_t file;
 extern bool isWarning;

@@ -1,8 +1,8 @@
-#include "tarkiq.h"
-#include "../ast/ASTNode.h"
+#include "../../tarkiq.h"
+#include "../../frontend/ast/ASTNode.h"
 #include "../eval/eval.h"
-#include "../utils/colors.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../utils/colors.h"
+#include "../../utils/error_msg.h"
 #include "semantic.h"
 #include <float.h>
 #include <limits.h>

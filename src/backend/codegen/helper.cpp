@@ -1,11 +1,11 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <string>
-#include "../ast/ASTNode.h"
+#include "../../frontend/ast/ASTNode.h"
 #include "codegen.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../utils/error_msg.h"
 
 __int128 parse_i128(const char *s, int *ok) {
     if (ok) *ok = 0;

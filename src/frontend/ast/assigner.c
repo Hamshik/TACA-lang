@@ -1,10 +1,10 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "ASTNode.h"
 #include "../eval/eval.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../utils/error_msg.h"
 
 extern file_t file;
 

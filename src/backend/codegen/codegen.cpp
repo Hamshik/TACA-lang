@@ -1,8 +1,8 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include "codegen.h"
-#include "../ast/ASTNode.h"
-#include "../stdlibs/stdlibs.h"
-#include "../utils/colors.h"
+#include "../../frontend/ast/ASTNode.h"
+#include "../../runtime/stdlibs/stdlibs.h"
+#include "../../utils/colors.h"
 #include <iostream>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>

@@ -1,5 +1,5 @@
-#include "tarkiq.h"
-#include "../utils/utf-8_lib/utf8/unchecked.h"
+#include "../../tarkiq.h"
+#include "../../utils/utf8/unchecked.h"
 #include "codegen.h"
 #include <stdint.h>
 #include <cstring>

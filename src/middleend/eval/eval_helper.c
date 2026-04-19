@@ -1,4 +1,4 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include "eval.h"
 #include <stdio.h>
 #include <math.h>

@@ -5,8 +5,6 @@
 extern "C"
 {
 #endif
-    #include "tarkiq.h"
-    #include "../utils/error_handler/error_msg.h"
     #include "../eval/eval.h"
 
     extern file_t file;

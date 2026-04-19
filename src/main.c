@@ -1,4 +1,3 @@
-#include "tarkiq.h"
 #include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>
@@ -8,6 +7,11 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "frontend/ast/ASTNode.h"
+#include "backend/codegen/codegen.h"
+#include "utils/error_msg.h"
+#include "middleend/semantic/semantic.h"
 
 extern FILE *yyin;
 void yyrestart(FILE *input_file);

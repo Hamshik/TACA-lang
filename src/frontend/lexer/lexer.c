@@ -590,7 +590,7 @@ char *yytext;
 
     #include "../parser/parser.h"
     #include "../ast/ASTNode.h"
-    #include "../utils/error_handler/error_msg.h"
+    #include "../../utils/error_msg.h"
     #include "lexer_helpers.h"
     #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
 

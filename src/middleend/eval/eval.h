@@ -45,8 +45,8 @@
     case OP_DEC: result->field = ((int)operand->field)-1; break
 #ifndef EVAL_H
 #define EVAL_H
-#include "tarkiq.h"
 
+#include "../ast/ASTNode.h"
 
 TypedValue ast_eval(ASTNode_t *node);
 TypedValue ast_eval_main(ASTNode_t *root);

@@ -1,8 +1,8 @@
-#include "tarkiq.h"
-#include "../ast/ASTNode.h"
-#include "../builtin/builtin.h"
+#include "../../tarkiq.h"
+#include "../../frontend/ast/ASTNode.h"
+#include "../../runtime/builtin/builtin.h"
 #include "../eval/eval.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../utils/error_msg.h"
 #include "semantic.h"
 #include <float.h>
 #include <limits.h>

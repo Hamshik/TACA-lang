@@ -1,4 +1,4 @@
-#include "tarkiq.h"
+#include "../tarkiq.h"
 #include "stdlibs.h"
 
 Function *get_exit(Module &mod, LLVMContext &ctx) {

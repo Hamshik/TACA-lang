@@ -1,5 +1,5 @@
-#include "tarkiq.h"
-#include "../ast/ASTNode.h"
+#include "../tarkiq.h"
+#include "../frontend/ast/ASTNode.h"
 #include "stdlibs.h"
 #include "llvm/IR/IRBuilder.h"
 #include <llvm/IR/LLVMContext.h>

@@ -1,8 +1,8 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
-#include "../ast/ASTNode.h"
+#include "../../frontend/ast/ASTNode.h"
 #include "codegen.h"
 
 llvm::Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals)

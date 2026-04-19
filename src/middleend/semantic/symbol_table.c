@@ -1,11 +1,11 @@
-#include "tarkiq.h"
-#include "../ast/ASTNode.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../tarkiq.h"
+#include "../../frontend/ast/ASTNode.h"
+#include "../../utils/error_msg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "semantic.h"
 #include <stdbool.h>
-#include "../utils/uhash.h"
+#include "../../utils/uhash.h"
 
 typedef struct Scope {
     Symboltable_t *symbols; // uthash table

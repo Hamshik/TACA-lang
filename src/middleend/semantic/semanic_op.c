@@ -1,8 +1,8 @@
-#include "tarkiq.h"
-#include "../ast/ASTNode.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../tarkiq.h"
+#include "../../frontend/ast/ASTNode.h"
+#include "../../utils/error_msg.h"
 #include "semantic.h"
-#include "typechecker/typecheck.h"
+#include "../typechecker/typecheck.h"
 
 DataTypes_t unop(ASTNode_t *n) {
   DataTypes_t t = check_expr(n->unop.operand);

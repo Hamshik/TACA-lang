@@ -2,7 +2,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "../ast/ASTNode.h"
-    #include "../utils/error_handler/error_msg.h"
+    #include "../../utils/error_msg.h"
     #include "parser_helpers.h"
     extern ASTNode_t *root;
     extern file_t file;
@@ -129,6 +129,7 @@
 %nonassoc ELSE
 
 %%
+
 program
     : /* empty */               { root = NULL; }
     | stmt_list                 { root = $1; }

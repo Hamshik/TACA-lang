@@ -1,5 +1,5 @@
-#include "tarkiq.h"
-#include "../ast/ASTNode.h"
+#include "../../tarkiq.h"
+#include "../../frontend/ast/ASTNode.h"
 #include "eval.h"
 #include <stdio.h>
 #include <math.h>

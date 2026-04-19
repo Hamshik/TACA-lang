@@ -1,8 +1,8 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include "ASTNode.h"
 #include <stdio.h>
-#include "../utils/uhash.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../../utils/uhash.h"
+#include "../../utils/error_msg.h"
 #include "../semantic/semantic.h"
 
 extern file_t file;

@@ -1,9 +1,9 @@
-#include "tarkiq.h"
+#include "../../tarkiq.h"
 #include "../typechecker/typecheck.h"
 #include "semantic.h"
 #include <stdio.h>
-#include "../utils/error_handler/error_msg.h"
-#include "utils/colors.h"
+#include "../../utils/error_msg.h"
+#include "../../utils/colors.h"
 
 extern file_t file;
 
