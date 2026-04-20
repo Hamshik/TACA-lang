@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-PARSER_DIR="src/parser"
-LEXER_DIR="src/lexer"
+PARSER_DIR=$(find src -type d -iname "*.y")
+LEXER_DIR=$(find src -type d -iname "*.l")
 BIN_DIR="bin"
 
 LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
@@ -13,8 +13,8 @@ if command -v "$LLVM_CONFIG" >/dev/null 2>&1; then
     LLVM_CXXFLAGS="$($LLVM_CONFIG --cxxflags)"
     LLVM_LDFLAGS="$($LLVM_CONFIG --ldflags --libs core native)"
 else
-    LLVM_CXXFLAGS=""
-    LLVM_LDFLAGS=""
+    echo "Error: llvm-config not found. Please install LLVM and ensure llvm-config is in your PATH."
+    exit 1
 fi
 
 echo "Running bison to generate the parser..."
