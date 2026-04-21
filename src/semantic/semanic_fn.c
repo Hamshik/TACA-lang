@@ -1,8 +1,4 @@
-#include "../ast/ASTNode.h"
-#include "../builtin/builtin.h"
-#include "../eval/eval.h"
-#include "../utils/error_handler/error_msg.h"
-#include "semantic.h"
+#include "../taca.h"
 #include <float.h>
 #include <limits.h>
 #include <stdio.h>

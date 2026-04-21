@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-PARSER_DIR=$(find src -type d -iname "*.y")
-LEXER_DIR=$(find src -type d -iname "*.l")
+PARSER_DIR=$(find src/**/* -iname "*.y" -exec dirname {} +;)
+LEXER_DIR=$(find src/**/* -iname "*.l" -exec dirname {} +;)
 BIN_DIR="bin"
 
 LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
@@ -30,7 +30,7 @@ echo "Compiling [1/3] C++ Files"
 
 for src in $(find src -type f -iname "*.cpp"); do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    clang++ -fcxx-exceptions -Wall -Wextra -g -Isrc -c "$src" -o "$obj"
+    clang++ -fcxx-exceptions -w -Wall -Wextra -g $LLVM_CXXFLAGS -Isrc -c "$src" -o "$obj"
 done
 
 # C sources

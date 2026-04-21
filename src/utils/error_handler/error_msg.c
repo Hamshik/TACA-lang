@@ -1,9 +1,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../colors.h"
+#include "../utils.h"
 #include <stdbool.h>
-#include "error_msg.h"
 
 const char *errc_msg(errc_t code) {
     switch (code) {

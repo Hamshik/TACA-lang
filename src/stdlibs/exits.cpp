@@ -1,4 +1,5 @@
-#include "stdlibs.h"
+#include "../taca.h"
+
 
 Function *get_exit(Module &mod, LLVMContext &ctx) {
     Function *exitFn = mod.getFunction("exit");

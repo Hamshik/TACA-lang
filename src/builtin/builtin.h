@@ -1,7 +1,7 @@
 #ifndef TQ_STDLIB_H
 #define TQ_STDLIB_H
 
-#include "../ast/ASTNode.h"
+#include "../taca.h"
 
 typedef struct tq_std_sig {
     const char *name;

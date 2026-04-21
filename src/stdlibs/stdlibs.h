@@ -10,14 +10,13 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+#include "../taca.h"
 
 #ifdef __cplusplus
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>   // ✅ REQUIRED
-#include "../ast/ASTNode.h"
-#include "../codegen/codegen.h"
 
 using namespace llvm;
 

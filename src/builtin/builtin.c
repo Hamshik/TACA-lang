@@ -1,14 +1,10 @@
-#include "builtin.h"
-
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "../semantic/semantic.h"
-#include "../utils/error_handler/error_msg.h"
-#include "ast/ASTNode.h"
+#include "../taca.h"
 
 extern file_t file;
 extern bool isWarning;

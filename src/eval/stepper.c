@@ -1,5 +1,4 @@
-#include "../ast/ASTNode.h"
-#include "eval.h"
+#include "../taca.h"
 #include <stdio.h>
 #include <math.h>
 

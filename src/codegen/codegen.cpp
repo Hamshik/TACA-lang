@@ -1,7 +1,4 @@
-#include "codegen.h"
-#include "../ast/ASTNode.h"
-#include "../stdlibs/stdlibs.h"
-#include "../utils/colors.h"
+#include "../taca.h"
 #include <iostream>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -10,6 +7,7 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 #include <string>
+
 extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
   LLVMContext ctx;
   Module mod("TQModule", ctx);

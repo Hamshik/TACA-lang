@@ -1,8 +1,6 @@
-#include "ASTNode.h"
 #include <stdio.h>
-#include "../utils/uhash.h"
-#include "../utils/error_handler/error_msg.h"
-#include "../semantic/semantic.h"
+#include "../taca.h"
+
 
 extern file_t file;
 

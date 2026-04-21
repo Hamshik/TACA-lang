@@ -5,10 +5,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef struct {
+typedef struct file_t {
     char* filename;
     FILE* source;
-}file_t;
+} file_t;
 
 typedef enum errc {
     /* Lexer */

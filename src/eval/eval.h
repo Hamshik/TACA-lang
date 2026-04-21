@@ -45,7 +45,7 @@
     case OP_DEC: result->field = ((int)operand->field)-1; break
 #ifndef EVAL_H
 #define EVAL_H
-#include "../ast/ASTNode.h"
+#include "../taca.h"
 
 
 TypedValue ast_eval(ASTNode_t *node);
@@ -72,4 +72,5 @@ TypedValue tq_cast_typed(TypedValue v, DataTypes_t target, int line, int col, in
 TQValue tq_eval_binop_numeric(OP_kind_t op, DataTypes_t type, TQValue a, TQValue b);
 unsigned __int128 tq_parse_u128(const char *s, int *ok);
 __int128 tq_parse_i128(const char *s, int *ok);
+
 #endif

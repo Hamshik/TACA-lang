@@ -1,4 +1,4 @@
-#include "ASTNode.h"
+#include "../taca.h"
 #include <stdlib.h>
 #include <stdio.h>
 

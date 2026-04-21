@@ -1,5 +1,4 @@
-#include "../ast/ASTNode.h"
-#include "codegen.h"
+#include "../taca.h"
 #include "utils/error_handler/error_msg.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"

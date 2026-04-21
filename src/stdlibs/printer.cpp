@@ -1,9 +1,7 @@
-#include "../ast/ASTNode.h"
-#include "stdlibs.h"
-#include "llvm/IR/IRBuilder.h"
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-#include "../codegen/codegen.h"
+#include "../taca.h"
 
 using namespace llvm;
 

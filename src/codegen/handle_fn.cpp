@@ -1,6 +1,5 @@
-#include "../ast/ASTNode.h"
-#include "../stdlibs/stdlibs.h"
-#include "codegen.h"
+#include "../taca.h"
+
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/IRBuilder.h>

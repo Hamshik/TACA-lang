@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "ASTNode.h"
+#include "../taca.h"
 
 ASTNode_t* new_num(char *rawval, DataTypes_t datatype, int line, int col) {
     ASTNode_t *node = ast_alloc();

@@ -10,10 +10,8 @@
     #include <stdlib.h>
     #include <string.h>
 
-    #include "../parser/parser.h"
-    #include "../ast/ASTNode.h"
-    #include "../utils/error_handler/error_msg.h"
-    #include "lexer_helpers.h"
+    #include "../taca.h"
+
     #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
 
     extern file_t file;

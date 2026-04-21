@@ -1,7 +1,8 @@
 #ifndef ASTNODE_H
 #define ASTNODE_H
 
-#include "../utils/uhash.h"
+#include "../taca.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 

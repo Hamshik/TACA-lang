@@ -1,7 +1,7 @@
 #ifndef LEXER_HELPERS_H
 #define LEXER_HELPERS_H
+#include "../taca.h"
 
-#include "../parser/parser.h"
 
 void tq_lexer_reset_loc(void);
 void tq_lexer_update_loc(YYLTYPE *loc, const char *text, int len);

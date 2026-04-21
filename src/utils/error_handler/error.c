@@ -1,5 +1,4 @@
-#include "../colors.h"
-#include "error_msg.h"
+#include "../utils.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

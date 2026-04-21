@@ -1,10 +1,7 @@
-#include "../ast/ASTNode.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../taca.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "semantic.h"
 #include <stdbool.h>
-#include "../utils/uhash.h"
 
 typedef struct Scope {
     Symboltable_t *symbols; // uthash table

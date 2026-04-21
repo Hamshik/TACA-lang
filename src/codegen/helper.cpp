@@ -2,9 +2,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <string>
-#include "../ast/ASTNode.h"
-#include "codegen.h"
-#include "../utils/error_handler/error_msg.h"
+#include "../taca.h"
 
 __int128 parse_i128(const char *s, int *ok) {
     if (ok) *ok = 0;

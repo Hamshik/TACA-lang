@@ -5,9 +5,7 @@
 extern "C"
 {
 #endif
-    #include "../ast/ASTNode.h"
-    #include "../utils/error_handler/error_msg.h"
-    #include "../eval/eval.h"
+    #include "../taca.h"
 
     extern file_t file;
     /* If ll_path is non-NULL, writes IR there. If ir_out is non-NULL, allocates a

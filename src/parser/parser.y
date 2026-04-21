@@ -1,9 +1,15 @@
 %code requires {
+#ifdef __cplusplus
+extern "C" {
+#endif
     #include <stdio.h>
     #include <stdlib.h>
-    #include "../ast/ASTNode.h"
-    #include "../utils/error_handler/error_msg.h"
-    #include "parser_helpers.h"
+
+    typedef struct ASTNode ASTNode_t;
+    typedef enum DataTypes DataTypes_t;
+    typedef struct Param Param_t;
+    typedef struct file_t file_t;
+
     extern ASTNode_t *root;
     extern file_t file;
 
@@ -16,11 +22,14 @@
         int first_pos;   /* 0-based byte offset */
         int last_pos;    /* 0-based byte offset */
     } TQLocation;
+#ifdef __cplusplus
+}
+#endif
 }
 
 %{
-    #include "../ast/ASTNode.h"
-    #include "parser_helpers.h"
+    #include "../taca.h"
+
     ASTNode_t *root = NULL;
     static int g_last_parse_err_line = 1;
     static int g_last_parse_err_col = 1;
@@ -83,9 +92,15 @@
 }
 
 %code {
+#ifdef __cplusplus
+extern "C" {
+#endif
     int yylex(YYSTYPE *yylval, YYLTYPE *yylloc);
     void yyerror(YYLTYPE *loc, const char *s);
     int yyparse(void);
+#ifdef __cplusplus
+}
+#endif
 }
 
 %token <node> IDENTIFIER NUMBER STRING_LITERAL BOOL_LITERAL CHAR_LITERAL

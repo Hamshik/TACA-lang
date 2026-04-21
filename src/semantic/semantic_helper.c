@@ -1,8 +1,5 @@
-#include "../typechecker/typecheck.h"
-#include "semantic.h"
 #include <stdio.h>
-#include "../utils/error_handler/error_msg.h"
-#include "utils/colors.h"
+#include "../taca.h"
 
 extern file_t file;
 

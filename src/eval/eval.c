@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../ast/ASTNode.h"
-#include "../utils/error_handler/error_msg.h"
-#include "../builtin/builtin.h"
-#include "eval.h"
+#include "../taca.h"
 
 extern file_t file;
 

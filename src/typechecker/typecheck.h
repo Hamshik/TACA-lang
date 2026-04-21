@@ -2,7 +2,7 @@
 #define NUMERIC_TYPE_SPECIFIER_H
 
 #include <stdbool.h>
-#include "../ast/ASTNode.h"
+#include "../taca.h"
 
 bool is_i8(const char* raw_num);
 bool is_i16(const char* raw_num);
