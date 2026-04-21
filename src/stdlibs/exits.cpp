@@ -1,4 +1,4 @@
-#include "../taca.h"
+#include "../taca.hpp"
 
 
 Function *get_exit(Module &mod, LLVMContext &ctx) {

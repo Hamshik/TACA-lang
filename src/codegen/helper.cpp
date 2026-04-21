@@ -2,7 +2,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <string>
-#include "../taca.h"
+#include "../taca.hpp"
 
 __int128 parse_i128(const char *s, int *ok) {
     if (ok) *ok = 0;

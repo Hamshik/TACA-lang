@@ -1,4 +1,4 @@
-#include "../taca.h"
+#include "../taca.hpp"
 #include <iostream>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>

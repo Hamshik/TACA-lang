@@ -5,14 +5,11 @@
 extern "C" {
 #endif
 
-// C-compatible declarations (if any) go here
-
 #ifdef __cplusplus
 }
 #endif
-#include "../taca.h"
-
 #ifdef __cplusplus
+#include "../taca.hpp"
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>

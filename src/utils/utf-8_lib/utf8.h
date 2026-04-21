@@ -32,9 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #pragma clang diagnostic ignored "-Wunknown-warning-option"
 
 #ifdef __cplusplus
-extern "C" {
 #include "utf8/unchecked.h"
-}
 #endif
 
 #pragma clang diagnostic pop

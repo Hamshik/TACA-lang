@@ -2,7 +2,9 @@
 #define SEMANTIC_H
 
 #include "../taca.h"
+#include "../ast/ASTNode.h"
 #include <stdbool.h>
+
 extern DataTypes_t g_fn_ret;
 extern int g_in_fn;
 

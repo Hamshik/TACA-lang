@@ -1,4 +1,4 @@
-#include "../taca.h"
+#include "../taca.hpp"
 #include "utils/error_handler/error_msg.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
