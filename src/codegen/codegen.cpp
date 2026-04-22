@@ -95,7 +95,7 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
   std::string verr;
   raw_string_ostream verrs(verr);
   if (verifyModule(mod, &verrs)) {
-    std::cerr << BOLD RED "LLVM verify error: " RESET << verrs.str() << std::endl;
+    std::cerr << TACA_BOLD TACA_RED "LLVM verify error: " TACA_RESET << verrs.str() << std::endl;
     return 1;
   }
 
@@ -119,8 +119,8 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
     std::cout << "LLVM IR written to " << ll_path << std::endl;
   }
 
-  printf(BOLD GREEN
-         "SUCCESS: Compilation succeeded with no errors or warnings\n" RESET);
+  printf(TACA_BOLD TACA_GREEN
+         "SUCCESS: Compilation succeeded with no errors or warnings\n" TACA_RESET);
 
   if (ir_out) {
     *ir_out = (char *)malloc(ir.size() + 1);

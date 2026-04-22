@@ -1,4 +1,4 @@
-#include "../utils.h"
+#include "../../taca.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,17 +24,17 @@ void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, co
     if (detail && *detail) {
         /* Avoid "syntax error: syntax error, unexpected X" style duplication. */
         if (starts_with(detail, base))
-            fprintf(stderr, BOLD RED "error[TQ%04d]: %s\n" RESET, (int)code, detail);
+            fprintf(stderr, TACA_BOLD TACA_RED "error[TQ%04d]: %s\n" TACA_RESET, (int)code, detail);
         else
-            fprintf(stderr, BOLD RED "error[TQ%04d]: %s: %s\n" RESET, (int)code, base, detail);
+            fprintf(stderr, TACA_BOLD TACA_RED "error[TQ%04d]: %s: %s\n" TACA_RESET, (int)code, base, detail);
     } else {
-        fprintf(stderr, BOLD RED "error[TQ%04d]: %s\n" RESET, (int)code, base);
+        fprintf(stderr, TACA_BOLD TACA_RED "error[TQ%04d]: %s\n" TACA_RESET, (int)code, base);
     }
-    fprintf(stderr, BOLD DIM " --> %s:%d:%d\n" RESET, filename, err_line, err_col);
+    fprintf(stderr, TACA_BOLD TACA_DIM " --> %s:%d:%d\n" TACA_RESET, filename, err_line, err_col);
 
     if (!src || src_len == 0) {
         free(src);
-        fprintf(stderr, BOLD DIM " note:" RESET " could not read source to show caret\n");
+        fprintf(stderr, TACA_BOLD TACA_DIM " note:" TACA_RESET " could not read source to show caret\n");
         if (error_fatal) exit(EXIT_FAILURE);
         return;
     }
@@ -50,18 +50,18 @@ void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, co
 
     int ln_width = digits_int(err_line);
 
-    fprintf(stderr, BOLD DIM "%*s |\n" RESET, ln_width, "");
-    fprintf(stderr, BOLD DIM "%*d | " RESET, ln_width, err_line);
+    fprintf(stderr, TACA_BOLD TACA_DIM "%*s |\n" TACA_RESET, ln_width, "");
+    fprintf(stderr, TACA_BOLD TACA_DIM "%*d | " TACA_RESET, ln_width, err_line);
     fwrite(src + line_start, 1, line_end - line_start, stderr);
     fputc('\n', stderr);
 
-    fprintf(stderr, BOLD DIM "%*s | " RESET, ln_width, "");
+    fprintf(stderr, TACA_BOLD TACA_DIM "%*s | " TACA_RESET, ln_width, "");
     size_t caret_col = pos - line_start;
     for (size_t i = 0; i < caret_col; i++) {
         char c = src[line_start + i];
         fputc((c == '\t') ? '\t' : ' ', stderr);
     }
-    fprintf(stderr, BOLD RED "^\n" RESET);
+    fprintf(stderr, TACA_BOLD TACA_RED "^\n" TACA_RESET);
 
     free(src);
     if (error_fatal) exit(EXIT_FAILURE);
@@ -79,17 +79,17 @@ void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, 
     if (detail && *detail) {
         /* Avoid "syntax warning: syntax warning, unexpected X" style duplication. */
         if (starts_with(detail, base))
-            fprintf(stderr, BOLD YELLOW "warning[TQ%04d]: %s\n" RESET, (int)code, detail);
+            fprintf(stderr, TACA_BOLD TACA_YELLOW "warning[TQ%04d]: %s\n" TACA_RESET, (int)code, detail);
         else
-            fprintf(stderr, BOLD YELLOW "warning[TQ%04d]: %s: %s\n" RESET, (int)code, base, detail);
+            fprintf(stderr, TACA_BOLD TACA_YELLOW "warning[TQ%04d]: %s: %s\n" TACA_RESET, (int)code, base, detail);
     } else {
-        fprintf(stderr, BOLD YELLOW "warning[TQ%04d]: %s\n" RESET, (int)code, base);
+        fprintf(stderr, TACA_BOLD TACA_YELLOW "warning[TQ%04d]: %s\n" TACA_RESET, (int)code, base);
     }
-    fprintf(stderr, BOLD DIM " --> %s:%d:%d\n" RESET, filename, warn_line, warn_col);
+    fprintf(stderr, TACA_BOLD TACA_DIM " --> %s:%d:%d\n" TACA_RESET, filename, warn_line, warn_col);
 
     if (!src || src_len == 0) {
         free(src);
-        fprintf(stderr, BOLD DIM " note:" RESET " could not read source to show caret\n");
+        fprintf(stderr, TACA_BOLD TACA_DIM " note:" TACA_RESET " could not read source to show caret\n");
         return;
     }
 
@@ -104,18 +104,18 @@ void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, 
 
     int ln_width = digits_int(warn_line);
 
-    fprintf(stderr, BOLD DIM "%*s |\n" RESET, ln_width, "");
-    fprintf(stderr, BOLD DIM "%*d | " RESET, ln_width, warn_line);
+    fprintf(stderr, TACA_BOLD TACA_DIM "%*s |\n" TACA_RESET, ln_width, "");
+    fprintf(stderr, TACA_BOLD TACA_DIM "%*d | " TACA_RESET, ln_width, warn_line);
     fwrite(src + line_start, 1, line_end - line_start, stderr);
     fputc('\n', stderr);
 
-    fprintf(stderr, BOLD DIM "%*s | " RESET, ln_width, "");
+    fprintf(stderr, TACA_BOLD TACA_DIM "%*s | " TACA_RESET, ln_width, "");
     size_t caret_col = pos - line_start;
     for (size_t i = 0; i < caret_col; i++) {
         char c = src[line_start + i];
         fputc((c == '\t') ? '\t' : ' ', stderr);
     }
-    fprintf(stderr, BOLD YELLOW "^\n" RESET);
+    fprintf(stderr, TACA_BOLD TACA_YELLOW "^\n" TACA_RESET);
     free(src);
 }
 
@@ -124,11 +124,11 @@ void syserr(const char *context)
     int saved_errno = errno;
     isError = true;
     err_no++;
-    fprintf(stderr,BOLD WHITE "Tarkc:" RESET);
-    fprintf(stderr, BOLD RED " fatal error:" RESET);
-    fprintf(stderr, BOLD WHITE " %s\n" RESET, (context && *context) ? context : "unknown");
+    fprintf(stderr,TACA_BOLD TACA_WHITE "Tarkc:" TACA_RESET);
+    fprintf(stderr, TACA_BOLD TACA_RED " fatal error:" TACA_RESET);
+    fprintf(stderr, TACA_BOLD TACA_WHITE " %s\n" TACA_RESET, (context && *context) ? context : "unknown");
     if (saved_errno != 0) {
-        fprintf(stderr, BOLD DIM " note:" RESET " %s\n", strerror(saved_errno));
+        fprintf(stderr, TACA_BOLD TACA_DIM " note:" TACA_RESET " %s\n", strerror(saved_errno));
     }
     exit(EXIT_FAILURE);
 }
@@ -138,9 +138,9 @@ void syswarn(const char *context)
     int saved_errno = errno;
     isWarning = true;
     warn_no++;
-    fprintf(stderr, BOLD YELLOW "warning[TQ??]: system warning: %s\n" RESET,
+    fprintf(stderr, TACA_BOLD TACA_YELLOW "warning[TQ??]: system warning: %s\n" TACA_RESET,
             (context && *context) ? context : "unknown");
     if (saved_errno != 0) {
-        fprintf(stderr, BOLD DIM " note:" RESET " %s\n", strerror(saved_errno));
+        fprintf(stderr, TACA_BOLD TACA_DIM " note:" TACA_RESET " %s\n", strerror(saved_errno));
     }
 }

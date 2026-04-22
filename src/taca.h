@@ -4,8 +4,10 @@
 #pragma clang diagnostic ignored "-Wmissing-include-dirs"
 #pragma clang diagnostic ignored "-Wunknown-warning-option"
 
+#include "utils/uhash.h" //C++ and AST needed this one, becase AST is include in C++ files and it needs the hash table for symbol tables
+
+#ifndef __cplusplus
 // Utility headers (C parts)
-#include "utils/uhash.h"
 #include "utils/colors.h"
 #include "utils/error_handler/error.h"
 
@@ -26,5 +28,11 @@
 
 // Evaluation
 #include "eval/eval.h"
+
+//codegen
+
+#include "codegen/codegen.h"
+
+#endif
 
 #pragma clang diagnostic pop

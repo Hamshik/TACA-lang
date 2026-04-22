@@ -237,23 +237,23 @@ void force_numeric_type(ASTNode_t *n, DataTypes_t t) {
 
 void check_err() {
   if (isError && isWarning) {
-    fprintf(stderr, BOLD RED "ERROR: " RESET);
+    fprintf(stderr, TACA_BOLD TACA_RED "ERROR: " TACA_RESET);
     fprintf(stderr,
-            UNDERLINE MAGENTA
-            "Compilation failed with %zu error(s) and %zu warning(s)\n" RESET,
+            TACA_UNDERLINE TACA_MAGENTA
+            "Compilation failed with %zu error(s) and %zu warning(s)\n" TACA_RESET,
             err_no, warn_no);
     exit(EXIT_FAILURE);
   } else if (isError) {
-    fprintf(stderr, BOLD RED "ERROR: " RESET);
+    fprintf(stderr, TACA_BOLD TACA_RED "ERROR: " TACA_RESET);
     fprintf(stderr,
-            UNDERLINE MAGENTA "Compilation failed with %zu error(s)\n" RESET,
+            TACA_UNDERLINE TACA_MAGENTA "Compilation failed with %zu error(s)\n" TACA_RESET,
             err_no);
     exit(EXIT_FAILURE);
   } else if (isWarning) {
-    fprintf(stderr, BOLD YELLOW "WARNING: " RESET);
+    fprintf(stderr, TACA_BOLD TACA_YELLOW "WARNING: " TACA_RESET);
     fprintf(stderr,
-            UNDERLINE MAGENTA
-            "Compilation succeeded with %zu warning(s)\n" RESET,
+            TACA_UNDERLINE TACA_MAGENTA
+            "Compilation succeeded with %zu warning(s)\n" TACA_RESET,
             warn_no);
   } 
 }

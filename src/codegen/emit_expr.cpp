@@ -1,5 +1,5 @@
 #include "../taca.hpp"
-#include "utils/error_handler/error_msg.h"
+#include "utils/error_handler/error.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Value.h"

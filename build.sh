@@ -38,7 +38,7 @@ echo "Compiling [2/3] C Files"
 
 for src in $(find src -type f -iname "*.c"); do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    gcc -Wall -Wextra -g -Isrc -Isrc/utils/utf-8_lib -c "$src" -o "$obj"
+    clang -Wall -Wextra -g -Isrc -c "$src" -o "$obj"
 done
 
 echo "Linking [3/3] Files..."
