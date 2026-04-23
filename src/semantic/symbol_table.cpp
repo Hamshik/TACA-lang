@@ -1,28 +1,22 @@
-#include "../taca.h"
+#include "../taca.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct Scope {
-    Symboltable_t *symbols; // uthash table
-    struct Scope *parent;
-} Scope_t;
-
 static Scope_t *g_scope = NULL;
 static FnSymbol_t *g_fns = NULL;
+static Module_t *modules = NULL;
 
 static Scope_t *scope_top(void) {
     if (!g_scope) {
-        g_scope = calloc(1, sizeof(*g_scope));
+        g_scope = (Scope_t *)calloc(1, sizeof(*g_scope));
         if (!g_scope) { perror("calloc"); exit(1); }
     }
     return g_scope;
 }
 
-
-
 void scope_push(void) {
-    Scope_t *s = calloc(1, sizeof(*s));
+    Scope_t *s = (Scope_t *)calloc(1, sizeof(*s));
     if (!s) { perror("calloc"); exit(1); }
     s->parent = scope_top();
     g_scope = s;
@@ -81,7 +75,7 @@ bool declare(const char* name, DataTypes_t type, DataTypes_t ptr_to, const bool 
     HASH_FIND_STR(top->symbols, name, v);
     if (v) return false;
 
-    v = malloc(sizeof(*v));
+    v = (Symboltable_t *)malloc(sizeof(*v));
     if (!v) { perror("malloc"); exit(1); }
     v->name = strdup(name);
     v->type = type;
@@ -130,7 +124,7 @@ bool fn_declare(const char *name, Param_t *params, int param_count, DataTypes_t 
     HASH_FIND_STR(g_fns, name, f);
     if (f != NULL) return false;
 
-    f = malloc(sizeof(*f));
+    f = (FnSymbol_t *)malloc(sizeof(*f));
     if (!f) { perror("malloc"); exit(1); }
     f->name = strdup(name);
     f->params = params;
@@ -169,4 +163,45 @@ DataTypes_t update_datatype(const char* name, DataTypes_t want){
     return UNKNOWN;
 }
 
+Module_t *get_module(const char *path) {
+    Module_t *m = NULL;
+    HASH_FIND_STR(modules, path, m);
+    return m;
+}
 
+Module_t *load_module(const char *path) {
+    Module_t *m = get_module(path);
+    if (m) {
+        if (m->state == MOD_LOADING) {
+            return NULL;
+        }
+        return m;
+    }
+
+    m = (Module_t *)calloc(1, sizeof(*m));
+    m->path = strdup(path);
+    m->state = MOD_LOADING;
+
+    HASH_ADD_KEYPTR(hh, modules, m->path, strlen(m->path), m);
+
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        panic(&file, 0, 0, 0, SEM_IMPORT_FILE_NOT_FOUND, path);
+        return NULL;
+    }
+
+    m->ast = parse_file(f);
+    fclose(f);
+
+    m->state = MOD_LOADED;
+    m->parsed = 1;
+
+    return m;
+}
+
+void ensure_semantic(Module_t *m) {
+    if (!m || m->semantic_done) return;
+
+    semantic_check(m->ast);
+    m->semantic_done = true;
+}

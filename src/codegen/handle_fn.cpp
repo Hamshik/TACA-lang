@@ -51,7 +51,7 @@ void emit_function(ASTNode_t *fn_ast, Module &mod, LLVMContext &ctx) {
     else if(strcmp(fn_ast->fn_def.name, "main") == 0)
       b.CreateRet(ConstantInt::get(Type::getInt32Ty(ctx), 0));
     else 
-      error(&file, fn_ast->line, fn_ast->col, fn_ast->pos, RET_NOT_DECLARED, fn_ast->fn_def.name);
+      panic(&file, fn_ast->line, fn_ast->col, fn_ast->pos, RET_NOT_DECLARED, fn_ast->fn_def.name);
   }
 }
 

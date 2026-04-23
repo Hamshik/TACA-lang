@@ -9,9 +9,10 @@
 #include "utils/colors.h"
 #include "utils/uhash.h"
 #include "utils/error_handler/error.h" 
+
 // AST and semantic analysis
 #include "ast/ASTNode.h"
-#include "semantic/semantic.h"
+#include "semantic/semantic.hpp" 
 
 // Frontend headers
 #include "parser/parser.h"
@@ -30,7 +31,9 @@
 //codegen
 #include "codegen/codegen.h"
 
+//import system
 #include "import/import.h"
+
 
 #endif
 

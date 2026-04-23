@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../taca.h"
+#include "../taca.hpp"
 
 extern file_t file;
 
@@ -7,7 +7,7 @@ extern file_t file;
 void type_error(ASTNode_t *n, const char *msg) {
   if (n)
     n->datatype = UNKNOWN;
-  error(&file, n ? n->line : 0, n ? n->col : 0, n ? n->pos : 0,
+  panic(&file, n ? n->line : 0, n ? n->col : 0, n ? n->pos : 0,
         SEM_BINOP_INVALID, msg ? msg : NULL);
   return;
 }

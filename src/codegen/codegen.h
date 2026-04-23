@@ -14,7 +14,7 @@ extern "C"
     int codegen(ASTNode_t* root, const char *ll_path, char **ir_out);
     unsigned __int128 tq_parse_u128(const char *s, int *ok);
     __int128         tq_parse_i128(const char *s, int *ok);
-    void error(file_t *file, int line, int col, int pos, errc_t code, const char *detail);
+    void panic(file_t *file, int line, int col, int pos, errc_t code, const char *detail);
 
 #ifdef __cplusplus
 }

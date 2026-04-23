@@ -1,13 +1,13 @@
 [
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang++",
+      "/usr/bin/clang++",
       "-fcxx-exceptions",
       "-w",
       "-Wall",
       "-Wextra",
       "-g",
-      "-I/usr/include/llvm/include",
+      "-I/usr/lib/llvm-22/include",
       "-std=c++17",
       "-D_GNU_SOURCE",
       "-D_GLIBCXX_USE_CXX11_ABI=1",
@@ -15,26 +15,25 @@
       "-D__STDC_FORMAT_MACROS",
       "-D__STDC_LIMIT_MACROS",
       "-fno-exceptions",
-      "-fno-rtti",
       "-Isrc",
       "-c",
       "-o",
-      "bin/printer.o",
-      "src/stdlibs/printer.cpp"
+      "bin/semantic_helper.o",
+      "src/semantic/semantic_helper.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/stdlibs/printer.cpp",
-    "output": "/workspaces/TACA-lang/bin/printer.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/semantic/semantic_helper.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/semantic_helper.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang++",
+      "/usr/bin/clang++",
       "-fcxx-exceptions",
       "-w",
       "-Wall",
       "-Wextra",
       "-g",
-      "-I/usr/include/llvm/include",
+      "-I/usr/lib/llvm-22/include",
       "-std=c++17",
       "-D_GNU_SOURCE",
       "-D_GLIBCXX_USE_CXX11_ABI=1",
@@ -42,26 +41,77 @@
       "-D__STDC_FORMAT_MACROS",
       "-D__STDC_LIMIT_MACROS",
       "-fno-exceptions",
-      "-fno-rtti",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/symbol_table.o",
+      "src/semantic/symbol_table.cpp"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/semantic/symbol_table.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/symbol_table.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-fcxx-exceptions",
+      "-w",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-I/usr/lib/llvm-22/include",
+      "-std=c++17",
+      "-D_GNU_SOURCE",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-fno-exceptions",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/semanic_op.o",
+      "src/semantic/semanic_op.cpp"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/semantic/semanic_op.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/semanic_op.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-fcxx-exceptions",
+      "-w",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-I/usr/lib/llvm-22/include",
+      "-std=c++17",
+      "-D_GNU_SOURCE",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-fno-exceptions",
       "-Isrc",
       "-c",
       "-o",
       "bin/exits.o",
       "src/stdlibs/exits.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/stdlibs/exits.cpp",
-    "output": "/workspaces/TACA-lang/bin/exits.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/stdlibs/exits.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/exits.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang++",
+      "/usr/bin/clang++",
       "-fcxx-exceptions",
       "-w",
       "-Wall",
       "-Wextra",
       "-g",
-      "-I/usr/include/llvm/include",
+      "-I/usr/lib/llvm-22/include",
       "-std=c++17",
       "-D_GNU_SOURCE",
       "-D_GLIBCXX_USE_CXX11_ABI=1",
@@ -69,107 +119,25 @@
       "-D__STDC_FORMAT_MACROS",
       "-D__STDC_LIMIT_MACROS",
       "-fno-exceptions",
-      "-fno-rtti",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/op_handler.o",
-      "src/codegen/op_handler.cpp"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/op_handler.cpp",
-    "output": "/workspaces/TACA-lang/bin/op_handler.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang++",
-      "-fcxx-exceptions",
-      "-w",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-I/usr/include/llvm/include",
-      "-std=c++17",
-      "-D_GNU_SOURCE",
-      "-D_GLIBCXX_USE_CXX11_ABI=1",
-      "-D__STDC_CONSTANT_MACROS",
-      "-D__STDC_FORMAT_MACROS",
-      "-D__STDC_LIMIT_MACROS",
-      "-fno-exceptions",
-      "-fno-rtti",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/handle_fn.o",
-      "src/codegen/handle_fn.cpp"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/handle_fn.cpp",
-    "output": "/workspaces/TACA-lang/bin/handle_fn.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang++",
-      "-fcxx-exceptions",
-      "-w",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-I/usr/include/llvm/include",
-      "-std=c++17",
-      "-D_GNU_SOURCE",
-      "-D_GLIBCXX_USE_CXX11_ABI=1",
-      "-D__STDC_CONSTANT_MACROS",
-      "-D__STDC_FORMAT_MACROS",
-      "-D__STDC_LIMIT_MACROS",
-      "-fno-exceptions",
-      "-fno-rtti",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/codegen.o",
-      "src/codegen/codegen.cpp"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/codegen.cpp",
-    "output": "/workspaces/TACA-lang/bin/codegen.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang++",
-      "-fcxx-exceptions",
-      "-w",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-I/usr/include/llvm/include",
-      "-std=c++17",
-      "-D_GNU_SOURCE",
-      "-D_GLIBCXX_USE_CXX11_ABI=1",
-      "-D__STDC_CONSTANT_MACROS",
-      "-D__STDC_FORMAT_MACROS",
-      "-D__STDC_LIMIT_MACROS",
-      "-fno-exceptions",
-      "-fno-rtti",
       "-Isrc",
       "-c",
       "-o",
       "bin/emit_expr.o",
       "src/codegen/emit_expr.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/emit_expr.cpp",
-    "output": "/workspaces/TACA-lang/bin/emit_expr.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/emit_expr.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/emit_expr.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang++",
+      "/usr/bin/clang++",
       "-fcxx-exceptions",
       "-w",
       "-Wall",
       "-Wextra",
       "-g",
-      "-I/usr/include/llvm/include",
+      "-I/usr/lib/llvm-22/include",
       "-std=c++17",
       "-D_GNU_SOURCE",
       "-D_GLIBCXX_USE_CXX11_ABI=1",
@@ -177,26 +145,25 @@
       "-D__STDC_FORMAT_MACROS",
       "-D__STDC_LIMIT_MACROS",
       "-fno-exceptions",
-      "-fno-rtti",
       "-Isrc",
       "-c",
       "-o",
-      "bin/handle_loops.o",
-      "src/codegen/handle_loops.cpp"
+      "bin/op_handler.o",
+      "src/codegen/op_handler.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/handle_loops.cpp",
-    "output": "/workspaces/TACA-lang/bin/handle_loops.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/op_handler.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/op_handler.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang++",
+      "/usr/bin/clang++",
       "-fcxx-exceptions",
       "-w",
       "-Wall",
       "-Wextra",
       "-g",
-      "-I/usr/include/llvm/include",
+      "-I/usr/lib/llvm-22/include",
       "-std=c++17",
       "-D_GNU_SOURCE",
       "-D_GLIBCXX_USE_CXX11_ABI=1",
@@ -204,26 +171,25 @@
       "-D__STDC_FORMAT_MACROS",
       "-D__STDC_LIMIT_MACROS",
       "-fno-exceptions",
-      "-fno-rtti",
       "-Isrc",
       "-c",
       "-o",
       "bin/helper.o",
       "src/codegen/helper.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/helper.cpp",
-    "output": "/workspaces/TACA-lang/bin/helper.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/helper.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/helper.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang++",
+      "/usr/bin/clang++",
       "-fcxx-exceptions",
       "-w",
       "-Wall",
       "-Wextra",
       "-g",
-      "-I/usr/include/llvm/include",
+      "-I/usr/lib/llvm-22/include",
       "-std=c++17",
       "-D_GNU_SOURCE",
       "-D_GLIBCXX_USE_CXX11_ABI=1",
@@ -231,116 +197,97 @@
       "-D__STDC_FORMAT_MACROS",
       "-D__STDC_LIMIT_MACROS",
       "-fno-exceptions",
-      "-fno-rtti",
       "-Isrc",
       "-c",
       "-o",
       "bin/str_handler.o",
       "src/codegen/str_handler.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/codegen/str_handler.cpp",
-    "output": "/workspaces/TACA-lang/bin/str_handler.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/str_handler.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/str_handler.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang++",
+      "-fcxx-exceptions",
+      "-w",
       "-Wall",
       "-Wextra",
       "-g",
+      "-I/usr/lib/llvm-22/include",
+      "-std=c++17",
+      "-D_GNU_SOURCE",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-fno-exceptions",
       "-Isrc",
       "-c",
       "-o",
-      "bin/main.o",
-      "src/main.c"
+      "bin/codegen.o",
+      "src/codegen/codegen.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/main.c",
-    "output": "/workspaces/TACA-lang/bin/main.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/codegen.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/codegen.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang++",
+      "-fcxx-exceptions",
+      "-w",
       "-Wall",
       "-Wextra",
       "-g",
+      "-I/usr/lib/llvm-22/include",
+      "-std=c++17",
+      "-D_GNU_SOURCE",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-fno-exceptions",
       "-Isrc",
       "-c",
       "-o",
-      "bin/semanic_fn.o",
-      "src/semantic/semanic_fn.c"
+      "bin/handle_loops.o",
+      "src/codegen/handle_loops.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/semantic/semanic_fn.c",
-    "output": "/workspaces/TACA-lang/bin/semanic_fn.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/handle_loops.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/handle_loops.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang++",
+      "-fcxx-exceptions",
+      "-w",
       "-Wall",
       "-Wextra",
       "-g",
+      "-I/usr/lib/llvm-22/include",
+      "-std=c++17",
+      "-D_GNU_SOURCE",
+      "-D_GLIBCXX_USE_CXX11_ABI=1",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-fno-exceptions",
       "-Isrc",
       "-c",
       "-o",
-      "bin/semanic_op.o",
-      "src/semantic/semanic_op.c"
+      "bin/handle_fn.o",
+      "src/codegen/handle_fn.cpp"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/semantic/semanic_op.c",
-    "output": "/workspaces/TACA-lang/bin/semanic_op.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/codegen/handle_fn.cpp",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/handle_fn.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/symbol_table.o",
-      "src/semantic/symbol_table.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/semantic/symbol_table.c",
-    "output": "/workspaces/TACA-lang/bin/symbol_table.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/semantic_helper.o",
-      "src/semantic/semantic_helper.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/semantic/semantic_helper.c",
-    "output": "/workspaces/TACA-lang/bin/semantic_helper.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/semanic.o",
-      "src/semantic/semanic.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/semantic/semanic.c",
-    "output": "/workspaces/TACA-lang/bin/semanic.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -350,109 +297,13 @@
       "bin/typecheck.o",
       "src/typechecker/typecheck.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/typechecker/typecheck.c",
-    "output": "/workspaces/TACA-lang/bin/typecheck.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/typechecker/typecheck.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/typecheck.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/lexer_helpers.o",
-      "src/lexer/lexer_helpers.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/lexer/lexer_helpers.c",
-    "output": "/workspaces/TACA-lang/bin/lexer_helpers.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/lexer.o",
-      "src/lexer/lexer.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/lexer/lexer.c",
-    "output": "/workspaces/TACA-lang/bin/lexer.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/builtin.o",
-      "src/builtin/builtin.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/builtin/builtin.c",
-    "output": "/workspaces/TACA-lang/bin/builtin.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/eval.o",
-      "src/eval/eval.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/eval/eval.c",
-    "output": "/workspaces/TACA-lang/bin/eval.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/eval_helper.o",
-      "src/eval/eval_helper.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/eval/eval_helper.c",
-    "output": "/workspaces/TACA-lang/bin/eval_helper.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/stepper.o",
-      "src/eval/stepper.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/eval/stepper.c",
-    "output": "/workspaces/TACA-lang/bin/stepper.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -462,13 +313,13 @@
       "bin/parser_helpers.o",
       "src/parser/parser_helpers.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/parser/parser_helpers.c",
-    "output": "/workspaces/TACA-lang/bin/parser_helpers.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/parser/parser_helpers.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/parser_helpers.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -478,13 +329,61 @@
       "bin/parser.o",
       "src/parser/parser.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/parser/parser.c",
-    "output": "/workspaces/TACA-lang/bin/parser.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/parser/parser.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/parser.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/lexer.o",
+      "src/lexer/lexer.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/lexer/lexer.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/lexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/lexer_helpers.o",
+      "src/lexer/lexer_helpers.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/lexer/lexer_helpers.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/lexer_helpers.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/import.o",
+      "src/import/import.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/import/import.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/import.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -494,13 +393,13 @@
       "bin/error.o",
       "src/utils/error_handler/error.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/utils/error_handler/error.c",
-    "output": "/workspaces/TACA-lang/bin/error.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/utils/error_handler/error.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/error.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -510,29 +409,29 @@
       "bin/error_msg.o",
       "src/utils/error_handler/error_msg.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/utils/error_handler/error_msg.c",
-    "output": "/workspaces/TACA-lang/bin/error_msg.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/utils/error_handler/error_msg.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/error_msg.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
       "-Isrc",
       "-c",
       "-o",
-      "bin/assigner.o",
-      "src/ast/assigner.c"
+      "bin/main.o",
+      "src/main.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/ast/assigner.c",
-    "output": "/workspaces/TACA-lang/bin/assigner.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/main.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/main.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -542,29 +441,13 @@
       "bin/ASTNode.o",
       "src/ast/ASTNode.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/ast/ASTNode.c",
-    "output": "/workspaces/TACA-lang/bin/ASTNode.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/ast/ASTNode.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/ASTNode.o"
   },
   {
     "arguments": [
-      "/usr/include/llvm/bin/clang",
-      "-Wall",
-      "-Wextra",
-      "-g",
-      "-Isrc",
-      "-c",
-      "-o",
-      "bin/ASTHelper.o",
-      "src/ast/ASTHelper.c"
-    ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/ast/ASTHelper.c",
-    "output": "/workspaces/TACA-lang/bin/ASTHelper.o"
-  },
-  {
-    "arguments": [
-      "/usr/include/llvm/bin/clang",
+      "/usr/bin/clang",
       "-Wall",
       "-Wextra",
       "-g",
@@ -574,8 +457,104 @@
       "bin/env.o",
       "src/ast/env.c"
     ],
-    "directory": "/workspaces/TACA-lang",
-    "file": "/workspaces/TACA-lang/src/ast/env.c",
-    "output": "/workspaces/TACA-lang/bin/env.o"
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/ast/env.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/env.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/ASTHelper.o",
+      "src/ast/ASTHelper.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/ast/ASTHelper.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/ASTHelper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/assigner.o",
+      "src/ast/assigner.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/ast/assigner.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/assigner.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/eval_helper.o",
+      "src/eval/eval_helper.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/eval/eval_helper.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/eval_helper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/eval.o",
+      "src/eval/eval.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/eval/eval.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/eval.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/stepper.o",
+      "src/eval/stepper.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/eval/stepper.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/stepper.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "bin/builtin.o",
+      "src/builtin/builtin.c"
+    ],
+    "directory": "/home/Hamshik/Documents/TACA-lang",
+    "file": "/home/Hamshik/Documents/TACA-lang/src/builtin/builtin.c",
+    "output": "/home/Hamshik/Documents/TACA-lang/bin/builtin.o"
   }
 ]

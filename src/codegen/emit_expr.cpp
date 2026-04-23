@@ -29,7 +29,7 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
 
   case AST_CHAR: {
     if (!n->literal.raw) {
-      error(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, nullptr);
+      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, nullptr);
       return nullptr;
     }
 
@@ -48,7 +48,7 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
       else if (err == Utf8Error::InvalidUtf8)
         msg = n->literal.raw;
 
-      error(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, msg ? msg : "unknown");
+      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, msg ? msg : "unknown");
       return nullptr;
     }
 

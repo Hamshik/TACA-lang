@@ -1,4 +1,4 @@
-#import "test_two.tq";
+#import "source/test_two.tq";
 
 var x = '🔥';
 

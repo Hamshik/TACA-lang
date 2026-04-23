@@ -6,9 +6,8 @@ PARSER_DIR=$(find src/**/* -iname "*.y" -exec dirname {} +;)
 LEXER_DIR=$(find src/**/* -iname "*.l" -exec dirname {} +;)
 BIN_DIR="bin"
 
-LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
+LLVM_CONFIG=${LLVM_CONFIG:-llvm-config-22}
 
-LLVM_CONFIG=${LLVM_CONFIG:-llvm-config}
 if command -v "$LLVM_CONFIG" >/dev/null 2>&1; then
     LLVM_CXXFLAGS="$($LLVM_CONFIG --cxxflags)"
     LLVM_LDFLAGS="$($LLVM_CONFIG --ldflags --system-libs --libs core native)"
@@ -42,7 +41,7 @@ for src in $(find src -type f -iname "*.c"); do
 done
 
 echo "Linking [3/3] Files..."
-g++ -o "$BIN_DIR/taca" "$BIN_DIR"/*.o -lm $LLVM_LDFLAGS
+clang++ -o "$BIN_DIR/taca" "$BIN_DIR"/*.o -lm $LLVM_LDFLAGS
 
 echo "Cleaning up object files..."
 rm -f "$BIN_DIR"/*.o

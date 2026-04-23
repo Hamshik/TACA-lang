@@ -1,4 +1,5 @@
 #include "taca.h"
+#include "taca.hpp"
 #include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>
@@ -135,9 +136,10 @@ static int compile_and_execute(ASTNode_t *root, const Options *opts) {
     error_fatal = true; /* runtime errors should still stop */
     char *ir_text = NULL;
 
+    ast_eval_main(root);
     if (codegen(root, opts->emit_ir ? opts->ir_output_path : NULL, &ir_text))
         return 1;
-    ast_eval_main(root);
+
     ast_free(root);
 
     FILE *irf = fopen(opts->ir_output_path, "w");
@@ -192,11 +194,14 @@ int main(int argc, char **argv) {
     yyrestart(yyin);
 
     yyparse();
-    if (root != NULL) {
+    if (root) {
         int result = compile_and_execute(root, &opts);
         if (result != 0) {
             return result;
         }
+    } else {
+        fprintf(stderr, "Parsing failed with errors.\n");
+        return EXIT_FAILURE;
     }
 
     if (file.source != stdin)

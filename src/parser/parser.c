@@ -110,7 +110,7 @@
         } while (0)
 
     #define TQ_error_LOC(loc, code, detail) \
-        error(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
+        panic(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
     
 
 #line 117 "src/parser/parser.c"
@@ -1893,9 +1893,9 @@ yyreduce:
   case 2: /* program: import_list stmt_list  */
 #line 149 "src/parser/parser.y"
       {
-          if (!(yyvsp[-1].node)) (yyval.node) = (yyvsp[0].node);
-          else if (!(yyvsp[0].node)) (yyval.node) = (yyvsp[-1].node);
-          else (yyval.node) = new_seq((yyvsp[-1].node), (yyvsp[0].node));
+          if (!(yyvsp[-1].node)) root = (yyvsp[0].node);
+          else if (!(yyvsp[0].node)) root = (yyvsp[-1].node);
+          else root = new_seq((yyvsp[-1].node), (yyvsp[0].node));
       }
 #line 1901 "src/parser/parser.c"
     break;
@@ -1996,7 +1996,7 @@ yyreduce:
 
   case 18: /* stmt: error SEMICOLON  */
 #line 180 "src/parser/parser.y"
-                                { error(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; (yyval.node) = NULL; }
+                                { panic(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; (yyval.node) = NULL; }
 #line 2001 "src/parser/parser.c"
     break;
 

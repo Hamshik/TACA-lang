@@ -69,7 +69,7 @@ extern "C" {
         } while (0)
 
     #define TQ_error_LOC(loc, code, detail) \
-        error(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
+        panic(&file, (loc).first_line, (loc).first_column, (loc).first_pos, (code), (detail))
     
 %}
 
@@ -147,9 +147,9 @@ extern "C" {
 program
     : import_list stmt_list
       {
-          if (!$1) $$ = $2;
-          else if (!$2) $$ = $1;
-          else $$ = new_seq($1, $2);
+          if (!$1) root = $2;
+          else if (!$2) root = $1;
+          else root = new_seq($1, $2);
       }
 ;
 
@@ -177,7 +177,7 @@ stmt
     | fn_def                    { $$ = $1; }
     | return_stmt SEMICOLON     { $$ = $1; }
     | return_stmt error         { TQ_error_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
-    | error SEMICOLON           { error(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
+    | error SEMICOLON           { panic(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
     ;
 
 import_list:

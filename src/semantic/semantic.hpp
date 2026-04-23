@@ -1,8 +1,9 @@
 #ifndef SEMANTIC_H
 #define SEMANTIC_H
 
-#include "../taca.h"
-#include "../ast/ASTNode.h"
+#ifdef __cplusplus
+#include "../taca.hpp"
+extern "C" {
 #include <stdbool.h>
 
 extern DataTypes_t g_fn_ret;
@@ -17,7 +18,7 @@ typedef struct symboltable{
     DataTypes_t last_maxed_type; /* for type inference: if so, what's the max type it's been assigned so far? */
     bool is_mutable;
     bool is_used;
-}Symboltable_t;
+} Symboltable_t;
 
 
 typedef struct fnsymbol{
@@ -36,10 +37,41 @@ typedef enum exitcode{
     IMMUTABLE_TYPING
 }exitcode_t;
 
+typedef struct Scope {
+    Symboltable_t *symbols; // uthash table
+    struct Scope *parent;
+} Scope_t;
+
+
+typedef enum {
+    MOD_NEW,
+    MOD_LOADING,
+    MOD_LOADED
+} ModuleState_t;
+
+typedef struct module {
+    char *path;
+
+    ASTNode_t *ast;
+
+    bool parsed;
+    bool semantic_done;
+
+    UT_hash_handle hh;
+
+    ModuleState_t state;
+} Module_t;
+
+#endif
+
 void semantic_check(ASTNode_t *root);
+bool is_numeric(DataTypes_t t);
+
+
+
+#ifdef __cplusplus
 DataTypes_t check_expr(ASTNode_t *n);
 void type_error(ASTNode_t *n, const char *msg);
-bool is_numeric(DataTypes_t t);
 bool is_integer(DataTypes_t t);
 void check_err();
 
@@ -78,5 +110,9 @@ bool is_numeric(DataTypes_t t);
 bool is_integer(DataTypes_t t);
 int numeric_bits(DataTypes_t t);
 
-
+Module_t *get_module(const char *path);
+Module_t *load_module(const char *path);
+void ensure_semantic(Module_t *m);
+}
+#endif
 #endif

@@ -941,7 +941,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(COMMENT3):
 #line 42 "src/lexer/lexer.l"
 {
-    error(&file,
+    panic(&file,
           tq_comment_start_line,
           tq_comment_start_col,
           tq_comment_start_pos,
@@ -968,7 +968,7 @@ YY_RULE_SETUP
     char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
     if (!s) {
         int off = (err_i >= 0) ? err_i : 0;
-        error(&file,
+        panic(&file,
               yylloc->first_line,
               yylloc->first_column + 1 + off,
               yylloc->first_pos + 1 + off,
@@ -997,7 +997,7 @@ YY_RULE_SETUP
     char *s = tq_unescape_string(inner, inner_len, &out_len, &err_i, &err_msg);
     if (!s || out_len == 0) {
         int off = (err_i >= 0) ? err_i : 0;
-        error(&file,
+        panic(&file,
               yylloc->first_line,
               yylloc->first_column + 1 + off,
               yylloc->first_pos + 1 + off,
@@ -1009,7 +1009,7 @@ YY_RULE_SETUP
 
     /* enforce exactly one UTF-8 codepoint */
     if (!tq_utf8_single(s, out_len)) {
-        error(&file, yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1, INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
+        panic(&file, yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1, INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
         free(s);
         return 0;
     }
@@ -1439,7 +1439,7 @@ YY_RULE_SETUP
     } else {
         tq_lexer_get_cursor(&line, &col, &pos);
     }
-    error(&file, line, col, pos, LEX_UNKNOWN_CHAR, detail);
+    panic(&file, line, col, pos, LEX_UNKNOWN_CHAR, detail);
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
@@ -1448,7 +1448,7 @@ case YY_STATE_EOF(INITIAL):
     if (tq_brace_depth > 0) {
         int line = 0, col = 0, pos = 0;
         tq_lexer_get_cursor(&line, &col, &pos);
-        error(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
+        panic(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
     }
     return 0;
 }
