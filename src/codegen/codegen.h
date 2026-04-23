@@ -2,11 +2,12 @@
 #define CODEGEN_H
 
 #ifdef __cplusplus
+
+#include "../taca.hpp"
+
 extern "C"
 {
 #endif
-    #include "../taca.h"
-
     extern file_t file;
     /* If ll_path is non-NULL, writes IR there. If ir_out is non-NULL, allocates a
     * NUL-terminated copy of the textual IR (caller free). Returns 0 on success. */
@@ -17,6 +18,7 @@ extern "C"
 
 #ifdef __cplusplus
 }
+
 enum class Utf8Error {
     None = 0,
     Empty,         // ''

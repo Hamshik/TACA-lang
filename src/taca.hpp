@@ -3,10 +3,12 @@
 #pragma clang diagnostic ignored "-Wmissing-include-dirs"
 #pragma clang diagnostic ignored "-Wunknown-warning-option"
 
+#ifdef __cplusplus 
 extern "C" {
 
 #include "utils/colors.h"
 #include "utils/error_handler/error.h"
+#include "utils/uhash.h"
 
 #include "ast/ASTNode.h"
 
@@ -20,4 +22,5 @@ extern "C" {
 //libs cpp only
 #include "stdlibs/stdlibs.h"
 
+#endif
 #pragma clang diagnostic pop

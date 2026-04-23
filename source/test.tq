@@ -1,8 +1,6 @@
-var x = '🔥';
+#import "test_two.tq";
 
-fn char gstr(){
-    ret '🔥';
-}
+var x = '🔥';
 
 fn main(){
     println(gstr());

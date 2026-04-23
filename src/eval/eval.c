@@ -141,7 +141,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_CHAR:
         v.type = CHARACTER;
-        v.val.chars = node->literal.raw ? node->literal.raw[0] : '\0';
+        v.val.chars = node->literal.raw ? node->literal.raw : '\0';
         return v;
 
     case AST_VAR: return (TypedValue){

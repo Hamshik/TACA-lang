@@ -1,6 +1,6 @@
 bin
 *ll
-out
+out*
 *.out
 .cache
 src/lexer/lexer.c

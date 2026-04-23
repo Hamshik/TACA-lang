@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../taca.h"
+#include "error.h"
 #include <stdbool.h>
 
 const char *errc_msg(errc_t code) {
@@ -14,6 +14,8 @@ const char *errc_msg(errc_t code) {
         case PARSE_UNCLOSED_PAREN: return "missing closing parenthesis";
         case PARSE_UNCLOSED_BRACE: return "missing closing brace";
         case PARSE_UNCLOSED_BRACKET: return "missing closing bracket";
+        case PARSE_INVALID_IMPORT: return "invalid import statement";
+        case PARSE_IMPORT_NOT_TOP: return "import statement must be at the top level";
 
         case SEM_VAR_UNDECL: return "variable not declared";
         case SEM_VAR_TYPE_MISMATCH: return "variable type mismatch";

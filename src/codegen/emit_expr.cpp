@@ -109,18 +109,6 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
     return v;
   }
 
-  case AST_BLOCK: {
-    emit_expr(n->block.stmts, ctx, b, entryBuilder, locals);
-
-    if (blockTerminated(b))
-      return nullptr;
-
-    if (n->block.last_expr)
-      return emit_expr(n->block.last_expr, ctx, b, entryBuilder, locals);
-
-    return nullptr;
-  }
-
   default:
     return nullptr;
   }

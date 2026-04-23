@@ -54,7 +54,7 @@ static void tq_write_value(FILE *out, TQValue v, DataTypes_t t) {
         case UF128:     fprintf(out, "%Lg", v.f128); break;
         case BOOL:      fputs(v.bval ? "true" : "false", out); break;
         case STRINGS:   fputs(v.str ? v.str : "", out); break;
-        case CHARACTER: fputc(v.chars, out); break;
+        case CHARACTER: fputs(v.chars, out); break;
         case PTR:
             if (v.ptr.name) fprintf(out, "&%s@%d", v.ptr.name, v.ptr.frame_id);
             else fputs("<null-ptr>", out);

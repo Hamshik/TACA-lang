@@ -139,13 +139,14 @@ extern "C" {
     VAR = 309,                     /* VAR  */
     FN = 310,                      /* FN  */
     RETURN = 311,                  /* RETURN  */
-    DATATYPES = 312,               /* DATATYPES  */
-    UPLUS = 313,                   /* UPLUS  */
-    UMINUS = 314,                  /* UMINUS  */
-    UADDR = 315,                   /* UADDR  */
-    UDEREF = 316,                  /* UDEREF  */
-    POSTFIX = 317,                 /* POSTFIX  */
-    LOWER_THAN_ELSE = 318          /* LOWER_THAN_ELSE  */
+    IMPORT = 312,                  /* IMPORT  */
+    DATATYPES = 313,               /* DATATYPES  */
+    UPLUS = 314,                   /* UPLUS  */
+    UMINUS = 315,                  /* UMINUS  */
+    UADDR = 316,                   /* UADDR  */
+    UDEREF = 317,                  /* UDEREF  */
+    POSTFIX = 318,                 /* POSTFIX  */
+    LOWER_THAN_ELSE = 319          /* LOWER_THAN_ELSE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -167,7 +168,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 171 "src/parser/parser.h"
+#line 172 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

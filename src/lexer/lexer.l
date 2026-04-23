@@ -109,6 +109,8 @@
     yylval->node->end_pos = yylloc->last_pos;
     return CHAR_LITERAL;
 }
+
+#import                      { return IMPORT; }
 else                         { return ELSE; }
 if                           { return IF; }
 for                          { return FOR; }

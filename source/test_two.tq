@@ -1,0 +1,4 @@
+
+fn char gstr(){
+    ret '🔥';
+}

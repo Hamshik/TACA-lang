@@ -172,11 +172,10 @@ ASTNode_t *new_return(ASTNode_t *value, int line, int col){
     return node;
 }
 
-ASTNode_t *new_block(ASTNode_t* a, ASTNode_t* b, int line, int col){
-    ASTNode_t *node = ast_alloc();
-    node->kind = AST_BLOCK;
-    node->block.stmts = a;
-    node->block.last_expr = b;
+ASTNode_t* new_import_node(const char* path, int line, int col) {
+    ASTNode_t* node = ast_alloc();
+    node->kind = AST_IMPORT;
+    node->importNode.path = strdup(path);
     node->line = line;
     node->col = col;
     return node;

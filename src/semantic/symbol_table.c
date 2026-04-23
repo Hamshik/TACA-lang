@@ -19,6 +19,8 @@ static Scope_t *scope_top(void) {
     return g_scope;
 }
 
+
+
 void scope_push(void) {
     Scope_t *s = calloc(1, sizeof(*s));
     if (!s) { perror("calloc"); exit(1); }

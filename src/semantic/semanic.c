@@ -1,7 +1,11 @@
 #include "../taca.h"
+#include "ast/ASTNode.h"
+#include "import/import.h"
+#include "utils/error_handler/error.h"
 
 #include <float.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,22 +135,30 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
   case AST_RETURN: return ret(n);
 
-  // case AST_BLOCK: {
-  //   // Check statements first
-  //   if (n->block.stmts) {
-  //     DataTypes_t st = check_expr(n->block.stmts);
-  //     if (st == UNKNOWN)
-  //       return UNKNOWN; // 🔥 propagate error
-  //   }
+  case AST_IMPORT: {
 
-  //   // Then check last expression (if exists)
-  //   if (n->block.last_expr) {
-  //     return check_expr(n->block.last_expr);
-  //   }
+    char *filename = n->importNode.path;
 
-  //   // No last expression → void
-  //   return VOID;
-  // }
+    char resolved_path[PATH_MAX];
+    realpath(filename, resolved_path);
+
+    filename = n->importNode.path = resolved_path;
+
+    FILE *f = fopen(filename, "r");
+    file_t file_struct = {
+        .filename = filename,
+        .source = f
+    };
+    if (!f) {
+        error(&file_struct, n->line, n->col, n->pos, SEM_IMPORT_FILE_NOT_FOUND, filename);
+        return UNKNOWN;
+    }
+
+    ASTNode_t *imported_root = parse_file(f);
+    root = new_seq(imported_root, root);
+
+    fclose(f);
+  }; return UNKNOWN;
   
   default:
 

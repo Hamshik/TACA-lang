@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 extern FILE *yyin;
-void yyrestart(FILE *input_file);
 file_t file = {0};
 
 /* Program options structure */
@@ -97,8 +96,15 @@ static bool parse_arguments(int argc, char **argv, Options *opts) {
                 return false;
             }
         } else {
-            syserr("Unknown argument: %s\nUsage: tq [source] [-o bin_path] [--emit-ir ir_path]");
+            syserr(logf_msg("Unknown argument: %s\nUsage: tq [source] [-o bin_path] [--emit-ir ir_path]", argv[i]));
             return false;
+        }
+    }
+
+    if(opts->emit_ir) {
+        char resolved[PATH_MAX];
+        if (realpath(opts->ir_output_path, resolved)) {
+            opts->ir_output_path = strdup(resolved);
         }
     }
     return true;
@@ -134,27 +140,9 @@ static int compile_and_execute(ASTNode_t *root, const Options *opts) {
     ast_eval_main(root);
     ast_free(root);
 
-    /* Write IR to file (requested or temporary) then call llc/clang via run_exec. */
-    char ll_path_buf[PATH_MAX] = {0};
-    const char *ll_path = opts->emit_ir ? opts->ir_output_path : NULL;
-    int temp_fd = -1;
-
-    if (!ll_path) {
-        snprintf(ll_path_buf, sizeof ll_path_buf, "/tmp/tq-ir-XXXXXX.ll");
-        temp_fd = mkstemps(ll_path_buf, 3); /* suffix .ll */
-        if (temp_fd == -1) {
-            perror("mkstemps");
-            free(ir_text);
-            return 1;
-        }
-        ll_path = ll_path_buf;
-    }
-
-    FILE *irf = fopen(ll_path, "w");
+    FILE *irf = fopen(opts->ir_output_path, "w");
     if (!irf) {
         perror("fopen ll");
-        if (temp_fd != -1)
-            close(temp_fd);
         free(ir_text);
         return 1;
     }
@@ -162,23 +150,29 @@ static int compile_and_execute(ASTNode_t *root, const Options *opts) {
     fclose(irf);
     free(ir_text);
 
-    char *llc_argv[] = {"llc", "-filetype=obj", (char *)ll_path,
-                        "-o",  "out/out.o",     NULL};
-    if (run_exec(llc_argv[0], llc_argv)) {
-        if (!opts->emit_ir)
-            unlink(ll_path);
+    if (access(opts->ir_output_path, F_OK) != 0) {
+        perror("IR file missing before llc");
         return 1;
     }
 
-    char *clang_argv[] = {"clang", "-Wl,-e,entrypoint", "-no-pie", "out/out.o", "-g", "-O0",
-                          "-o",    (char *)opts->bin_output_path,    NULL};
+    char *clang_argv[] = {
+        "clang",
+        opts->ir_output_path,   // your .ll file
+        "-Wl,-e,entrypoint",
+        "-no-pie",
+        "-g",
+        "-O0",
+        "-o", (char *)opts->bin_output_path,
+        NULL
+    };
+
     if (run_exec(clang_argv[0], clang_argv)) {
         if (!opts->emit_ir)
-            unlink(ll_path);
+            unlink(opts->ir_output_path);
         return 1;
     }
     if (!opts->emit_ir)
-        unlink(ll_path);
+        unlink(opts->ir_output_path);
 
     env_clear_all();
     return 0;

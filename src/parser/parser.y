@@ -113,13 +113,13 @@ extern "C" {
 %token ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN MOD_ASSIGN POWER_ASSIGN
 %token LSHIFT_ASSIGN RSHIFT_ASSIGN COLON COMMA
 %token AND OR NOT EQ NEQ LT LE GT GE
-%token IF ELSE FOR WHILE MUT VAR FN RETURN
+%token IF ELSE FOR WHILE MUT VAR FN RETURN IMPORT
 
-%type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt paren_chain
+%type <node> program stmt_list stmt block if_stmt for_stmt expr assignment while_stmt paren_chain import_stmt
 %type <node> fn_def param return_stmt opt_args args
 %type <node> lvalue
 %type <node> MUT_block decl_block_items decl_item_untyped decl_item_typed
-%type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more
+%type <node> decl_items_after_type decl_items_after_type_more decl_items_typed_more import_list
 %type <node> decl decl_stmt for_init
 %type <paramlist> opt_params params
 %token <datatype> DATATYPES
@@ -145,18 +145,23 @@ extern "C" {
 
 %%
 program
-    : /* empty */               { root = NULL; }
-    | stmt_list                 { root = $1; }
-    ;
+    : import_list stmt_list
+      {
+          if (!$1) $$ = $2;
+          else if (!$2) $$ = $1;
+          else $$ = new_seq($1, $2);
+      }
+;
 
 stmt_list
-    : stmt                      { $$ = $1; }
-    | stmt stmt_list            {
-                                  if (!$1) $$ = $2;
-                                  else if (!$2) $$ = $1;
-                                  else { $$ = new_seq($1, $2); TQ_SET_NODE_LOC($$, @$); }
-                                }
-    ;
+    : /* empty */  { $$ = NULL; }
+    | stmt stmt_list
+      {
+          if (!$1) $$ = $2;
+          else if (!$2) $$ = $1;
+          else $$ = new_seq($1, $2);
+      }
+;
 
 stmt
     : assignment SEMICOLON      { $$ = $1; }
@@ -174,6 +179,22 @@ stmt
     | return_stmt error         { TQ_error_LOC(@2, PARSE_MISSING_SEMI, g_last_parse_err_msg); yyerrok; $$ = $1; }
     | error SEMICOLON           { error(&file, g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos, PARSE_SYNTAX, g_last_parse_err_msg); yyerrok; $$ = NULL; }
     ;
+
+import_list:
+      /* empty */                  { $$ = NULL; }
+    | import_stmt SEMICOLON import_list
+      {
+          if (!$3) $$ = $1;
+          else $$ = new_seq($1, $3);
+      }    
+    ;
+
+import_stmt
+    : IMPORT STRING_LITERAL
+      {
+          $$ = new_import_node($2->literal.raw, @1.first_line, @1.first_column);
+      }
+;
 
 block
     : LBRACE stmt_list RBRACE   { $$ = $2; }

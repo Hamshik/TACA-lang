@@ -23,7 +23,7 @@ typedef enum ASTKind {
     AST_FN,
     AST_CALL,
     AST_RETURN,
-    AST_BLOCK
+    AST_IMPORT
 } ASTKind_t;
 
 typedef enum DataTypes{
@@ -97,7 +97,7 @@ typedef union {
     TQPtr ptr;
 
     bool bval;
-    char chars;
+    char* chars;
     char* str;
 } TQValue;
 
@@ -164,11 +164,8 @@ typedef struct ASTNode {
         struct { char *name; Param_t *params; int param_count; DataTypes_t ret; struct ASTNode *body; } fn_def;
         struct { char *name; struct ASTNode *args; } call;
         struct { struct ASTNode *value; } ret_stmt;
-        //block
-        struct {
-            struct ASTNode *stmts;
-            struct ASTNode *last_expr;  // 🔥 THIS is the Rust trick
-        } block;
+        //Import Nodes
+        struct { char *path; } importNode;
         
     };
 } ASTNode_t;
@@ -189,6 +186,7 @@ ASTNode_t* new_bool(bool val, int line, int col);
 ASTNode_t* new_fn_def(const char *name, Param_t *params, int param_count, DataTypes_t ret_type, ASTNode_t *body, int line, int col);
 ASTNode_t* new_fn_call(const char *name, ASTNode_t *args, int line, int col);
 ASTNode_t* new_return(ASTNode_t *value, int line, int col);
+ASTNode_t* new_import_node(const char *path, int line, int col);
 /* Eval + memory */
 void ast_free(ASTNode_t *n);
 ASTNode_t *ast_alloc(void);
