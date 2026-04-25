@@ -1,7 +1,4 @@
 #pragma once
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-include-dirs"
-#pragma clang diagnostic ignored "-Wunknown-warning-option"
 
 #ifdef __cplusplus 
 extern "C" {
@@ -29,6 +26,8 @@ extern "C" {
 //libs cpp only
 #include "stdlibs/stdlibs.h"
 
+//symbol table
+#include "SymbolTable/SymbolTable.hpp"
+
 
 #endif
-#pragma clang diagnostic pop

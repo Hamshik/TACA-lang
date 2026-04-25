@@ -1,9 +1,5 @@
 #pragma once
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-include-dirs"
-#pragma clang diagnostic ignored "-Wunknown-warning-option"
-
 #ifndef __cplusplus
 // Utility headers (C parts)
 #include "utils/colors.h"
@@ -36,5 +32,3 @@
 
 
 #endif
-
-#pragma clang diagnostic pop

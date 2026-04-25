@@ -2,16 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../taca.h"
+#include "../SymbolTable/SymbolTable.hpp"
 
 extern file_t file;
-
-typedef struct FnEntry {
-    char *name;
-    ASTNode_t *def;
-    UT_hash_handle hh;
-} FnEntry_t;
-
-static FnEntry_t *g_fns = NULL;
 static int g_returning = 0;
 static TypedValue g_return_value = (TypedValue){0};
 
@@ -40,16 +33,11 @@ __int128 tq_parse_i128(const char *s, int *ok) {
     return neg ? -(__int128)u : (__int128)u;
 }
 
-static FnEntry_t *fn_lookup_runtime(const char *name) {
-    FnEntry_t *e = NULL;
-    HASH_FIND_STR(g_fns, name, e);
-    return e;
-}
-
 TypedValue ast_eval_main(ASTNode_t *root) {
+    tq_runtime_fn_clear();
     /* first pass: register all function definitions */
     if (root) ast_eval(root); /* ast_eval registers functions on AST_FN */
-    FnEntry_t *main_fn = fn_lookup_runtime("main");
+    ASTNode_t *main_fn = tq_runtime_fn_lookup("main");
     if (!main_fn) {
         panic(&file, 1, 1, 0, SEM_CALL_UNDEF_FN, "main");
         return (TypedValue){0};
@@ -62,15 +50,9 @@ TypedValue ast_eval_main(ASTNode_t *root) {
 
 static void fn_register_runtime(ASTNode_t *fn) {
     if (!fn || fn->kind != AST_FN) return;
-    if (fn_lookup_runtime(fn->fn_def.name)) {
+    if (!tq_runtime_fn_register(fn)) {
         panic(&file, fn->line, fn->col, fn->pos, SEM_FN_REDECL, fn->fn_def.name);
-        return;
     }
-    FnEntry_t *e = calloc(1, sizeof(*e));
-    if (!e) { perror("memory error: failed to allocate the memory"); exit(1); }
-    e->name = strdup(fn->fn_def.name);
-    e->def = fn;
-    HASH_ADD_KEYPTR(hh, g_fns, e->name, strlen(e->name), e);
 }
 
 TypedValue ast_eval(ASTNode_t *node) {
@@ -146,7 +128,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
     case AST_VAR: return (TypedValue){
         .type = node->datatype,
-        .val = getvar(node->var, node->datatype, node->line, node->col, node->pos)
+        .val = tq_runtime_env_get(node->var, node->datatype, node->line, node->col, node->pos)
     };
 
     case AST_BINOP: {
@@ -190,7 +172,7 @@ TypedValue ast_eval(ASTNode_t *node) {
                 panic(&file, node->line, node->col, node->pos, RT_UNKNOWN_AST, "address-of requires a variable");
                 return (TypedValue){0};
             }
-            int fid = env_frame_id_of(node->unop.operand->var, node->line, node->col, node->pos);
+            int fid = tq_runtime_env_frame_id_of(node->unop.operand->var, node->line, node->col, node->pos);
             TQValue pv = {0};
             pv.ptr.frame_id = fid;
             pv.ptr.name = node->unop.operand->var;
@@ -203,7 +185,7 @@ TypedValue ast_eval(ASTNode_t *node) {
                 panic(&file, node->line, node->col, node->pos, RT_DANGLING_PTR, NULL);
                 return (TypedValue){0};
             }
-            TypedValue *ref = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, node->line, node->col, node->pos);
+            TypedValue *ref = tq_runtime_env_get_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, node->line, node->col, node->pos);
             if (!ref) return (TypedValue){0};
             return (TypedValue){ .type = ref->type, .val = ref->val };
         }
@@ -220,7 +202,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         if (node->assign.op == OP_ASSIGN && node->assign.is_declaration) {
             TypedValue rt0 = ast_eval(node->assign.rhs);
             TypedValue rt = tq_cast_typed(rt0, node->datatype, node->line, node->col, node->pos);
-            set_var_current(node->assign.lhs->var, &rt.val, node->datatype);
+            tq_runtime_env_set_current(node->assign.lhs->var, &rt.val, node->datatype);
             return (TypedValue){.val = rt.val, .type = node->datatype};
         }
 
@@ -278,12 +260,12 @@ TypedValue ast_eval(ASTNode_t *node) {
 
         TypedValue last = {0};
         
-        while (should_continue_for(loop_type, getvar(loop_name, loop_type, node->line, node->col, node->pos), endv_cast, stepv)) {
+        while (should_continue_for(loop_type, tq_runtime_env_get(loop_name, loop_type, node->line, node->col, node->pos), endv_cast, stepv)) {
             last = ast_eval(node->fornode.body);
             if (g_returning) return g_return_value;
-            TQValue cur = getvar(loop_name, loop_type, node->line, node->col, node->pos);
+            TQValue cur = tq_runtime_env_get(loop_name, loop_type, node->line, node->col, node->pos);
             TQValue next = add_step_for(loop_type, cur, stepv);
-            set_var(loop_name, &next, loop_type);
+            tq_runtime_env_set(loop_name, &next, loop_type);
         }
 
         return last;
@@ -306,8 +288,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         return (TypedValue){0};
 
     case AST_CALL: {
-        FnEntry_t *e = fn_lookup_runtime(node->call.name);
-        ASTNode_t *fn = e ? e->def : NULL;
+        ASTNode_t *fn = tq_runtime_fn_lookup(node->call.name);
 
         // Evaluate args left-to-right into a small array.
         int argc = 0;
@@ -343,11 +324,11 @@ TypedValue ast_eval(ASTNode_t *node) {
         }
 
         // New call frame.
-        env_push();
+        tq_runtime_env_push();
         for (int i = 0; i < fn->fn_def.param_count; i++) {
             TypedValue casted = tq_cast_typed(argv[i], fn->fn_def.params[i].type, node->line, node->col, node->pos);
             TQValue vv = casted.val;
-            set_var_current(fn->fn_def.params[i].name, &vv, fn->fn_def.params[i].type);
+            tq_runtime_env_set_current(fn->fn_def.params[i].name, &vv, fn->fn_def.params[i].type);
         }
 
         int saved_returning = g_returning;
@@ -362,7 +343,7 @@ TypedValue ast_eval(ASTNode_t *node) {
         g_returning = saved_returning;
         g_return_value = saved_return_value;
 
-        env_pop();
+        tq_runtime_env_pop();
         free(argv);
 
         return ret;
@@ -375,7 +356,14 @@ TypedValue ast_eval(ASTNode_t *node) {
         g_returning = 1;
         return r;
     }
-    case AST_IMPORT: return (TypedValue){0}; // handled in codegen and already integratted to the node
+    case AST_IMPORT:{
+        Module_t *module = tq_semantic_load_module(node->importNode.path);
+        if (module && module->ast) {
+            ast_eval(module->ast);
+        }
+    }
+    return (TypedValue){0}; // handled in codegen and already integratted to the node
+    
     default:
         panic(&file, node ? node->line : 0, node ? node->col : 0, node ? node->pos : 0, RT_UNKNOWN_AST, NULL);
         return (TypedValue){0};

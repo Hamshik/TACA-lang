@@ -1,0 +1,233 @@
+#include "SymbolTableInternal.hpp"
+
+#include <string>
+#include <unordered_map>
+
+extern file_t file;
+
+namespace {
+
+void reset_runtime_value(TypedValue &value) {
+  if (value.type == STRINGS) {
+    free(value.val.str);
+  } else if (value.type == PTR) {
+    free(value.val.ptr.name);
+  }
+
+  value.type = UNKNOWN;
+  value.val = TQValue{};
+}
+
+void store_runtime_value(TypedValue &slot, DataTypes_t datatype,
+                         const TQValue &value) {
+  reset_runtime_value(slot);
+  slot.type = datatype;
+  assign_value(datatype, &slot.val, value);
+}
+
+struct RuntimeBinding {
+  TypedValue typed_value{};
+
+  RuntimeBinding() {
+    typed_value.type = UNKNOWN;
+    typed_value.val = TQValue{};
+  }
+
+  ~RuntimeBinding() { reset_runtime_value(typed_value); }
+
+  RuntimeBinding(const RuntimeBinding &) = delete;
+  RuntimeBinding &operator=(const RuntimeBinding &) = delete;
+
+  RuntimeBinding(RuntimeBinding &&other) noexcept : typed_value(other.typed_value) {
+    other.typed_value.type = UNKNOWN;
+    other.typed_value.val = TQValue{};
+  }
+
+  RuntimeBinding &operator=(RuntimeBinding &&other) noexcept {
+    if (this != &other) {
+      reset_runtime_value(typed_value);
+      typed_value = other.typed_value;
+      other.typed_value.type = UNKNOWN;
+      other.typed_value.val = TQValue{};
+    }
+    return *this;
+  }
+};
+
+struct RuntimeFrame {
+  int id = 0;
+  std::unordered_map<std::string, RuntimeBinding> vars;
+  RuntimeFrame *parent = nullptr;
+};
+
+RuntimeFrame *g_runtime_env = nullptr;
+int g_next_runtime_frame_id = 1;
+std::unordered_map<std::string, ASTNode_t *> g_runtime_functions;
+
+RuntimeFrame *runtime_env_top() {
+  if (!g_runtime_env) {
+    g_runtime_env = new RuntimeFrame();
+  }
+  return g_runtime_env;
+}
+
+RuntimeFrame *runtime_find_frame(int frame_id) {
+  for (RuntimeFrame *it = runtime_env_top(); it; it = it->parent) {
+    if (it->id == frame_id) {
+      return it;
+    }
+  }
+  return nullptr;
+}
+
+RuntimeBinding *runtime_find_binding(RuntimeFrame *start, const char *name) {
+  for (RuntimeFrame *it = start; it; it = it->parent) {
+    auto found = it->vars.find(name);
+    if (found != it->vars.end()) {
+      return &found->second;
+    }
+  }
+  return nullptr;
+}
+
+} // namespace
+
+namespace tq::runtime_symbol_table {
+
+void env_push() {
+  RuntimeFrame *frame = new RuntimeFrame();
+  frame->id = g_next_runtime_frame_id++;
+  frame->parent = runtime_env_top();
+  g_runtime_env = frame;
+}
+
+void env_pop() {
+  RuntimeFrame *top = runtime_env_top();
+  if (!top->parent) {
+    top->vars.clear();
+    return;
+  }
+
+  g_runtime_env = top->parent;
+  delete top;
+}
+
+void env_clear_all() {
+  while (g_runtime_env && g_runtime_env->parent) {
+    env_pop();
+  }
+
+  if (g_runtime_env) {
+    g_runtime_env->vars.clear();
+    delete g_runtime_env;
+    g_runtime_env = nullptr;
+  }
+
+  fn_clear();
+}
+
+void env_set(const char *name, TQValue *val, DataTypes_t datatype) {
+  RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
+  if (binding) {
+    store_runtime_value(binding->typed_value, datatype, *val);
+    return;
+  }
+
+  env_set_current(name, val, datatype);
+}
+
+void env_set_current(const char *name, TQValue *val, DataTypes_t datatype) {
+  RuntimeFrame *frame = runtime_env_top();
+  auto [it, inserted] = frame->vars.try_emplace(name);
+  (void)inserted;
+  store_runtime_value(it->second.typed_value, datatype, *val);
+}
+
+TQValue env_get(const char *name, DataTypes_t datatype, int line, int col,
+                int pos) {
+  RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
+  if (!binding) {
+    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    return TQValue{};
+  }
+
+  if (binding->typed_value.type != datatype &&
+      !is_numeric(binding->typed_value.type) && !is_numeric(datatype)) {
+    panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+    return TQValue{};
+  }
+
+  return binding->typed_value.val;
+}
+
+TypedValue *env_get_ref(const char *name, int line, int col, int pos) {
+  RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
+  if (binding) {
+    return &binding->typed_value;
+  }
+
+  panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+  return nullptr;
+}
+
+int env_frame_id_of(const char *name, int line, int col, int pos) {
+  for (RuntimeFrame *it = runtime_env_top(); it; it = it->parent) {
+    if (it->vars.find(name) != it->vars.end()) {
+      return it->id;
+    }
+  }
+
+  panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+  return -1;
+}
+
+TypedValue *env_get_ref_at(int frame_id, const char *name, int line, int col,
+                           int pos) {
+  RuntimeFrame *frame = runtime_find_frame(frame_id);
+  if (!frame) {
+    panic(&file, line, col, pos, RT_DANGLING_PTR, name);
+    return nullptr;
+  }
+
+  auto found = frame->vars.find(name);
+  if (found == frame->vars.end()) {
+    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    return nullptr;
+  }
+
+  return &found->second.typed_value;
+}
+
+void env_set_at(int frame_id, const char *name, TQValue *val,
+                DataTypes_t datatype, int line, int col, int pos) {
+  TypedValue *target = env_get_ref_at(frame_id, name, line, col, pos);
+  if (!target) {
+    return;
+  }
+
+  if (target->type != datatype) {
+    panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+    return;
+  }
+
+  store_runtime_value(*target, datatype, *val);
+}
+
+bool fn_register(ASTNode_t *fn) {
+  if (!fn || fn->kind != AST_FN) {
+    return false;
+  }
+
+  auto [it, inserted] = g_runtime_functions.emplace(fn->fn_def.name, fn);
+  (void)it;
+  return inserted;
+}
+
+ASTNode_t *fn_lookup(const char *name) {
+  auto found = g_runtime_functions.find(name);
+  return found == g_runtime_functions.end() ? nullptr : found->second;
+}
+
+void fn_clear() { g_runtime_functions.clear(); }
+
+} // namespace tq::runtime_symbol_table

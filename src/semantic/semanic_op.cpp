@@ -144,8 +144,8 @@ DataTypes_t assign(ASTNode_t *n) {
       n->assign.lhs->datatype = lhs_t;
       n->assign.lhs->ptr_to = lhs_ptr_to;
     } else {
-      lhs_t = lookup(n->assign.lhs->var);
-      lhs_ptr_to = lookup_ptr_to(n->assign.lhs->var);
+      lhs_t = tq_semantic_lookup(n->assign.lhs->var);
+      lhs_ptr_to = tq_semantic_lookup_ptr_to(n->assign.lhs->var);
 
       n->assign.lhs->datatype = lhs_t;
       n->assign.lhs->ptr_to = lhs_ptr_to;
@@ -212,7 +212,8 @@ DataTypes_t assign(ASTNode_t *n) {
     n->datatype = lhs_t;
     n->ptr_to = lhs_ptr_to;
 
-    if (!declare(n->assign.lhs->var, lhs_t, lhs_ptr_to, n->assign.is_mutable))
+    if (!tq_semantic_declare(n->assign.lhs->var, lhs_t, lhs_ptr_to,
+                             n->assign.is_mutable))
       panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
   } else {
     /* Reassignment path: may auto-widen if mutable and numeric literal
@@ -235,7 +236,8 @@ DataTypes_t assign(ASTNode_t *n) {
   /* ✅ FIX 3: now do assign_check with CORRECT types */
   if (n->assign.lhs->kind == AST_VAR && !n->assign.is_declaration) {
     exitcode_t ac =
-        assign_check(n->assign.lhs->var, rhs_t, n->assign.rhs->ptr_to);
+        tq_semantic_assign_check(n->assign.lhs->var, rhs_t,
+                                 n->assign.rhs->ptr_to);
     switch (ac) {
     case NOT_DECLARED:
       panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);

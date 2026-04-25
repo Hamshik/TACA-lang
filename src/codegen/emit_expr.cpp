@@ -1,4 +1,5 @@
 #include "../taca.hpp"
+#include "codegen/codegen.h"
 #include "utils/error_handler/error.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -107,6 +108,11 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
         b.CreateRetVoid();
     }
     return v;
+  }
+
+  case AST_IMPORT:{
+    // Import is handled superatly
+    return nullptr;
   }
 
   default:

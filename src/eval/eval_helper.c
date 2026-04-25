@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 static bool tq_is_float(DataTypes_t t) {
     return t == F32 || t == F64 || t == F128 || t == UF32 || t == UF64 || t == UF128;

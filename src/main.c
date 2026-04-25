@@ -168,13 +168,27 @@ static int compile_and_execute(ASTNode_t *root, const Options *opts) {
         NULL
     };
 
+    char* mkdir_argv[] = {
+        "mkdir",
+        "-p",
+        "output"
+    };
+
     if (run_exec(clang_argv[0], clang_argv)) {
         if (!opts->emit_ir)
             unlink(opts->ir_output_path);
         return 1;
     }
+
     if (!opts->emit_ir)
         unlink(opts->ir_output_path);
+
+    
+    if (run_exec(mkdir_argv[0], mkdir_argv)) {
+        if (!opts->emit_ir)
+            unlink(opts->ir_output_path);
+        return 1;
+    }
 
     env_clear_all();
     return 0;

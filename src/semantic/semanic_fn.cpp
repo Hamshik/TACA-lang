@@ -8,16 +8,16 @@ DataTypes_t handle_fn(ASTNode_t *n) {
   if (n->fn_def.name && strcmp(n->fn_def.name, "main") == 0)
     n->fn_def.ret = I32;
 
-  if (!fn_declare(n->fn_def.name, n->fn_def.params, n->fn_def.param_count,
-                  n->fn_def.ret)) {
+  if (!tq_semantic_fn_declare(n->fn_def.name, n->fn_def.params,
+                              n->fn_def.param_count, n->fn_def.ret)) {
     panic(&file, n->line, n->col, n->pos, SEM_FN_REDECL, n->fn_def.name);
   }
 
-  scope_push();
+  tq_semantic_scope_push();
   for (int i = 0; i < n->fn_def.param_count; i++) {
     // params are mutable locals
-    if (!declare(n->fn_def.params[i].name, n->fn_def.params[i].type,
-                 n->fn_def.params[i].ptr_to, true))
+    if (!tq_semantic_declare(n->fn_def.params[i].name, n->fn_def.params[i].type,
+                             n->fn_def.params[i].ptr_to, true))
       panic(&file, n->line, n->col, n->pos, SEM_DUP_PARAM,
             n->fn_def.params[i].name);
   }
@@ -30,12 +30,12 @@ DataTypes_t handle_fn(ASTNode_t *n) {
   g_fn_ret = saved_ret;
   g_in_fn = saved_in_fn;
 
-  scope_pop();
+  tq_semantic_scope_pop();
   return UNKNOWN;
 }
 
 DataTypes_t call(ASTNode_t *n) {
-  FnSymbol_t *f = fn_lookup(n->call.name);
+  FnSymbol_t *f = tq_semantic_fn_lookup(n->call.name);
   const tq_std_sig_t *stds = NULL;
   if (!f)
     stds = tq_std_sig(n->call.name);

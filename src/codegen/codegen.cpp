@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <unordered_set>
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -49,11 +50,27 @@ static TargetMachine* setup_target(Module &mod) {
 /* ===================== AST EMISSION ===================== */
 
 static void emit_functions(ASTNode_t *root, Module &mod, LLVMContext &ctx) {
+    std::unordered_set<std::string> visited_modules;
+
     std::function<void(ASTNode_t*)> walk = [&](ASTNode_t *n) {
         if (!n) return;
 
         if (n->kind == AST_FN) {
             emit_function(n, mod, ctx);
+            return;
+        }
+
+        if (n->kind == AST_IMPORT) {
+            const char *path = n->importNode.path;
+            if (!path) return;
+
+            auto [_, inserted] = visited_modules.emplace(path);
+            if (!inserted) return;
+
+            Module_t *imported = tq_semantic_load_module(path);
+            if (imported && imported->ast) {
+                walk(imported->ast);
+            }
             return;
         }
 
@@ -76,9 +93,24 @@ static Function* emit_init(ASTNode_t *root, Module &mod, LLVMContext &ctx) {
     IRBuilder<> entryB(bb, bb->begin());
 
     LocalMap locals;
+    std::unordered_set<std::string> visited_modules;
 
     std::function<void(ASTNode_t*)> emit_nonfn = [&](ASTNode_t *n) {
         if (!n || n->kind == AST_FN) return;
+
+        if (n->kind == AST_IMPORT) {
+            const char *path = n->importNode.path;
+            if (!path) return;
+
+            auto [_, inserted] = visited_modules.emplace(path);
+            if (!inserted) return;
+
+            Module_t *imported = tq_semantic_load_module(path);
+            if (imported && imported->ast) {
+                emit_nonfn(imported->ast);
+            }
+            return;
+        }
 
         if (n->kind == AST_SEQ) {
             emit_nonfn(n->seq.a);
@@ -186,7 +218,7 @@ extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
     if (!emit_ir(mod, ll_path, ir_out))
         return 1;
 
-    printf(TACA_BOLD TACA_GREEN
+    std::cout << (TACA_BOLD TACA_GREEN
            "SUCCESS: Compilation succeeded with no errors or warnings\n"
            TACA_RESET);
 

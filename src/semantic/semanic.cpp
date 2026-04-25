@@ -4,7 +4,6 @@
 #include <float.h>
 #include <limits.h>
 #include <linux/limits.h>
-#include <llvm-22/llvm/ADT/Sequence.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,16 +13,24 @@ extern size_t err_no;
 extern size_t warn_no;
 extern bool isWarning;
 
+
+void ensure_semantic(Module_t *m) {
+    if (!m || m->semantic_done) return;
+
+    semantic_check(m->ast);
+    m->semantic_done = true;
+}
+
 DataTypes_t g_fn_ret = UNKNOWN;
 int g_in_fn = 0;
 
 extern "C" void semantic_check(ASTNode_t *root) {
   if (!root)
     return;
-  scope_push();
+  tq_semantic_scope_push();
   check_expr(root);
-  scope_pop();
-  clear_fns();
+  tq_semantic_scope_pop();
+  tq_semantic_clear_fns();
   check_err();
 }
 
@@ -49,10 +56,10 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
   case AST_VAR:
     if (n->datatype == UNKNOWN)
-      n->datatype = lookup(n->var);
+      n->datatype = tq_semantic_lookup(n->var);
     if (n->datatype == PTR && n->ptr_to == UNKNOWN)
-      n->ptr_to = lookup_ptr_to(n->var);
-    exit_code = exists(n->var, n->datatype, n->ptr_to);
+      n->ptr_to = tq_semantic_lookup_ptr_to(n->var);
+    exit_code = tq_semantic_exists(n->var, n->datatype, n->ptr_to);
     switch (exit_code) {
     case NOT_DECLARED:
       panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->var);
@@ -142,7 +149,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
   case AST_IMPORT: {
     char *path = n->importNode.path;
 
-    Module_t *mod = load_module(path);
+    Module_t *mod = tq_semantic_load_module(path);
     if (!mod) return UNKNOWN;
 
     ensure_semantic(mod);
