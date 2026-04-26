@@ -1,4 +1,5 @@
 #include "../taca.hpp"
+#include "semantic/semantic.hpp"
 
 DataTypes_t unop(ASTNode_t *n) {
   DataTypes_t t = check_expr(n->unop.operand);
@@ -71,6 +72,10 @@ DataTypes_t binop(ASTNode_t *n) {
     n->bin.right->datatype = I32;
     lt = rt = I32;
   }
+  // } else if (n->bin.right->kind == AST_NUM && !is_numeric(rt) &&
+  //        is_numeric(lt)) {
+  //     n->bin.right->datatype = rt = lt;
+  //   }
 
   if (lt == PTR || rt == PTR) {
     panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,

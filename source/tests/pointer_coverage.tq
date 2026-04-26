@@ -1,0 +1,13 @@
+fn i32 main() {
+    mut i32 counter = 5;
+    mut i32& handle = &counter;
+
+    *handle = 9;
+    *handle += 3;
+    counter--;
+
+    println(counter);
+    println(type(handle));
+
+    return 0;
+}

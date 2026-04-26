@@ -29,7 +29,7 @@ echo "Compiling [1/3] C++ Files"
 
 for src in $(find src -type f -iname "*.cpp"); do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    clang++ -fcxx-exceptions -w -Wall -Wextra -g $LLVM_CXXFLAGS -Isrc -c "$src" -o "$obj"
+    clang++ -fcxx-exceptions -w -Wall -Wextra -g -O0 $LLVM_CXXFLAGS -Isrc -c "$src" -o "$obj"
 done
 
 # C sources
@@ -37,7 +37,7 @@ echo "Compiling [2/3] C Files"
 
 for src in $(find src -type f -iname "*.c"); do
     obj="$BIN_DIR/$(basename "${src%.*}").o"
-    clang -Wall -Wextra -g -Isrc -c "$src" -o "$obj"
+    clang -Wall -Wextra -g -O0 -Isrc -c "$src" -o "$obj"
 done
 
 echo "Linking [3/3] Files..."

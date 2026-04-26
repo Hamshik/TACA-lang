@@ -135,7 +135,7 @@ static int compile_and_execute(ASTNode_t *root, const Options *opts) {
     semantic_check(root);
     error_fatal = true; /* runtime errors should still stop */
     char *ir_text = NULL;
-
+    
     ast_eval_main(root);
     if (codegen(root, opts->emit_ir ? opts->ir_output_path : NULL, &ir_text))
         return 1;
@@ -159,6 +159,7 @@ static int compile_and_execute(ASTNode_t *root, const Options *opts) {
 
     char *clang_argv[] = {
         "clang",
+        "TQlib/TQstrcmp.c",
         opts->ir_output_path,   // your .ll file
         "-Wl,-e,entrypoint",
         "-no-pie",

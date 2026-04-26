@@ -1,7 +1,14 @@
 #include "../taca.hpp"
+#include "codegen/codegen.h"
+#include "stdlibs/stdlibs.h"
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
+#include <cstdio>
+#include <cstring>
+#include <llvm-22/llvm/IR/DerivedTypes.h>
+#include <llvm-22/llvm/IR/Function.h>
+#include <llvm-22/llvm/IR/GlobalValue.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -46,18 +53,17 @@ void emit_function(ASTNode_t *fn_ast, Module &mod, LLVMContext &ctx) {
 
   emit_expr(fn_ast->fn_def.body, ctx, b, entryBuilder, locals);
   if (!blockTerminated(b)) {
-    if (fn->getReturnType()->isVoidTy()) 
+    if (fn->getReturnType()->isVoidTy())
       b.CreateRetVoid();
-    else if(strcmp(fn_ast->fn_def.name, "main") == 0)
+    else if (strcmp(fn_ast->fn_def.name, "main") == 0)
       b.CreateRet(ConstantInt::get(Type::getInt32Ty(ctx), 0));
-    else 
-      panic(&file, fn_ast->line, fn_ast->col, fn_ast->pos, RET_NOT_DECLARED, fn_ast->fn_def.name);
+    else
+      b.CreateRet(ConstantInt::get(Type::getInt32Ty(ctx), 0));
   }
 }
 
-llvm::Value *emit_call(ASTNode_t *n, LLVMContext &ctx,
-                       IRBuilder<> &b, IRBuilder<> &entryBuilder,
-                       LocalMap &locals) {
+llvm::Value *emit_call(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+                       IRBuilder<> &entryBuilder, LocalMap &locals) {
 
   argvec args;
 
@@ -82,54 +88,31 @@ llvm::Value *emit_call(ASTNode_t *n, LLVMContext &ctx,
     syserr("ERROR: function call with empty name\n");
   }
 
-  bool isPrint = strcmp(fname, "print") == 0 ||
-                 strcmp(fname, "println") == 0;
+  bool isPrintLn = strcmp(fname, "println") == 0;
+
+  bool isPrint = strcmp(fname, "print") == 0;
 
   bool isExit = strcmp(fname, "hlt") == 0;
 
+  bool isType = strcmp(fname, "type") == 0;
+
   // 🔹 PRINT
   if (isPrint)
-    return print(n, args, ctx, b);
+    return emit_print(n, args[0], ctx, b);
+  if(isPrintLn)
+    return emit_println(n, args[0], ctx, b);
+  if (isExit)
+    return get_exit(m, ctx, args, b);
+
+  if (isType) return get_type(n, b);
 
   // 🔥 EXIT (hlt)
-  if (isExit) {
-    Function *callee = m->getFunction("exit");
-
-    // ensure exactly 1 argument
-    llvm::Value *exitCode = args.empty()
-        ? ConstantInt::get(Type::getInt32Ty(ctx), 0)
-        : args[0];
-
-    // cast to i32 if needed
-    if (exitCode->getType() != Type::getInt32Ty(ctx)) {
-      exitCode = b.CreateIntCast(exitCode, Type::getInt32Ty(ctx), true);
-    }
-
-    // create prototype if not exists
-    if (!callee) {
-      FunctionType *ft = FunctionType::get(
-          Type::getVoidTy(ctx),                 // void
-          {Type::getInt32Ty(ctx)},              // (i32)
-          false
-      );
-      callee = Function::Create(ft, Function::ExternalLinkage, "exit", m);
-    }
-
-    // emit call
-    b.CreateCall(callee, {exitCode});
-
-    // 🚨 terminate block
-    b.CreateUnreachable();
-
-    return nullptr;
-  }
 
   // 🔹 NORMAL FUNCTION CALL
   Function *callee = m->getFunction(fname);
 
   if (!callee) {
-    FunctionType *ft = FunctionType::get(b.getInt32Ty(), {}, true);
-    callee = Function::Create(ft, Function::ExternalLinkage, fname, m);
+    perror("undef std fns");
   }
 
   return b.CreateCall(callee, args);

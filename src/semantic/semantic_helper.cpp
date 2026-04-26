@@ -209,7 +209,7 @@ DataTypes_t promote(DataTypes_t a, DataTypes_t b) {
 }
 
 void force_numeric_type(ASTNode_t *n, DataTypes_t t) {
-  if (!n || t == UNKNOWN)
+  if (!n || t == UNKNOWN || !is_numeric(t))
     return;
   switch (n->kind) {
   case AST_NUM:

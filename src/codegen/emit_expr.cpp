@@ -25,8 +25,37 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
     return emit_number(n, ctx);
   case AST_BOOL:
     return ConstantInt::get(Type::getInt1Ty(ctx), n->datatype == BOOL ? 1 : 0);
-  case AST_STR:
-    return b.CreateGlobalString(n->literal.raw ? n->literal.raw : "", "strlit");
+
+  case AST_STR: {
+    auto module = b.GetInsertBlock()->getModule();
+    auto &ctx = b.getContext();
+
+    const char *data = n->literal.raw ? n->literal.raw : "";
+    size_t len = n->literal.len;
+
+    if (len == 0)
+      len = strlen(data);
+
+    // ✅ BEST PRACTICE: LLVM string constant
+    llvm::Constant *strConst =
+        llvm::ConstantDataArray::getString(ctx, data, true); // null terminated
+
+    static int id = 0;
+    std::string name = "strlit." + std::to_string(id++);
+
+    auto global = new llvm::GlobalVariable(*module, strConst->getType(), true,
+                                           llvm::GlobalValue::PrivateLinkage,
+                                           strConst, name);
+
+    // ✅ Correct GEP: from pointer, NOT array type
+    llvm::Value *zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx), 0);
+
+    llvm::Value *ptr = b.CreateInBoundsGEP(global->getValueType(), global,
+                                           {b.getInt32(0), b.getInt32(0)});
+
+    return b.CreateBitCast(
+        ptr, llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx)));
+  }
 
   case AST_CHAR: {
     if (!n->literal.raw) {
@@ -36,20 +65,23 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
 
     size_t len = 0;
     Utf8Error err = Utf8Error::None;
-    uint32_t codepoint = decode_utf8(n->literal.raw, n->literal.len, &len, &err);
+    uint32_t codepoint =
+        decode_utf8(n->literal.raw, n->literal.len, &len, &err);
 
     // Error Handling
     if (err != Utf8Error::None) {
       const char *msg = nullptr;
       if (err == Utf8Error::MultiCharacter)
-        msg = "Character literal must be a single UTF-8 character (e.g., 'a' or 'π')";
+        msg = "Character literal must be a single UTF-8 character (e.g., 'a' "
+              "or 'π')";
       else if (err == Utf8Error::Empty)
         msg = "Character literal cannot be empty";
 
       else if (err == Utf8Error::InvalidUtf8)
         msg = n->literal.raw;
 
-      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, msg ? msg : "unknown");
+      panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR,
+            msg ? msg : "unknown");
       return nullptr;
     }
 
@@ -59,14 +91,17 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
 
   case AST_VAR: {
     auto it = locals.find(n->var ? n->var : "");
-    if (it != locals.end())
+    if (it != locals.end()) {
       return b.CreateLoad(ir_type(n->datatype, ctx), it->second, n->var);
-    // fallback to module global
+    }
+
     Module *m = b.GetInsertBlock()->getModule();
-    auto *g = m->getGlobalVariable(n->var ? n->var : "", true);
+    auto g = m->getGlobalVariable(n->var ? n->var : "", true);
+
     if (g) {
       return b.CreateLoad(ir_type(n->datatype, ctx), g, n->var);
     }
+
     return nullptr;
   }
 
@@ -110,7 +145,7 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
     return v;
   }
 
-  case AST_IMPORT:{
+  case AST_IMPORT: {
     // Import is handled superatly
     return nullptr;
   }

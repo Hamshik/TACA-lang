@@ -1,0 +1,7 @@
+fn char green_badge() {
+    return '✅';
+}
+
+fn char fire_badge() {
+    return '🔥';
+}

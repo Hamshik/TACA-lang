@@ -1,6 +1,10 @@
 #include "../taca.hpp"
+#include "ast/ASTNode.h"
+#include "codegen/codegen.h"
+#include "parser/parser.h"
 #include "llvm/IR/Value.h"
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 
@@ -11,47 +15,109 @@ llvm::Value *emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
   if (!L || !R)
     return nullptr;
 
-  if (is_float_dtype(n->datatype)) {
-    switch (n->bin.op) {
-    case OP_ADD:
-      return b.CreateFAdd(L, R);
-    case OP_SUB:
-      return b.CreateFSub(L, R);
-    case OP_MUL:
-      return b.CreateFMul(L, R);
-    case OP_DIV:
-      return b.CreateFDiv(L, R);
-    default:
-      return nullptr;
-    }
-  }
+  bool is_float = is_float_dtype(n->datatype);
+  bool is_unsigned = is_unsigned_dtype(n->datatype);
+
+  llvm::Module *module = b.GetInsertBlock()->getModule();
 
   switch (n->bin.op) {
-  case OP_ADD:
-    return b.CreateAdd(L, R);
+
+  case OP_ADD: {
+    if (n->datatype == STRINGS) {
+      llvm::Module *module = b.GetInsertBlock()->getModule();
+
+      llvm::Type *i8Ty = llvm::Type::getInt8Ty(ctx);
+      llvm::Type *i8Ptr = llvm::PointerType::getUnqual(ctx);
+
+      // ensure concat function exists
+      llvm::Function *concatFn = module->getFunction("tq_concat");
+      if (!concatFn) {
+        llvm::FunctionType *ft =
+            llvm::FunctionType::get(i8Ptr, {i8Ptr, i8Ptr}, false);
+
+        concatFn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
+                                          "tq_concat", *module);
+      }
+
+      // IMPORTANT: ensure L and R are i8*
+      if (L->getType() != i8Ptr)
+        L = b.CreateBitCast(L, i8Ptr);
+
+      if (R->getType() != i8Ptr)
+        R = b.CreateBitCast(R, i8Ptr);
+
+      return b.CreateCall(concatFn, {L, R});
+    }
+
+    return is_float ? b.CreateFAdd(L, R) : b.CreateAdd(L, R);
+  }
+
   case OP_SUB:
-    return b.CreateSub(L, R);
+    return is_float ? b.CreateFSub(L, R) : b.CreateSub(L, R);
+
   case OP_MUL:
-    return b.CreateMul(L, R);
+    return is_float ? b.CreateFMul(L, R) : b.CreateMul(L, R);
+
   case OP_DIV:
-    return is_unsigned_dtype(n->datatype) ? b.CreateUDiv(L, R)
-                                          : b.CreateSDiv(L, R);
+    if (is_float)
+      return b.CreateFDiv(L, R);
+    return is_unsigned ? b.CreateUDiv(L, R) : b.CreateSDiv(L, R);
+
+  case OP_MOD:
+    if (is_float)
+      return b.CreateFRem(L, R);
+    return is_unsigned ? b.CreateURem(L, R) : b.CreateSRem(L, R);
+
+  case OP_POW:
+    if (is_float) {
+      auto *powFn = llvm::Intrinsic::getDeclarationIfExists(
+          module, llvm::Intrinsic::pow, {L->getType()});
+      return b.CreateCall(powFn, {L, R});
+    }
+    // integer pow NOT supported yet
+    return nullptr;
+
+  case OP_LSHIFT:
+    return b.CreateShl(L, R);
+
+  case OP_RSHIFT:
+    return is_unsigned ? b.CreateLShr(L, R) : b.CreateAShr(L, R);
+
+  case OP_BITAND:
+    return b.CreateAnd(L, R);
+
+  case OP_BITOR:
+    return b.CreateOr(L, R);
+
+  case OP_BITXOR:
+    return b.CreateXor(L, R);
+
   case OP_EQ:
-    return b.CreateICmpEQ(L, R);
+    return is_float ? b.CreateFCmpOEQ(L, R) : b.CreateICmpEQ(L, R);
+
   case OP_NEQ:
-    return b.CreateICmpNE(L, R);
+    return is_float ? b.CreateFCmpONE(L, R) : b.CreateICmpNE(L, R);
+
   case OP_LT:
-    return is_unsigned_dtype(n->datatype) ? b.CreateICmpULT(L, R)
-                                          : b.CreateICmpSLT(L, R);
+    if (is_float)
+      return b.CreateFCmpOLT(L, R);
+    return is_unsigned ? b.CreateICmpULT(L, R) : b.CreateICmpSLT(L, R);
+
   case OP_LE:
-    return is_unsigned_dtype(n->datatype) ? b.CreateICmpULE(L, R)
-                                          : b.CreateICmpSLE(L, R);
+    if (is_float)
+      return b.CreateFCmpOLE(L, R);
+    return is_unsigned ? b.CreateICmpULE(L, R) : b.CreateICmpSLE(L, R);
+
   case OP_GT:
-    return is_unsigned_dtype(n->datatype) ? b.CreateICmpUGT(L, R)
-                                          : b.CreateICmpSGT(L, R);
+    if (is_float)
+      return b.CreateFCmpOGT(L, R);
+    return is_unsigned ? b.CreateICmpUGT(L, R) : b.CreateICmpSGT(L, R);
+
   case OP_GE:
-    return is_unsigned_dtype(n->datatype) ? b.CreateICmpUGE(L, R)
-                                          : b.CreateICmpSGE(L, R);
+    if (is_float)
+      return b.CreateFCmpOGE(L, R);
+    return is_unsigned ? b.CreateICmpUGE(L, R) : b.CreateICmpSGE(L, R);
+
   default:
     return nullptr;
   }
@@ -78,57 +144,105 @@ llvm::Value *emit_assing(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
 
   std::string name =
       n->assign.lhs && n->assign.lhs->var ? n->assign.lhs->var : "";
+
   DataTypes_t t = n->datatype != UNKNOWN
                       ? n->datatype
                       : (n->assign.lhs ? n->assign.lhs->datatype : UNKNOWN);
 
-  if (t == UNKNOWN && n->assign.rhs)
-    t = n->assign.rhs->datatype;
-  AllocaInst *alloca = nullptr;
   Module *m = b.GetInsertBlock()->getModule();
-  GlobalVariable *gv = nullptr;
+
   auto it = locals.find(name);
+
+  AllocaInst *alloca = nullptr;
+  GlobalVariable *gv = nullptr;
 
   if (it != locals.end()) {
     alloca = it->second;
   } else {
     gv = m->getGlobalVariable(name, true);
     if (!gv) {
-      gv = new GlobalVariable(
-          *m, ir_type(n->datatype, ctx),
-          false,                                             // isConstant
-          GlobalValue::ExternalLinkage,                      // linkage
-          Constant::getNullValue(ir_type(n->datatype, ctx)), // initializer
-          n->assign.lhs->var                                             // name
-      );
+      gv = new GlobalVariable(*m, ir_type(t, ctx),
+                              false,
+                              GlobalValue::ExternalLinkage,
+                              Constant::getNullValue(ir_type(t, ctx)),
+                              name);
     }
   }
 
-  llvm::Value *rhs = emit_expr(n->assign.rhs, ctx, b, entryBuilder, locals);
+  auto loadVar = [&](Value *ptr) {
+    return b.CreateLoad(ir_type(t, ctx), ptr, name);
+  };
 
-  if (!rhs)
-    return nullptr;
+  Value *lhsVal = alloca ? loadVar(alloca) : loadVar(gv);
+
+  Value *rhs = emit_expr(n->assign.rhs, ctx, b, entryBuilder, locals);
+  if (!rhs) return nullptr;
+
+  Value *result = nullptr;
+
+  switch (n->assign.op) {
+
+    case OP_ASSIGN:
+      result = rhs;
+      break;
+
+    case OP_PLUS_ASSIGN:
+      result = is_float_dtype(t)
+        ? b.CreateFAdd(lhsVal, rhs)
+        : b.CreateAdd(lhsVal, rhs);
+      break;
+
+    case OP_MINUS_ASSIGN:
+      result = is_float_dtype(t)
+        ? b.CreateFSub(lhsVal, rhs)
+        : b.CreateSub(lhsVal, rhs);
+      break;
+
+    case OP_MUL_ASSIGN:
+      result = is_float_dtype(t)
+        ? b.CreateFMul(lhsVal, rhs)
+        : b.CreateMul(lhsVal, rhs);
+      break;
+
+    case OP_DIV_ASSIGN:
+      result = is_float_dtype(t)
+        ? b.CreateFDiv(lhsVal, rhs)
+        : b.CreateSDiv(lhsVal, rhs);
+      break;
+
+    default:
+      result = rhs;
+      break;
+  }
+
+  if (t == STRINGS) {
+    result = to_i8_ptr(result, b);
+  }
+
   if (alloca)
-    b.CreateStore(rhs, alloca);
-  else if (gv)
-    b.CreateStore(rhs, gv);
-  return rhs;
+    b.CreateStore(result, alloca);
+  else
+    b.CreateStore(result, gv);
+
+  return result;
 }
 
 void emit_global(ASTNode_t *n, Module &mod, LLVMContext &ctx) {
-    if (!n) return;
-    if (n->kind == AST_SEQ) { emit_global(n->seq.a, mod, ctx); emit_global(n->seq.b, mod, ctx); return; }
-    if (n->kind == AST_ASSIGN && n->assign.is_declaration) {
-        std::string name = n->assign.lhs->var;
-        DataTypes_t t = n->datatype != UNKNOWN ? n->datatype : n->assign.lhs->datatype;
-        if (mod.getGlobalVariable(name)) return;
-        new GlobalVariable(
-            mod,
-            ir_type(t, ctx),
-            false,
-            GlobalValue::ExternalLinkage,
-            Constant::getNullValue(ir_type(t, ctx)),
-            name
-        );
-    }
+  if (!n)
+    return;
+  if (n->kind == AST_SEQ) {
+    emit_global(n->seq.a, mod, ctx);
+    emit_global(n->seq.b, mod, ctx);
+    return;
+  }
+  if (n->kind == AST_ASSIGN && n->assign.is_declaration) {
+    std::string name = n->assign.lhs->var;
+    DataTypes_t t =
+        n->datatype != UNKNOWN ? n->datatype : n->assign.lhs->datatype;
+    if (mod.getGlobalVariable(name))
+      return;
+    new GlobalVariable(mod, ir_type(t, ctx), false,
+                       GlobalValue::ExternalLinkage,
+                       Constant::getNullValue(ir_type(t, ctx)), name);
+  }
 }

@@ -64,7 +64,7 @@ DataTypes_t call(ASTNode_t *n) {
 
     DataTypes_t want = f ? f->params[i].type : stds->params[i];
     DataTypes_t want_ptr_to = f ? f->params[i].ptr_to : UNKNOWN;
-    if (want != UNKNOWN && want != PTR)
+    if (is_numeric(want))
       force_numeric_type(cur, want);
     DataTypes_t at = check_expr(cur);
     if (want != UNKNOWN && at != want)
@@ -94,7 +94,8 @@ DataTypes_t ret(ASTNode_t *n) {
       panic(&file, n->line, n->col, n->pos, SEM_RETURN_TYPE_MISMATCH, NULL);
       return UNKNOWN;
     }
-    force_numeric_type(n->ret_stmt.value, g_fn_ret);
+    if (is_numeric(g_fn_ret))
+      force_numeric_type(n->ret_stmt.value, g_fn_ret);
     DataTypes_t rt = check_expr(n->ret_stmt.value);
     if (g_fn_ret != UNKNOWN && rt != g_fn_ret) {
       panic(&file, n->line, n->col, n->pos, SEM_RETURN_TYPE_MISMATCH, NULL);

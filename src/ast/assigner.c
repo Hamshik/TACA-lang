@@ -25,7 +25,7 @@ void assign_value(DataTypes_t dt, TQValue *dst, TQValue src) {
         case UF128:  dst->f128 = src.f128; break;
         case BOOL:   dst->bval = src.bval; break;
         case STRINGS:
-            free(dst->str);
+            if(dst != NULL && dst->str) free(dst->str);
             dst->str = strdup(src.str);
             break;
         case CHARACTER:

@@ -1,0 +1,60 @@
+#import "source/tests/github_helpers.tq";
+
+fn i32 sum_reviews(i32 count) {
+    println("sum_reviw:entry");
+    mut i32 idx = 0;
+    mut i32 total = 0;
+    println(count);
+    while (idx < count) {
+        total += idx;
+        idx += 1;
+        println(idx);
+    }
+    println(total);
+    println("sum_reviw:ends");
+    return total;
+}
+
+fn i32 main() {
+    mut i32 additions = 120;
+    mut i32 deletions = 35;
+    mut i32 review_comments = 6;
+    mut i32 weekly_score = 0;
+    mut i32 sprint_day = 0;
+    mut i32 permissions = 3;
+    mut bool healthy = true;
+    mut bool noisy = false;
+    mut repo_name = "taca";
+    mut headline = "Repo: " + repo_name;
+
+    println(headline);
+
+    additions++;
+    deletions--;
+
+    permissions <<= 2;
+    permissions >>= 1;
+    permissions >>= 2;
+
+    weekly_score = score_pr(additions, deletions, review_comments);
+    println(weekly_score);
+    println(type(weekly_score));
+
+    for (mut i32 day = 0 : 7 : 1) {
+        weekly_score += day;
+        sprint_day = day;
+    }
+
+    weekly_score += sum_reviews(5);
+
+    if {healthy && !noisy && weekly_score >= 50} {
+        println(pass_badge());
+    } else {
+        println(fire_badge());
+    }
+
+    println(is_even(sprint_day));
+    println(permissions);
+
+    return 0;
+}

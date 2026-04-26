@@ -2,8 +2,8 @@ If:
   PathMatch: .*\.c
   
 CompileFlags:
-  Add: 
-    [-xc]
+  Add: [-Isrc]
+
 
   Remove:
     - -w

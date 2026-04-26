@@ -21,8 +21,10 @@ void reset_runtime_value(TypedValue &value) {
 void store_runtime_value(TypedValue &slot, DataTypes_t datatype,
                          const TQValue &value) {
   reset_runtime_value(slot);
+  TQValue fresh{};
+  assign_value(datatype, &fresh, value);
   slot.type = datatype;
-  assign_value(datatype, &slot.val, value);
+  slot.val = fresh;
 }
 
 struct RuntimeBinding {
