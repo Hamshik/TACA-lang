@@ -1,5 +1,4 @@
 #include "../taca.hpp"
-#include "ast/ASTNode.h"
 #include <llvm-22/llvm/IR/DerivedTypes.h>
 #include <llvm-22/llvm/IR/Type.h>
 #include <llvm/IR/IRBuilder.h>
@@ -60,6 +59,7 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
   // ---------------- CHARACTER → STRING ----------------
   case CHARACTER: {
     // create stack buffer: char[2] = {c, 0}
+    printf("char");
     Value *c = b.CreateTrunc(argV, Type::getInt8Ty(ctx));
 
     AllocaInst *buf = b.CreateAlloca(Type::getInt8Ty(ctx), nullptr, "charbuf");
@@ -107,7 +107,6 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
 
   // ---------------- INT ----------------
   default:
-    printf("Unknown case(print)");
     if (argV->getType()->isPointerTy()) {
       // treat as string fallback
       llvm::Value *fmt = b.CreateGlobalStringPtr("%s\n");
@@ -143,6 +142,7 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
   // ---------------- CHARACTER → STRING ----------------
   case CHARACTER: {
     // create stack buffer: char[2] = {c, 0}
+    printf("char\n");
     Value *c = b.CreateTrunc(argV, Type::getInt8Ty(ctx));
 
     static size_t id = 0;
@@ -193,7 +193,6 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
 
     // ---------------- INT ----------------
   default: {
-    printf("Unknown case(print)");
     if (argV->getType()->isPointerTy()) {
       // treat as string fallback
       llvm::Value *fmt = b.CreateGlobalStringPtr("%s");
