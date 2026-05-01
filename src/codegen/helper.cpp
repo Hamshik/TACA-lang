@@ -1,8 +1,5 @@
-#include "../taca.hpp"
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
-#include <string>
+#include "taca.hpp"
+
 
 __int128 parse_i128(const char *s, int *ok) {
   if (ok)
@@ -17,7 +14,7 @@ __int128 parse_i128(const char *s, int *ok) {
     s++;
   }
   int ok_u = 0;
-  unsigned __int128 u = tq_parse_u128(s, &ok_u);
+  unsigned __int128 u = TQparse_u128(s, &ok_u);
   if (!ok_u)
     return 0;
   if (ok)

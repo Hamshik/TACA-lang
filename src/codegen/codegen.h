@@ -2,17 +2,18 @@
 #define CODEGEN_H
 
 #ifdef __cplusplus
-
-#include "../taca.hpp"
+#include "taca.hpp"
 
 extern "C" {
 #endif
+#include "utils/error_handler/error.h"
+
 extern file_t file;
 /* If ll_path is non-NULL, writes IR there. If ir_out is non-NULL, allocates a
  * NUL-terminated copy of the textual IR (caller free). Returns 0 on success. */
 int codegen(ASTNode_t *root, const char *ll_path, char **ir_out);
-unsigned __int128 tq_parse_u128(const char *s, int *ok);
-__int128 tq_parse_i128(const char *s, int *ok);
+unsigned __int128  TQparse_u128(const char *s, int *ok);
+__int128  TQparse_i128(const char *s, int *ok);
 void panic(file_t *file, int line, int col, int pos, errc_t code,
            const char *detail);
 #ifdef __cplusplus
@@ -24,12 +25,32 @@ enum class Utf8Error {
   InvalidUtf8,   // Bad bytes
   MultiCharacter // '67'
 };
+
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
+
+#include <iostream>
+#include <string>
+#include <functional>
+#include <unordered_set>
+
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
+
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/TargetSelect.h>
+
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/TargetParser/Triple.h>
+
 
 using namespace llvm;
 using LocalMap = std::unordered_map<std::string, AllocaInst *>;
@@ -74,7 +95,9 @@ bool blockTerminated(IRBuilder<> &b);
 uint32_t decode_utf8(const char *raw_ptr, size_t raw_len, size_t *byte_len,
                      Utf8Error *error);
 
-char *tq_concat(const char *a, const char *b);
+llvm::Value* generateList(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals);
+
+char* TQconcat(const char *a, const char *b);
 llvm::Value *to_i8_ptr(llvm::Value *v, IRBuilder<> &b) ;
 Value *emit_char_to_string(Value *ch, LLVMContext &ctx, IRBuilder<> &b);
 #endif

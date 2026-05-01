@@ -1,17 +1,5 @@
-#include "../taca.hpp"
-#include "codegen/codegen.h"
-#include "stdlibs/stdlibs.h"
+#include "taca.hpp"
 
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Value.h"
-#include <cstdio>
-#include <cstring>
-#include <llvm-22/llvm/IR/DerivedTypes.h>
-#include <llvm-22/llvm/IR/Function.h>
-#include <llvm-22/llvm/IR/GlobalValue.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
 
 Function *get_or_create_prototype(ASTNode_t *fn_ast, Module &mod,
                                   LLVMContext &ctx) {

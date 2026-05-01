@@ -1,4 +1,5 @@
-#include "../taca.hpp"
+#include "ast/ASTNode.h"
+#include "taca.hpp"
 #include "semantic/semantic.hpp"
 
 #include <float.h>
@@ -27,18 +28,19 @@ int g_in_fn = 0;
 extern "C" void semantic_check(ASTNode_t *root) {
   if (!root)
     return;
-  tq_semantic_scope_push();
+  TQsemantic_scope_push();
+
   check_expr(root);
-  tq_semantic_scope_pop();
-  tq_semantic_clear_fns();
+  TQsemantic_scope_pop();
+  TQsemantic_clear_fns();
   check_err();
 }
 
 /* Main recursive checker */
-DataTypes_t check_expr(ASTNode_t *n) {
+
+extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
   if (!n)
     return UNKNOWN;
-  exitcode_t exit_code;
 
   switch (n->kind) {
   case AST_BOOL:
@@ -46,6 +48,7 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
   case AST_NUM:
     /* Keep unknown here; we decide during declaration binding. */
+    if(n->datatype == UNKNOWN) n->datatype = type;
     return n->datatype;
 
   case AST_STR:
@@ -54,12 +57,12 @@ DataTypes_t check_expr(ASTNode_t *n) {
   case AST_CHAR:
     return CHARACTER;
 
-  case AST_VAR:
+  case AST_VAR:{
     if (n->datatype == UNKNOWN)
-      n->datatype = tq_semantic_lookup(n->var);
+      n->datatype = TQsemantic_lookup(n->var);
     if (n->datatype == PTR && n->ptr_to == UNKNOWN)
-      n->ptr_to = tq_semantic_lookup_ptr_to(n->var);
-    exit_code = tq_semantic_exists(n->var, n->datatype, n->ptr_to);
+      n->ptr_to = TQsemantic_lookup_ptr_to(n->var);
+    exitcode_t exit_code = TQsemantic_exists(n->var, n->datatype, n->ptr_to);
     switch (exit_code) {
     case NOT_DECLARED:
       panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->var);
@@ -75,19 +78,20 @@ DataTypes_t check_expr(ASTNode_t *n) {
       break;
     }
     return n->datatype;
+  }
 
   case AST_BINOP:
-    return binop(n);
+    return binop(n, type);
 
   case AST_UNOP:
-    return unop(n);
+    return unop(n, type);
 
   case AST_ASSIGN:
-    return assign(n);
+    return assign(n, type);
 
   case AST_SEQ:
-    check_expr(n->seq.a);
-    return check_expr(n->seq.b);
+    check_expr(n->seq.a, type);
+    return check_expr(n->seq.b, type);
 
   case NODE_IF: {
     DataTypes_t ct = check_expr(n->ifnode.cond);
@@ -148,10 +152,12 @@ DataTypes_t check_expr(ASTNode_t *n) {
 
   case AST_IMPORT: {
     char *path = n->importNode.path;
+    bool already_imported = false;
+    Module_t *mod = TQsemantic_load_module(path, &already_imported);
+    if (!mod) panic(&file, n->line, n->col, n->pos, SEM_IMPORT_FILE_NOT_FOUND, path);
 
-    Module_t *mod = tq_semantic_load_module(path);
-    if (!mod) return UNKNOWN;
-
+    if(already_imported) return UNKNOWN;
+    
     ensure_semantic(mod);
 
     // merge AST
@@ -162,8 +168,13 @@ DataTypes_t check_expr(ASTNode_t *n) {
     return UNKNOWN;
   }
 
-  default:
+  case AST_LIST:
+    return list_handle(n, type);
 
+  case AST_INDEX:
+    return semantic_index_handle(n);
+
+  default:
     panic(&file, n->line, n->col, n->pos, SEM_UNKNOWN_AST, NULL);
     return UNKNOWN;
   }

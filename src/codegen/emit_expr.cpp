@@ -1,14 +1,6 @@
-#include "../taca.hpp"
-#include "codegen/codegen.h"
-#include "utils/error_handler/error.h"
-#include "llvm/IR/GlobalValue.h"
-#include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/Value.h"
-#include <codecvt>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
-#include <vector>
+#include "ast/ASTNode.h"
+#include "taca.hpp"
+
 
 llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                        IRBuilder<> &entryBuilder, LocalMap &locals) {
@@ -149,6 +141,9 @@ llvm::Value *emit_expr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
     // Import is handled superatly
     return nullptr;
   }
+
+  case AST_LIST:
+    return generateList(n, ctx, b, entryBuilder, locals);
 
   default:
     return nullptr;

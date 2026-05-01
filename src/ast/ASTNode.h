@@ -1,10 +1,17 @@
 #ifndef ASTNODE_H
 #define ASTNODE_H
 
-#include "../taca.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "utils/uhash.h"
+
+#include "taca.h"
 
 typedef enum ASTKind {
     AST_NUM,
@@ -23,7 +30,9 @@ typedef enum ASTKind {
     AST_FN,
     AST_CALL,
     AST_RETURN,
-    AST_IMPORT
+    AST_IMPORT,
+    AST_LIST,
+    AST_INDEX
 } ASTKind_t;
 
 typedef enum DataTypes{
@@ -99,6 +108,8 @@ typedef union {
     bool bval;
     char* chars;
     char* str;
+
+    void* raw;
 } TQValue;
 
 typedef struct {
@@ -123,9 +134,8 @@ typedef struct ASTNode {
     ASTKind_t kind;
     DataTypes_t datatype;
     DataTypes_t ptr_to;
-    int line, col;
-    int pos;      /* 0-based byte offset (start) */
-    int end_pos;  /* 0-based byte offset (end) */
+    bool ismut;
+    size_t line,col, pos, end_pos; /* 0-based byte offset (start) */ /* 0-based byte offset (end) */ 
 
     union {
         // variables
@@ -166,7 +176,14 @@ typedef struct ASTNode {
         struct { struct ASTNode *value; } ret_stmt;
         //Import Nodes
         struct { char *path; } importNode;
-        
+        // List Nodes
+        struct { struct ASTNode *elements, *target; bool is_mutable; size_t num;} list;
+        // Index Nodes
+        struct {
+            struct ASTNode* target; // The thing being indexed (e.g., the variable 'list')
+            struct ASTNode* index;  // The position (e.g., the number '0' or expr 'i+1')
+        } index;
+
     };
 } ASTNode_t;
 
@@ -177,7 +194,7 @@ ASTNode_t *new_char_bytes(const char *bytes, size_t len, int line, int col);
 ASTNode_t *new_var(const char *name, DataTypes_t datatype, int line, int col);
 ASTNode_t *new_binop(ASTNode_t *l, ASTNode_t *r, int line, int col, OP_kind_t op);
 ASTNode_t *new_unop(ASTNode_t *e, int line, int col, OP_kind_t op);
-ASTNode_t *new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int line, int col, OP_kind_t op);
+ASTNode_t *new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, bool is_mutable, int line, int col, OP_kind_t op);
 ASTNode_t *new_if(ASTNode_t *cond, ASTNode_t *thenB, ASTNode_t *elseB, int line, int col);
 ASTNode_t *new_for(ASTNode_t *init, ASTNode_t *end, ASTNode_t *step, ASTNode_t *body, int line, int col);
 ASTNode_t *new_seq(ASTNode_t *a, ASTNode_t *b);
@@ -187,6 +204,8 @@ ASTNode_t* new_fn_def(const char *name, Param_t *params, int param_count, DataTy
 ASTNode_t* new_fn_call(const char *name, ASTNode_t *args, int line, int col);
 ASTNode_t* new_return(ASTNode_t *value, int line, int col);
 ASTNode_t* new_import_node(const char *path, int line, int col);
+ASTNode_t* new_list(ASTNode_t *elements, ASTNode_t *target, DataTypes_t datatype, size_t num ,bool is_mutable, int line, int col);
+ASTNode_t* new_index(ASTNode_t *var, ASTNode_t *index, int line, int col);
 /* Eval + memory */
 void ast_free(ASTNode_t *n);
 ASTNode_t *ast_alloc(void);
@@ -194,15 +213,19 @@ ASTNode_t *ast_alloc(void);
 /* Env */
 void set_var(const char *name, TQValue *val, DataTypes_t datatype);
 void set_var_current(const char *name, TQValue *val, DataTypes_t datatype);
-TQValue getvar(const char *name, DataTypes_t datatype, int line, int col, int pos);
+  TQValue getvar(const char *name, DataTypes_t datatype, int line, int col, int pos);
 void env_push(void);
 void env_pop(void);
 void env_clear_all(void);
 void assign_value(DataTypes_t datatype, TQValue *dest, TQValue src);
-TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
+  TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , int line, int col, int pos);
 TypedValue *getvar_ref(const char *name, int line, int col, int pos);
 int env_frame_id_of(const char *name, int line, int col, int pos);
 TypedValue *getvar_ref_at(int frame_id, const char *name, int line, int col, int pos);
 void set_var_at(int frame_id, const char *name, TQValue *val, DataTypes_t datatype, int line, int col, int pos);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-#include "../taca.h"
+#include "taca.h"
 
 ASTNode_t* new_num(char *rawval, DataTypes_t datatype, int line, int col) {
     ASTNode_t *node = ast_alloc();
@@ -72,14 +70,14 @@ ASTNode_t* new_binop(ASTNode_t *left, ASTNode_t *right, int line, int col, OP_ki
     return node;
 }
 
-ASTNode_t* new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, int line, int col, OP_kind_t op) {
+ASTNode_t* new_assign(ASTNode_t *lhs, ASTNode_t *rhs, DataTypes_t datatype, bool is_mutable, int line, int col, OP_kind_t op) {
     ASTNode_t *node = ast_alloc();
     node->kind = AST_ASSIGN;
     node->assign.op = op;
     node->assign.lhs = lhs;
     node->assign.rhs = rhs;
     node->datatype = datatype;
-    node->assign.is_mutable = true;
+    node->assign.is_mutable = is_mutable;
     node->assign.is_declaration = false;
     node->line = line;
     node->col = col;
@@ -176,6 +174,29 @@ ASTNode_t* new_import_node(const char* path, int line, int col) {
     ASTNode_t* node = ast_alloc();
     node->kind = AST_IMPORT;
     node->importNode.path = strdup(path);
+    node->line = line;
+    node->col = col;
+    return node;
+}
+
+ASTNode_t* new_list(ASTNode_t *elements, ASTNode_t *target, DataTypes_t datatype, size_t num ,bool is_mutable, int line, int col) {
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_LIST;
+    node->list.elements = elements;
+    node->list.target = target;
+    node->datatype = datatype;
+    node->list.is_mutable = is_mutable;
+    node->line = line;
+    node->col = col;
+    node->list.num = num;
+    return node;
+}
+
+ASTNode_t* new_index(ASTNode_t *var, ASTNode_t *index, int line, int col) {
+    ASTNode_t *node = ast_alloc();
+    node->kind = AST_INDEX;
+    node->index.target = var;
+    node->index.index = index;
     node->line = line;
     node->col = col;
     return node;

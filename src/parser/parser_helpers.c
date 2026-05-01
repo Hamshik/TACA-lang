@@ -1,10 +1,10 @@
-#include "../taca.h"
+#include "taca.h"
 
-void tq_annotate_decl_list(ASTNode_t *n, DataTypes_t default_t, DataTypes_t default_ptr_to, bool is_mutable) {
+void TQannotate_decl_list(ASTNode_t *n, DataTypes_t default_t, DataTypes_t default_ptr_to, bool is_mutable) {
     if (!n) return;
     if (n->kind == AST_SEQ) {
-        tq_annotate_decl_list(n->seq.a, default_t, default_ptr_to, is_mutable);
-        tq_annotate_decl_list(n->seq.b, default_t, default_ptr_to, is_mutable);
+        TQannotate_decl_list(n->seq.a, default_t, default_ptr_to, is_mutable);
+        TQannotate_decl_list(n->seq.b, default_t, default_ptr_to, is_mutable);
         return;
     }
     if (n->kind != AST_ASSIGN) return;

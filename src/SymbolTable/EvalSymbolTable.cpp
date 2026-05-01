@@ -15,13 +15,13 @@ void reset_runtime_value(TypedValue &value) {
   }
 
   value.type = UNKNOWN;
-  value.val = TQValue{};
+  value.val =  TQValue{};
 }
 
 void store_runtime_value(TypedValue &slot, DataTypes_t datatype,
-                         const TQValue &value) {
+                         const  TQValue &value) {
   reset_runtime_value(slot);
-  TQValue fresh{};
+ TQValue fresh{};
   assign_value(datatype, &fresh, value);
   slot.type = datatype;
   slot.val = fresh;
@@ -32,7 +32,7 @@ struct RuntimeBinding {
 
   RuntimeBinding() {
     typed_value.type = UNKNOWN;
-    typed_value.val = TQValue{};
+    typed_value.val =  TQValue{};
   }
 
   ~RuntimeBinding() { reset_runtime_value(typed_value); }
@@ -42,7 +42,7 @@ struct RuntimeBinding {
 
   RuntimeBinding(RuntimeBinding &&other) noexcept : typed_value(other.typed_value) {
     other.typed_value.type = UNKNOWN;
-    other.typed_value.val = TQValue{};
+    other.typed_value.val =  TQValue{};
   }
 
   RuntimeBinding &operator=(RuntimeBinding &&other) noexcept {
@@ -50,7 +50,7 @@ struct RuntimeBinding {
       reset_runtime_value(typed_value);
       typed_value = other.typed_value;
       other.typed_value.type = UNKNOWN;
-      other.typed_value.val = TQValue{};
+      other.typed_value.val =  TQValue{};
     }
     return *this;
   }
@@ -94,7 +94,7 @@ RuntimeBinding *runtime_find_binding(RuntimeFrame *start, const char *name) {
 
 } // namespace
 
-namespace tq::runtime_symbol_table {
+namespace  TQ::runtime_symbol_table {
 
 void env_push() {
   RuntimeFrame *frame = new RuntimeFrame();
@@ -128,7 +128,7 @@ void env_clear_all() {
   fn_clear();
 }
 
-void env_set(const char *name, TQValue *val, DataTypes_t datatype) {
+void env_set(const char *name,  TQValue *val, DataTypes_t datatype) {
   RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
   if (binding) {
     store_runtime_value(binding->typed_value, datatype, *val);
@@ -138,25 +138,25 @@ void env_set(const char *name, TQValue *val, DataTypes_t datatype) {
   env_set_current(name, val, datatype);
 }
 
-void env_set_current(const char *name, TQValue *val, DataTypes_t datatype) {
+void env_set_current(const char *name,  TQValue *val, DataTypes_t datatype) {
   RuntimeFrame *frame = runtime_env_top();
   auto [it, inserted] = frame->vars.try_emplace(name);
   (void)inserted;
   store_runtime_value(it->second.typed_value, datatype, *val);
 }
 
-TQValue env_get(const char *name, DataTypes_t datatype, int line, int col,
+ TQValue env_get(const char *name, DataTypes_t datatype, int line, int col,
                 int pos) {
   RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
   if (!binding) {
     panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
-    return TQValue{};
+    return  TQValue{};
   }
 
   if (binding->typed_value.type != datatype &&
       !is_numeric(binding->typed_value.type) && !is_numeric(datatype)) {
     panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
-    return TQValue{};
+    return  TQValue{};
   }
 
   return binding->typed_value.val;
@@ -200,7 +200,7 @@ TypedValue *env_get_ref_at(int frame_id, const char *name, int line, int col,
   return &found->second.typed_value;
 }
 
-void env_set_at(int frame_id, const char *name, TQValue *val,
+void env_set_at(int frame_id, const char *name,  TQValue *val,
                 DataTypes_t datatype, int line, int col, int pos) {
   TypedValue *target = env_get_ref_at(frame_id, name, line, col, pos);
   if (!target) {
@@ -232,4 +232,4 @@ ASTNode_t *fn_lookup(const char *name) {
 
 void fn_clear() { g_runtime_functions.clear(); }
 
-} // namespace tq::runtime_symbol_table
+} // namespace  TQ::runtime_symbol_table

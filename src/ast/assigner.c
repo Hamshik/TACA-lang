@@ -1,11 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "../taca.h"
+#include "taca.h"
 
 extern file_t file;
 
-void assign_value(DataTypes_t dt, TQValue *dst, TQValue src) {
+void assign_value(DataTypes_t dt,  TQValue *dst,  TQValue src) {
     switch (dt) {
         case I8:     dst->i8 = src.i8; break;
         case I16:    dst->i16 = src.i16; break;
@@ -45,16 +42,16 @@ void assign_value(DataTypes_t dt, TQValue *dst, TQValue src) {
     }
 }
 
-TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
+ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
     int line, int col, int pos) {
     TypedValue rt0 = ast_eval(rhs);
-    TypedValue rt = tq_cast_typed(rt0, datatypes, line, col, pos);
+    TypedValue rt = TQcast_typed(rt0, datatypes, line, col, pos);
     TQValue r = rt.val;
     TQValue v = {0};
 
     if (!lhs) {
         panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
-        return (TQValue){0};
+        return ( TQValue){0};
     }
 
     /* Assignment to variable */
@@ -64,47 +61,49 @@ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t da
             return r;
         }
 
-        TQValue cur = getvar(lhs->var, datatypes, line, col, pos);
+       TQValue cur = getvar(lhs->var, datatypes, line, col, pos);
         OP_kind_t operation = get_assign_op(op);
         switch (datatypes) {
             case I8: case I16: case I32: case I128:
             case U8: case U16: case U32: case U64: case U128:
             case F32: case F64: case F128:
             case UF32: case UF64: case UF128:
-                v = tq_eval_binop_numeric(operation, datatypes, cur, r);
+                v = TQeval_binop_numeric(operation, datatypes, cur, r);
                 break;
             case BOOL:
                 v = eval_bool(operation, BOOL, cur, r);
                 break;
             case STRINGS:
-                v = (TQValue){.str = do_operation_str(cur.str, r.str, operation)};
+                v = ( TQValue){.str = do_operation_str(cur.str, r.str, operation)};
                 break;
             case CHARACTER:
                 v.chars = r.chars;
                 break;
             case PTR:
                 panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "pointer compound assignment not supported");
-                return (TQValue){0};
+                return ( TQValue){0};
             default:
                 panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, NULL);
-                return (TQValue){0};
+                return ( TQValue){0};
         }
         set_var(lhs->var, &v, datatypes);
         return v;
     }
+
+    // TypedValue right_val = ast_eval(rhs);
 
     /* Assignment through dereference: *p = rhs */
     if (lhs->kind == AST_UNOP && lhs->unop.op == OP_DEREF) {
         TypedValue pv = ast_eval(lhs->unop.operand);
         if (pv.type != PTR || pv.val.ptr.name == NULL) {
             panic(&file, line, col, pos, RT_DANGLING_PTR, NULL);
-            return (TQValue){0};
+            return ( TQValue){0};
         }
         TypedValue *target = getvar_ref_at(pv.val.ptr.frame_id, pv.val.ptr.name, line, col, pos);
-        if (!target) return (TQValue){0};
+        if (!target) return ( TQValue){0};
         if (target->type != datatypes) {
             panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, pv.val.ptr.name);
-            return (TQValue){0};
+            return ( TQValue){0};
         }
 
         if (op == OP_ASSIGN) {
@@ -112,23 +111,38 @@ TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t da
             return r;
         }
 
-        TQValue cur = target->val;
+       TQValue cur = target->val;
         OP_kind_t operation = get_assign_op(op);
         switch (datatypes) {
             case I8: case I16: case I32: case I128:
             case U8: case U16: case U32: case U64: case U128:
             case F32: case F64: case F128:
             case UF32: case UF64: case UF128:
-                v = tq_eval_binop_numeric(operation, datatypes, cur, r);
+                v = TQeval_binop_numeric(operation, datatypes, cur, r);
                 break;
             default:
                 panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "unsupported deref assignment type");
-                return (TQValue){0};
+                return ( TQValue){0};
         }
         assign_value(datatypes, &target->val, v);
         return v;
     }
 
+    if (lhs->kind == AST_INDEX) {
+        // Evaluate the list
+        TypedValue target = ast_eval(lhs->index.target);
+        int idx = ast_eval(lhs->index.index).val.i32;
+
+        ASTNode_t *curr = (ASTNode_t*)target.val.raw;
+        for(int i = 0; i < idx && curr; i++) {
+            curr = curr->seq.b; // Or however your list nodes are linked
+        }
+        
+        return ast_eval(curr).val;
+
+    }
+
+
     panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);
-    return (TQValue){0};
+    return ( TQValue){0};
 }

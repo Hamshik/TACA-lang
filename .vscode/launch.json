@@ -10,7 +10,7 @@
 	            "request": "launch",
 	            "program": "${workspaceFolder}/bin/taca",
 	            "args": [
-					"${workspaceFolder}/source/tests/github_workflow.tq",
+					"${workspaceFolder}/source/test.tq",
 					"-o",
 					"${workspaceFolder}/output/test",
 					"--emit-ir",

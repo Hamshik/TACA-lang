@@ -17,7 +17,7 @@ else
 fi
 
 echo "Running bison to generate the parser..."
-bison -d -o "$PARSER_DIR/parser.c" "$PARSER_DIR/parser.y"
+bison -d --graph -o "$PARSER_DIR/parser.c" "$PARSER_DIR/parser.y"
 
 echo "Running flex to generate the lexer..."
 flex -o "$LEXER_DIR/lexer.c" "$LEXER_DIR/lexer.l"

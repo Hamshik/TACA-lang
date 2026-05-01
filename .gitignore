@@ -4,5 +4,7 @@ out*
 *.out
 .cache
 src/lexer/lexer.c
+src/parser/parser.gv
+.reflex
 src/parser/parser.c
 src/parser/parser.h

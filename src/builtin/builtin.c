@@ -1,16 +1,10 @@
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <inttypes.h>
-
-#include "../taca.h"
+#include "taca.h"
 
 extern file_t file;
 extern bool isWarning;
 extern size_t warn_no;
 
-static void tq_write_u128(FILE *out, unsigned __int128 x) {
+static void TQwrite_u128(FILE *out, unsigned __int128 x) {
     char buf[64];
     size_t i = 0;
     if (x == 0) {
@@ -26,26 +20,26 @@ static void tq_write_u128(FILE *out, unsigned __int128 x) {
     while (i--) fputc(buf[i], out);
 }
 
-static void tq_write_i128(FILE *out, __int128 x) {
+static void TQwrite_i128(FILE *out, __int128 x) {
     if (x < 0) {
         fputc('-', out);
-        tq_write_u128(out, (unsigned __int128)(-x));
+        TQwrite_u128(out, (unsigned __int128)(-x));
         return;
     }
-    tq_write_u128(out, (unsigned __int128)x);
+    TQwrite_u128(out, (unsigned __int128)x);
 }
 
-static void tq_write_value(FILE *out, TQValue v, DataTypes_t t) {
+static void TQwrite_value(FILE *out,  TQValue v, DataTypes_t t) {
     switch (t) {
         case I8:        fprintf(out, "%d", (int)v.i8); break;
         case I32:       fprintf(out, "%d", v.i32); break;
         case I16:       fprintf(out, "%hd", v.i16); break;
-        case I128:      tq_write_i128(out, v.i128); break;
+        case I128:      TQwrite_i128(out, v.i128); break;
         case U8:        fprintf(out, "%u", (unsigned)v.u8); break;
         case U16:       fprintf(out, "%u", (unsigned)v.u16); break;
         case U32:       fprintf(out, "%" PRIu32, v.u32); break;
         case U64:       fprintf(out, "%" PRIu64, v.u64); break;
-        case U128:      tq_write_u128(out, v.u128); break;
+        case U128:      TQwrite_u128(out, v.u128); break;
         case F32:       fprintf(out, "%f", v.f32); break;
         case F64:       fprintf(out, "%g", v.f64); break;
         case F128:      fprintf(out, "%Lg", v.f128); break;
@@ -76,7 +70,7 @@ static const DataTypes_t g_memcpy_params[]  = { PTR, PTR, UNKNOWN };
 static const DataTypes_t g_exit_params[]  = {I32};
 
 
-static const tq_std_sig_t g_builtins[] = {
+static const TQstd_sig_t g_builtins[] = {
     { "print",     g_print_params,   1, VOID },
     { "println",   g_print_params,   1, VOID },
     { "alloc",     g_alloc_params,   1, PTR  },
@@ -89,7 +83,7 @@ static const tq_std_sig_t g_builtins[] = {
     {"hlt", g_exit_params, 1, VOID}
 };
 
-const tq_std_sig_t *tq_std_sig(const char *name) {
+const TQstd_sig_t *  TQstd_sig(const char *name) {
     if (!name) return NULL;
     for (size_t i = 0; i < (sizeof(g_builtins) / sizeof(g_builtins[0])); i++) {
         if (strcmp(g_builtins[i].name, name) == 0) return &g_builtins[i];
@@ -97,7 +91,7 @@ const tq_std_sig_t *tq_std_sig(const char *name) {
     return NULL;
 }
 
-TypedValue tq_std_call(
+TypedValue TQstd_call(
     const char *name,
     const TypedValue *argv,
     int argc,
@@ -107,7 +101,7 @@ TypedValue tq_std_call(
     bool *ok
 ) {
     if (ok) *ok = 0;
-    const tq_std_sig_t *sig = tq_std_sig(name);
+    const TQstd_sig_t *sig = TQstd_sig(name);
     if (!sig) return (TypedValue){0};
     if (ok) *ok = 1;
 
@@ -117,7 +111,7 @@ TypedValue tq_std_call(
     }
 
     if (strcmp(sig->name, "print") == 0 || strcmp(sig->name, "println") == 0) {
-        if (argc == 1) tq_write_value(stdout, argv[0].val, argv[0].type);
+        if (argc == 1) TQwrite_value(stdout, argv[0].val, argv[0].type);
         if (strcmp(sig->name, "println") == 0) fputc('\n', stdout);
         return (TypedValue){.type = VOID};
     }

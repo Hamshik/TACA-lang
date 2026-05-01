@@ -1,4 +1,4 @@
-#include "../taca.h"
+#include "taca.h"
 
 extern ASTNode_t *root;
 

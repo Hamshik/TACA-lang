@@ -15,10 +15,10 @@ extern "C" {
 #include "parser/parser.h"
 #include "builtin/builtin.h"
 
-#include "semantic/semantic.hpp"
 
 #ifdef __cplusplus
 }
+#include "semantic/semantic.hpp"
 // Utility headers (C++ only)
 #include "utils/utf-8_lib/utf8.h"
 

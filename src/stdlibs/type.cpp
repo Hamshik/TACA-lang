@@ -1,4 +1,4 @@
-#include "../taca.hpp"
+#include "taca.hpp"
 #include <llvm-22/llvm/IR/BasicBlock.h>
 
 Value* get_type(ASTNode_t* n, IRBuilder<> &b) {

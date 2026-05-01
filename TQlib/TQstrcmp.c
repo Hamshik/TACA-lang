@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char* tq_concat(char* a, char* b) {
+char* TQconcat(char* a, char* b) {
     size_t lenA = strlen(a);
     size_t lenB = strlen(b);
 

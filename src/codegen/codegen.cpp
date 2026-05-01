@@ -1,21 +1,4 @@
-#include "../taca.hpp"
-#include <iostream>
-#include <string>
-#include <functional>
-#include <unordered_set>
-
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Verifier.h>
-
-#include <llvm/Support/FileSystem.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/TargetSelect.h>
-
-#include <llvm/Target/TargetMachine.h>
-#include <llvm/MC/TargetRegistry.h>
-#include <llvm/TargetParser/Triple.h>
+#include "taca.hpp"
 
 using namespace llvm;
 
@@ -67,7 +50,7 @@ static void emit_functions(ASTNode_t *root, Module &mod, LLVMContext &ctx) {
             auto [_, inserted] = visited_modules.emplace(path);
             if (!inserted) return;
 
-            Module_t *imported = tq_semantic_load_module(path);
+            Module_t *imported = TQsemantic_load_module(path, nullptr);
             if (imported && imported->ast) {
                 walk(imported->ast);
             }
@@ -105,7 +88,7 @@ static Function* emit_init(ASTNode_t *root, Module &mod, LLVMContext &ctx) {
             auto [_, inserted] = visited_modules.emplace(path);
             if (!inserted) return;
 
-            Module_t *imported = tq_semantic_load_module(path);
+            Module_t *imported = TQsemantic_load_module(path, nullptr);
             if (imported && imported->ast) {
                 emit_nonfn(imported->ast);
             }
@@ -177,7 +160,6 @@ static bool emit_ir(Module &mod, const char *path, char **out) {
             return false;
         }
         file << ir;
-        std::cout << "LLVM IR written to " << path << "\n";
     }
 
     if (out) {
@@ -192,7 +174,7 @@ static bool emit_ir(Module &mod, const char *path, char **out) {
 
 extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out) {
     LLVMContext ctx;
-    Module mod("TQModule", ctx);
+    Module mod(" TQModule", ctx);
 
     if (!setup_target(mod))
         return 1;

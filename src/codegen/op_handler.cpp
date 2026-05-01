@@ -1,12 +1,4 @@
-#include "../taca.hpp"
-#include "ast/ASTNode.h"
-#include "codegen/codegen.h"
-#include "parser/parser.h"
-#include "llvm/IR/Value.h"
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/Intrinsics.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
+#include "taca.hpp"
 
 llvm::Value *emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                         IRBuilder<> &entryBuilder, LocalMap &locals) {
@@ -30,13 +22,13 @@ llvm::Value *emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
       llvm::Type *i8Ptr = llvm::PointerType::getUnqual(ctx);
 
       // ensure concat function exists
-      llvm::Function *concatFn = module->getFunction("tq_concat");
+      llvm::Function *concatFn = module->getFunction("TQconcat");
       if (!concatFn) {
         llvm::FunctionType *ft =
             llvm::FunctionType::get(i8Ptr, {i8Ptr, i8Ptr}, false);
 
         concatFn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
-                                          "tq_concat", *module);
+                                          "TQconcat", *module);
       }
 
       // IMPORTANT: ensure L and R are i8*

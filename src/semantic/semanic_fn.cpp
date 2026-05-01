@@ -1,4 +1,4 @@
-#include "../taca.hpp"
+#include "taca.hpp"
 #include <float.h>
 #include <limits.h>
 #include <stdio.h>
@@ -8,15 +8,15 @@ DataTypes_t handle_fn(ASTNode_t *n) {
   if (n->fn_def.name && strcmp(n->fn_def.name, "main") == 0)
     n->fn_def.ret = I32;
 
-  if (!tq_semantic_fn_declare(n->fn_def.name, n->fn_def.params,
+  if (!  TQsemantic_fn_declare(n->fn_def.name, n->fn_def.params,
                               n->fn_def.param_count, n->fn_def.ret)) {
     panic(&file, n->line, n->col, n->pos, SEM_FN_REDECL, n->fn_def.name);
   }
 
-  tq_semantic_scope_push();
+  TQsemantic_scope_push();
   for (int i = 0; i < n->fn_def.param_count; i++) {
     // params are mutable locals
-    if (!tq_semantic_declare(n->fn_def.params[i].name, n->fn_def.params[i].type,
+    if (!  TQsemantic_declare(n->fn_def.params[i].name, n->fn_def.params[i].type,
                              n->fn_def.params[i].ptr_to, true))
       panic(&file, n->line, n->col, n->pos, SEM_DUP_PARAM,
             n->fn_def.params[i].name);
@@ -30,15 +30,15 @@ DataTypes_t handle_fn(ASTNode_t *n) {
   g_fn_ret = saved_ret;
   g_in_fn = saved_in_fn;
 
-  tq_semantic_scope_pop();
+  TQsemantic_scope_pop();
   return UNKNOWN;
 }
 
 DataTypes_t call(ASTNode_t *n) {
-  FnSymbol_t *f = tq_semantic_fn_lookup(n->call.name);
-  const tq_std_sig_t *stds = NULL;
+  FnSymbol_t *f = TQsemantic_fn_lookup(n->call.name);
+  const TQstd_sig_t *stds = NULL;
   if (!f)
-    stds = tq_std_sig(n->call.name);
+    stds = TQstd_sig(n->call.name);
   if (!f && !stds)
     panic(&file, n->line, n->col, n->pos, SEM_CALL_UNDEF_FN, n->call.name);
 

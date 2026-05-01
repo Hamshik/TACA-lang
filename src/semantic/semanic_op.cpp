@@ -1,8 +1,9 @@
-#include "../taca.hpp"
+#include "ast/ASTNode.h"
+#include "taca.hpp"
 #include "semantic/semantic.hpp"
 
-DataTypes_t unop(ASTNode_t *n) {
-  DataTypes_t t = check_expr(n->unop.operand);
+DataTypes_t unop(ASTNode_t *n, DataTypes_t type) {
+  DataTypes_t t = check_expr(n->unop.operand, type);
 
   switch (n->unop.op) {
   case OP_NOT:
@@ -53,9 +54,9 @@ DataTypes_t unop(ASTNode_t *n) {
   return t;
 }
 
-DataTypes_t binop(ASTNode_t *n) {
-  DataTypes_t lt = check_expr(n->bin.left);
-  DataTypes_t rt = check_expr(n->bin.right);
+DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
+  DataTypes_t lt = check_expr(n->bin.left, type);
+  DataTypes_t rt = check_expr(n->bin.right, type);
 
   if (n->bin.left->kind == AST_NUM && n->bin.left->datatype == UNKNOWN &&
       is_numeric(rt)) {
@@ -65,16 +66,18 @@ DataTypes_t binop(ASTNode_t *n) {
              n->bin.right->datatype == UNKNOWN && is_numeric(lt)) {
     n->bin.right->datatype = lt;
     rt = lt;
-  } else if (n->bin.left->kind == AST_NUM && n->bin.left->datatype == UNKNOWN &&
+  } else if (n->bin.left->kind == AST_NUM &&
+            n->bin.left->datatype == UNKNOWN &&
              n->bin.right->kind == AST_NUM &&
              n->bin.right->datatype == UNKNOWN) {
     n->bin.left->datatype = I32;
     n->bin.right->datatype = I32;
     lt = rt = I32;
   }
-  // } else if (n->bin.right->kind == AST_NUM && !is_numeric(rt) &&
-  //        is_numeric(lt)) {
-  //     n->bin.right->datatype = rt = lt;
+  // } else if (n->bin.right->datatype == UNKNOWN && n->bin.left->datatype == UNKNOWN) {
+  //     n->bin.right->datatype =
+  //     n->bin.left->datatype =
+  //     rt = lt = type;
   //   }
 
   if (lt == PTR || rt == PTR) {
@@ -138,7 +141,7 @@ DataTypes_t binop(ASTNode_t *n) {
   return n->datatype;
 }
 
-DataTypes_t assign(ASTNode_t *n) {
+DataTypes_t assign(ASTNode_t *n, DataTypes_t type) {
   DataTypes_t lhs_t = UNKNOWN;
   DataTypes_t lhs_ptr_to = UNKNOWN;
 
@@ -149,8 +152,8 @@ DataTypes_t assign(ASTNode_t *n) {
       n->assign.lhs->datatype = lhs_t;
       n->assign.lhs->ptr_to = lhs_ptr_to;
     } else {
-      lhs_t = tq_semantic_lookup(n->assign.lhs->var);
-      lhs_ptr_to = tq_semantic_lookup_ptr_to(n->assign.lhs->var);
+      lhs_t = TQsemantic_lookup(n->assign.lhs->var);
+      lhs_ptr_to = TQsemantic_lookup_ptr_to(n->assign.lhs->var);
 
       n->assign.lhs->datatype = lhs_t;
       n->assign.lhs->ptr_to = lhs_ptr_to;
@@ -217,7 +220,7 @@ DataTypes_t assign(ASTNode_t *n) {
     n->datatype = lhs_t;
     n->ptr_to = lhs_ptr_to;
 
-    if (!tq_semantic_declare(n->assign.lhs->var, lhs_t, lhs_ptr_to,
+    if (!TQsemantic_declare(n->assign.lhs->var, lhs_t, lhs_ptr_to,
                              n->assign.is_mutable))
       panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
   } else {
@@ -241,7 +244,7 @@ DataTypes_t assign(ASTNode_t *n) {
   /* ✅ FIX 3: now do assign_check with CORRECT types */
   if (n->assign.lhs->kind == AST_VAR && !n->assign.is_declaration) {
     exitcode_t ac =
-        tq_semantic_assign_check(n->assign.lhs->var, rhs_t,
+        TQsemantic_assign_check(n->assign.lhs->var, rhs_t,
                                  n->assign.rhs->ptr_to);
     switch (ac) {
     case NOT_DECLARED:

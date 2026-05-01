@@ -3,9 +3,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <memory>
-#include <string>
-#include <unordered_map>
 
 extern file_t file;
 
@@ -15,20 +12,6 @@ void die_allocation(const char *what) {
   std::perror(what);
   std::exit(1);
 }
-
-struct SemanticSymbolRecord {
-  DataTypes_t type = UNKNOWN;
-  DataTypes_t ptr_to = UNKNOWN;
-  DataTypes_t max_type = UNKNOWN;
-  DataTypes_t last_maxed_type = UNKNOWN;
-  bool is_mutable = false;
-  bool is_used = false;
-};
-
-struct SemanticScopeRecord {
-  std::unordered_map<std::string, SemanticSymbolRecord> symbols;
-  SemanticScopeRecord *parent = nullptr;
-};
 
 SemanticScopeRecord *g_semantic_scope = nullptr;
 std::unordered_map<std::string, std::unique_ptr<FnSymbol_t>> g_semantic_functions;
@@ -41,7 +24,7 @@ SemanticScopeRecord *semantic_scope_top() {
   return g_semantic_scope;
 }
 
-SemanticSymbolRecord *semantic_find_symbol(const char *name) {
+extern "C" SemanticSymbolRecord *semantic_find_symbol(const char *name) {
   for (SemanticScopeRecord *it = semantic_scope_top(); it; it = it->parent) {
     auto found = it->symbols.find(name);
     if (found != it->symbols.end()) {
@@ -53,7 +36,7 @@ SemanticSymbolRecord *semantic_find_symbol(const char *name) {
 
 } // namespace
 
-namespace tq::semantic_symbol_table {
+namespace  TQ::semantic_symbol_table {
 
 DataTypes_t lookup(const char *name) {
   SemanticSymbolRecord *symbol = semantic_find_symbol(name);
@@ -66,7 +49,7 @@ DataTypes_t lookup_ptr_to(const char *name) {
 }
 
 bool declare(const char *name, DataTypes_t type, DataTypes_t ptr_to,
-             bool is_mutable) {
+             bool is_mutable, bool is_list) {
   SemanticScopeRecord *scope = semantic_scope_top();
   auto [it, inserted] = scope->symbols.try_emplace(name);
   if (!inserted) {
@@ -79,6 +62,7 @@ bool declare(const char *name, DataTypes_t type, DataTypes_t ptr_to,
   it->second.last_maxed_type = UNKNOWN;
   it->second.is_mutable = is_mutable;
   it->second.is_used = false;
+  it->second.is_list = is_list;
   return true;
 }
 
@@ -198,11 +182,14 @@ Module_t *get_module(const char *path) {
   return found == g_modules.end() ? nullptr : found->second.get();
 }
 
-Module_t *load_module(const char *path) {
+Module_t *load_module(const char *path, bool &already_imported) {
   Module_t *existing = get_module(path);
   if (existing) {
     if (existing->state == MOD_LOADING) {
       return nullptr;
+    }
+    if (already_imported) {
+      already_imported = true;
     }
     return existing;
   }
@@ -235,4 +222,4 @@ Module_t *load_module(const char *path) {
   return raw;
 }
 
-} // namespace tq::semantic_symbol_table
+} // namespace  TQ::semantic_symbol_table

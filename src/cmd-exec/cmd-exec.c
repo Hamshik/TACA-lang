@@ -46,7 +46,7 @@ FILE *open_file(const char *filename, char **resolved_path_out) {
 bool parse_arguments(int argc, char **argv, Options *opts) {
     // Set defaults
     opts->input_filename = NULL;
-    opts->bin_output_path = "tq.out";
+    opts->bin_output_path = " TQ.out";
     opts->emit_ir = false;
     opts->ir_output_path = "out.ll";
 
@@ -64,7 +64,7 @@ bool parse_arguments(int argc, char **argv, Options *opts) {
                 opts->bin_output_path = argv[i + 1];
                 i += 2;
             } else {
-                syserr("Missing argument for -o\nUsage: tq [source] [-o bin_path] [--emit-ir ir_path]");
+                syserr("Missing argument for -o\nUsage:  TQ [source] [-o bin_path] [--emit-ir ir_path]");
                 return false;
             }
         } else if (strcmp(argv[i], "--emit-ir") == 0) {
@@ -73,11 +73,11 @@ bool parse_arguments(int argc, char **argv, Options *opts) {
                 opts->ir_output_path = argv[i + 1];
                 i += 2;
             } else {
-                syserr("Missing argument for --emit-ir\nUsage: tq [source] [-o bin_path] [--emit-ir ir_path]");
+                syserr("Missing argument for --emit-ir\nUsage:  TQ [source] [-o bin_path] [--emit-ir ir_path]");
                 return false;
             }
         } else {
-            syserr(logf_msg("Unknown argument: %s\nUsage: tq [source] [-o bin_path] [--emit-ir ir_path]", argv[i]));
+            syserr(logf_msg("Unknown argument: %s\nUsage:  TQ [source] [-o bin_path] [--emit-ir ir_path]", argv[i]));
             return false;
         }
     }

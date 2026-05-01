@@ -16,6 +16,7 @@ const char *errc_msg(errc_t code) {
         case PARSE_UNCLOSED_BRACKET: return "missing closing bracket";
         case PARSE_INVALID_IMPORT: return "invalid import statement";
         case PARSE_IMPORT_NOT_TOP: return "import statement must be at the top level";
+        case PARSE_INVALID_ARRAY_SIZE: return "invalid array size or number is too large";
 
         case SEM_VAR_UNDECL: return "variable not declared";
         case SEM_VAR_TYPE_MISMATCH: return "variable type mismatch";
@@ -45,7 +46,13 @@ const char *errc_msg(errc_t code) {
         case SEM_RETURN_TYPE_MISMATCH: return "return type mismatch";
         case SEM_NUMERIC_LITERAL_OVERFLOW: return "numeric literal overflow";
         case SEM_UNKNOWN_AST: return "unknown AST node in semantic analysis";
-
+        case SEM_LIST_SIZE_MISMATCH: return "list literal size does not match expected size";
+        case SEM_LIST_EMPTY: return "list literal cannot be empty";
+        case SEM_LIST_NUM_IS_0: return "list literal size cannot be 0";
+        case SEM_IMPORT_FILE_NOT_FOUND: return "import file not found";
+        case SEM_INDEX_NOT_ARRAY: return "indexing non-array type";
+        case SEM_INDEX_NOT_INT: return "array index must be an integer";
+        
         case INVAILD_UTF8_CHAR: return "invalid UTF-8 character literal";
         case RET_NOT_DECLARED: return "return value is not declared in a function";
         

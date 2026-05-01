@@ -1,9 +1,4 @@
-#include "../taca.hpp"
-#include "SymbolTable/SymbolTable.hpp"
-#include <cstring>
-#include <llvm-22/llvm/IR/Module.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include "taca.hpp"
 
 uint32_t decode_utf8(const char *raw, size_t raw_len, size_t *byte_len,
                      Utf8Error *error) {

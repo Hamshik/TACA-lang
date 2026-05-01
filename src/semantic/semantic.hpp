@@ -1,10 +1,12 @@
 #ifndef SEMANTIC_H
 #define SEMANTIC_H
 
-#include <stdbool.h>
 
 #ifdef __cplusplus
-#include "../taca.hpp"
+
+#include <llvm-22/llvm/IR/DerivedTypes.h>
+#include <stdbool.h>
+#include "taca.hpp"
 extern "C" {
 #endif
 
@@ -33,16 +35,22 @@ typedef struct module {
 } Module_t;
 #endif
 
-DataTypes_t check_expr(ASTNode_t *n);
+extern "C" {
+    DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type = UNKNOWN);
+    DataTypes_t semantic_index_handle(ASTNode_t *n);
+    DataTypes_t list_handle(ASTNode_t *n, DataTypes_t type = UNKNOWN);
+    bool islist(ASTNode_t *target);
+}
+
 void type_error(ASTNode_t *n, const char *msg);
 bool is_integer(DataTypes_t t);
 void check_err();
 
 DataTypes_t promote(DataTypes_t a, DataTypes_t b);
 
-DataTypes_t unop(ASTNode_t* n);
-DataTypes_t binop(ASTNode_t* n);
-DataTypes_t assign(ASTNode_t* n);
+DataTypes_t unop(ASTNode_t* n, DataTypes_t type = UNKNOWN);
+DataTypes_t binop(ASTNode_t* n, DataTypes_t type = UNKNOWN);
+DataTypes_t assign(ASTNode_t* n, DataTypes_t type = UNKNOWN);
 
 DataTypes_t handle_fn(ASTNode_t* n);
 DataTypes_t ret(ASTNode_t *n);

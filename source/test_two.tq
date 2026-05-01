@@ -1,4 +1,0 @@
-
-fn char gstr() {
-    return '🔥';
-}

@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "../taca.h"
+#include "taca.h"
 
-void tq_annotate_decl_list(ASTNode_t *n, DataTypes_t default_t, DataTypes_t default_ptr_to, bool is_mutable);
+void  TQannotate_decl_list(ASTNode_t *n, DataTypes_t default_t, DataTypes_t default_ptr_to, bool is_mutable);
 
 #endif

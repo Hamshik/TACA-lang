@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../taca.hpp"
+#include "taca.hpp"
 
 extern file_t file;
 

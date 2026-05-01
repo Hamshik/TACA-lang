@@ -1,4 +1,4 @@
-#include "../taca.h"
+#include "taca.h"
 
 #include <stdlib.h>
 #include <string.h>
