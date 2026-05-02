@@ -43,13 +43,13 @@ DataTypes_t lookup(const char *name) {
   return symbol ? symbol->type : UNKNOWN;
 }
 
-DataTypes_t lookup_ptr_to(const char *name) {
+DataTypes_t lookup_sub_type(const char *name) {
   SemanticSymbolRecord *symbol = semantic_find_symbol(name);
-  return symbol ? symbol->ptr_to : UNKNOWN;
+  return symbol ? symbol->sub_type : UNKNOWN;
 }
 
-bool declare(const char *name, DataTypes_t type, DataTypes_t ptr_to,
-             bool is_mutable, bool is_list) {
+bool declare(const char *name, DataTypes_t type, DataTypes_t sub_type,
+             bool is_mutable) {
   SemanticScopeRecord *scope = semantic_scope_top();
   auto [it, inserted] = scope->symbols.try_emplace(name);
   if (!inserted) {
@@ -57,16 +57,15 @@ bool declare(const char *name, DataTypes_t type, DataTypes_t ptr_to,
   }
 
   it->second.type = type;
-  it->second.ptr_to = (type == PTR) ? ptr_to : UNKNOWN;
+  it->second.sub_type = (type == PTR || type == LIST) ? sub_type : UNKNOWN;
   it->second.max_type = type;
   it->second.last_maxed_type = UNKNOWN;
   it->second.is_mutable = is_mutable;
   it->second.is_used = false;
-  it->second.is_list = is_list;
   return true;
 }
 
-exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t ptr_to) {
+exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t sub_type) {
   SemanticSymbolRecord *symbol = semantic_find_symbol(name);
   if (!symbol) {
     return NOT_DECLARED;
@@ -76,7 +75,7 @@ exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t ptr_to) {
     return TYPE_MISMATCH;
   }
 
-  if (type == PTR && symbol->ptr_to != ptr_to &&
+  if (type == PTR && symbol->sub_type != sub_type &&
       !is_numeric(symbol->type) && !is_numeric(type)) {
     return TYPE_MISMATCH;
   }
@@ -85,7 +84,7 @@ exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t ptr_to) {
 }
 
 exitcode_t assign_check(const char *name, DataTypes_t rhs_type,
-                        DataTypes_t rhs_ptr_to) {
+                        DataTypes_t rhs_sub_type) {
   SemanticSymbolRecord *symbol = semantic_find_symbol(name);
   if (!symbol) {
     return NOT_DECLARED;
@@ -96,7 +95,7 @@ exitcode_t assign_check(const char *name, DataTypes_t rhs_type,
     return TYPE_MISMATCH;
   }
 
-  if (rhs_type == PTR && symbol->ptr_to != rhs_ptr_to) {
+  if (rhs_type == PTR && symbol->sub_type != rhs_sub_type) {
     return TYPE_MISMATCH;
   }
 

@@ -7,7 +7,9 @@
 #include "utils/error_handler/error.h" 
 
 // AST and semantic analysis
-#include "ast/ASTNode.h"
+#include "ast/ast_enum.h"
+#include "ast/nodes.h"
+#include "ast/ast_declarator.h"
 #include "semantic/semantic.hpp" 
 
 // Frontend headers

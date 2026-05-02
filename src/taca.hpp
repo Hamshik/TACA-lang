@@ -2,23 +2,24 @@
 
 #ifdef __cplusplus 
 extern "C" {
-#endif
 
 
 #include "utils/colors.h"
 #include "utils/error_handler/error.h"
 #include "utils/uhash.h"
 
-#include "ast/ASTNode.h"
+#include "ast/nodes.h"
+#include "ast/ast_declarator.h"
 #include "import/import.h"
 #include "typechecker/typecheck.h"
 #include "parser/parser.h"
 #include "builtin/builtin.h"
 
 
-#ifdef __cplusplus
 }
+// Semantic analysis (C++)
 #include "semantic/semantic.hpp"
+
 // Utility headers (C++ only)
 #include "utils/utf-8_lib/utf8.h"
 

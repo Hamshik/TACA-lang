@@ -2,9 +2,16 @@
 %define parse.error verbose
 
 %define api.location.type { TQLocation }
+%lex-param { YYSTYPE *yylval, YYLTYPE *yylloc }
+%parse-param { void }
+
+%require "3.2"
+
 %locations
 
 %expect 0
+
+
 
 %code requires {
     #include <stdio.h>
@@ -82,7 +89,7 @@
     DataTypes_t datatype;
     struct {
         DataTypes_t type;
-        DataTypes_t ptr_to;
+        DataTypes_t sub_type;
     } typespec;
     struct {
         Param_t *params;
@@ -91,9 +98,7 @@
 }
 
 %code {
-    int yylex(YYSTYPE *yylval, YYLTYPE *yylloc);
     void yyerror(YYLTYPE *loc, const char *s);
-    int yyparse(void);
 }
 
 %token <node> IDENTIFIER NUMBER STRING_LITERAL BOOL_LITERAL CHAR_LITERAL
@@ -239,7 +244,7 @@ params:
         if (!$$.params) { perror("malloc"); exit(1); }
         $$.params[0].name = strdup($1->var);
         $$.params[0].type = $1->datatype;
-        $$.params[0].ptr_to = $1->ptr_to;
+        $$.params[0].sub_type = $1->sub_type;
         ast_free($1);
     }
   | param COMMA params {
@@ -248,7 +253,7 @@ params:
         if (!$$.params) { perror("malloc"); exit(1); }
         $$.params[0].name = strdup($1->var);
         $$.params[0].type = $1->datatype;
-        $$.params[0].ptr_to = $1->ptr_to;
+        $$.params[0].sub_type = $1->sub_type;
         ast_free($1);
         for (int i = 0; i < $3.count; i++) $$.params[i + 1] = $3.params[i];
         free($3.params);
@@ -257,14 +262,14 @@ params:
 
 type_spec:
     DATATYPES
-      { $$.type = $1; $$.ptr_to = UNKNOWN; }
+      { $$.type = $1; $$.sub_type = UNKNOWN; }
   | DATATYPES AMP %prec UDEREF
-      { $$.type = PTR; $$.ptr_to = $1; }
+      { $$.type = PTR; $$.sub_type = $1; }
 ;
 
 param:
     type_spec IDENTIFIER
-      { $2->datatype = $1.type; $2->ptr_to = $1.ptr_to; $$ = $2; }  /* AST_VAR node typed as param */
+      { $2->datatype = $1.type; $2->sub_type = $1.sub_type; $$ = $2; }  /* AST_VAR node typed as param */
 ;
 
 return_stmt:
@@ -352,9 +357,10 @@ expr:
           ast_free($1);
       }
     | list_stmt                   {$$ = $1;}
+
     | IDENTIFIER LSQUARE expr RSQUARE
       {
-          $$ = new_index($1, $3, @1.first_line, @1.first_column);
+          $$ = new_index($1, $3, @1.first_line, @1.first_column, false);
           TQSET_NODE_LOC($$, @$);
       }
 ;
@@ -362,24 +368,30 @@ expr:
 lvalue:
       IDENTIFIER                    {$$ = $1;}
     | STAR IDENTIFIER %prec UDEREF
-      {
+    {
         $$ = new_unop($2, @$.first_line, @$.first_column, OP_DEREF);
         TQSET_NODE_LOC($$, @$);
-      }			
-
+    }
+    | IDENTIFIER LSQUARE expr RSQUARE
+    {
+        $$ = new_index($1, $3, @$.first_line, @$.first_column, true);
+        TQSET_NODE_LOC($$, @$);
+    }
 ;
 
 assignment:
-    VAR MUT DATATYPES IDENTIFIER ASSIGN expr SEMICOLON
+    VAR MUT DATATYPES lvalue ASSIGN expr
         {
             $$ = new_assign($4, $6, $3, true, @1.first_line, @1.first_column, OP_ASSIGN);
-          TQSET_NODE_LOC($$, @$);
+            TQannotate_decl_list($$, $3, UNKNOWN, true);
+            TQSET_NODE_LOC($$, @$);
             // Note: $1 is VAR, $2 is MUT, $3 is DATATYPES, $4 is IDENTIFIER
         }
-    | VAR DATATYPES IDENTIFIER ASSIGN expr SEMICOLON
+    | VAR DATATYPES lvalue ASSIGN expr
         {
             $$ = new_assign($3, $5, $2, false, @1.first_line, @1.first_column, OP_ASSIGN);
-          TQSET_NODE_LOC($$, @$);
+            TQannotate_decl_list($$, $2, UNKNOWN, false);
+            TQSET_NODE_LOC($$, @$);
             // Note: $1 is VAR, $2 is DATATYPES, $3 is IDENTIFIER
         }
     | lvalue ASSIGN expr

@@ -52,6 +52,7 @@ const char *errc_msg(errc_t code) {
         case SEM_IMPORT_FILE_NOT_FOUND: return "import file not found";
         case SEM_INDEX_NOT_ARRAY: return "indexing non-array type";
         case SEM_INDEX_NOT_INT: return "array index must be an integer";
+        case SEM_INDEX_OUT_OF_BOUNDS: return "array index out of bounds";
         
         case INVAILD_UTF8_CHAR: return "invalid UTF-8 character literal";
         case RET_NOT_DECLARED: return "return value is not declared in a function";
@@ -68,6 +69,7 @@ const char *errc_msg(errc_t code) {
         case RT_ASSIGN_TARGET_NOT_VAR: return "assignment target must be a variable (runtime)";
         case RT_ASSIGN_UNSUPPORTED: return "unsupported assignment type (runtime)";
         case RT_DANGLING_PTR: return "dangling pointer (runtime)";
+        case RT_INDEX_OUT_OF_BOUNDS: return "index out of bounds (runtime)";
 
         default: return "?error?";
     }

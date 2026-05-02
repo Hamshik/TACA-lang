@@ -1,6 +1,6 @@
-#include "ast/ASTNode.h"
-#include "taca.hpp"
 #include "semantic/semantic.hpp"
+#include "taca.hpp"
+
 
 #include <float.h>
 #include <limits.h>
@@ -48,7 +48,8 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
 
   case AST_NUM:
     /* Keep unknown here; we decide during declaration binding. */
-    if(n->datatype == UNKNOWN) n->datatype = type;
+    if(n->datatype == UNKNOWN && is_numeric(type)) n->datatype = type;
+
     return n->datatype;
 
   case AST_STR:
@@ -60,9 +61,9 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
   case AST_VAR:{
     if (n->datatype == UNKNOWN)
       n->datatype = TQsemantic_lookup(n->var);
-    if (n->datatype == PTR && n->ptr_to == UNKNOWN)
-      n->ptr_to = TQsemantic_lookup_ptr_to(n->var);
-    exitcode_t exit_code = TQsemantic_exists(n->var, n->datatype, n->ptr_to);
+    if ((n->datatype == PTR || n->datatype == LIST) && n->sub_type == UNKNOWN)
+      n->sub_type = TQsemantic_lookup_sub_type(n->var);
+    exitcode_t exit_code = TQsemantic_exists(n->var, n->datatype, n->sub_type);
     switch (exit_code) {
     case NOT_DECLARED:
       panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->var);

@@ -8,7 +8,7 @@
 
 using namespace llvm;
 
-llvm::Value *to_i64(llvm::Value *v, IRBuilder<> &b) {
+Value *to_i64(Value *v, IRBuilder<> &b) {
   auto *i64 = llvm::Type::getInt64Ty(b.getContext());
 
   if (v->getType()->isIntegerTy())
@@ -28,16 +28,16 @@ Function *get_printf(Module &m, LLVMContext &ctx) {
   return Function::Create(ft, Function::ExternalLinkage, "printf", m);
 }
 
-llvm::Value *emit_print_like(const char *fmt, llvm::Value *v, LLVMContext &ctx,
+Value *emit_print_like(const char *fmt, Value *v, LLVMContext &ctx,
                              IRBuilder<> &b) {
   Module *m = b.GetInsertBlock()->getModule();
   Function *printfFn = get_printf(*m, ctx);
-  llvm::Value *fmtConst = b.CreateGlobalString(fmt, "fmt");
-  std::vector<llvm::Value *> argv{fmtConst, v};
+  Value *fmtConst = b.CreateGlobalString(fmt, "fmt");
+  std::vector<Value *> argv{fmtConst, v};
   return b.CreateCall(printfFn, argv);
 }
 
-llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
+Value *emit_println(ASTNode_t *argNode, Value *argV,
                           LLVMContext &ctx, IRBuilder<> &b) {
 
   Module *m = b.GetInsertBlock()->getModule();
@@ -52,7 +52,7 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
     if (argV->getType() != i8ptr)
       argV = b.CreateBitCast(argV, i8ptr);
 
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%s\n");
+    Value *fmt = b.CreateGlobalStringPtr("%s\n");
     return b.CreateCall(printfFn, {fmt, argV});
   }
 
@@ -75,7 +75,7 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
     Value *ptr1 = b.CreateGEP(Type::getInt8Ty(ctx), buf, one);
     b.CreateStore(ConstantInt::get(Type::getInt8Ty(ctx), 0), ptr1);
 
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%s\n");
+    Value *fmt = b.CreateGlobalStringPtr("%s\n");
     return b.CreateCall(printfFn, {fmt, buf});
   }
 
@@ -83,12 +83,12 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
   case BOOL: {
     Module *m = b.GetInsertBlock()->getModule();
 
-    llvm::Value *cond = argV;
+    Value *cond = argV;
 
-    llvm::Value *trueStr = b.CreateGlobalStringPtr("true\n");
-    llvm::Value *falseStr = b.CreateGlobalStringPtr("false\n");
+    Value *trueStr = b.CreateGlobalStringPtr("true\n");
+    Value *falseStr = b.CreateGlobalStringPtr("false\n");
 
-    llvm::Value *selected = b.CreateSelect(cond, trueStr, falseStr);
+    Value *selected = b.CreateSelect(cond, trueStr, falseStr);
 
     return b.CreateCall(get_printf(*m, ctx), {selected});
   }
@@ -97,11 +97,11 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
   case F32:
   case F64:
   case F128: {
-    llvm::Value *d = (argNode->datatype == F32)
+    Value *d = (argNode->datatype == F32)
                          ? b.CreateFPExt(argV, Type::getDoubleTy(ctx))
                          : argV;
 
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%f\n");
+    Value *fmt = b.CreateGlobalStringPtr("%f\n");
     return b.CreateCall(printfFn, {fmt, d});
   }
 
@@ -109,18 +109,18 @@ llvm::Value *emit_println(ASTNode_t *argNode, llvm::Value *argV,
   default:
     if (argV->getType()->isPointerTy()) {
       // treat as string fallback
-      llvm::Value *fmt = b.CreateGlobalStringPtr("%s\n");
+      Value *fmt = b.CreateGlobalStringPtr("%s\n");
       return b.CreateCall(printfFn, {fmt, argV});
     }
 
-    llvm::Value *i = b.CreateSExtOrBitCast(argV, Type::getInt64Ty(ctx));
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%lld\n");
+    Value *i = b.CreateSExtOrBitCast(argV, Type::getInt64Ty(ctx));
+    Value *fmt = b.CreateGlobalStringPtr("%lld\n");
 
     return b.CreateCall(printfFn, {fmt, i});
   }
 }
 
-llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
+Value *emit_print(ASTNode_t *argNode, Value *argV, LLVMContext &ctx,
                         IRBuilder<> &b) {
 
   Module *m = b.GetInsertBlock()->getModule();
@@ -135,7 +135,7 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
     if (argV->getType() != i8ptr)
       argV = b.CreateBitCast(argV, i8ptr);
 
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%s\n");
+    Value *fmt = b.CreateGlobalStringPtr("%s\n");
     return b.CreateCall(printfFn, {fmt, argV});
   }
 
@@ -161,7 +161,7 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
     Value *ptr1 = b.CreateGEP(Type::getInt8Ty(ctx), buf, one);
     b.CreateStore(ConstantInt::get(Type::getInt8Ty(ctx), 0), ptr1);
 
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%s");
+    Value *fmt = b.CreateGlobalStringPtr("%s");
     return b.CreateCall(printfFn, {fmt, buf});
   }
 
@@ -169,12 +169,12 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
   case BOOL: {
     Module *m = b.GetInsertBlock()->getModule();
 
-    llvm::Value *cond = argV;
+    Value *cond = argV;
 
-    llvm::Value *trueStr = b.CreateGlobalStringPtr("true");
-    llvm::Value *falseStr = b.CreateGlobalStringPtr("false");
+    Value *trueStr = b.CreateGlobalStringPtr("true");
+    Value *falseStr = b.CreateGlobalStringPtr("false");
 
-    llvm::Value *selected = b.CreateSelect(cond, trueStr, falseStr);
+    Value *selected = b.CreateSelect(cond, trueStr, falseStr);
 
     return b.CreateCall(get_printf(*m, ctx), {selected});
   }
@@ -183,11 +183,11 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
   case F32:
   case F64:
   case F128: {
-    llvm::Value *d = (argNode->datatype == F32)
+    Value *d = (argNode->datatype == F32)
                          ? b.CreateFPExt(argV, Type::getDoubleTy(ctx))
                          : argV;
 
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%f\n");
+    Value *fmt = b.CreateGlobalStringPtr("%f\n");
     return b.CreateCall(printfFn, {fmt, d});
   }
 
@@ -195,12 +195,12 @@ llvm::Value *emit_print(ASTNode_t *argNode, llvm::Value *argV, LLVMContext &ctx,
   default: {
     if (argV->getType()->isPointerTy()) {
       // treat as string fallback
-      llvm::Value *fmt = b.CreateGlobalStringPtr("%s");
+      Value *fmt = b.CreateGlobalStringPtr("%s");
       return b.CreateCall(printfFn, {fmt, argV});
     }
 
-    llvm::Value *i = b.CreateSExtOrBitCast(argV, Type::getInt64Ty(ctx));
-    llvm::Value *fmt = b.CreateGlobalStringPtr("%lld");
+    Value *i = b.CreateSExtOrBitCast(argV, Type::getInt64Ty(ctx));
+    Value *fmt = b.CreateGlobalStringPtr("%lld");
 
     return b.CreateCall(printfFn, {fmt, i});
   }

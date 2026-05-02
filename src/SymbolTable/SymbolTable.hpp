@@ -14,7 +14,7 @@ extern int g_in_fn;
 
 typedef struct symboltable{
     DataTypes_t type;
-    DataTypes_t ptr_to; /* for PTR only */
+    DataTypes_t sub_type; /* for PTR only */
     const char* name;
     UT_hash_handle hh;
     DataTypes_t max_type; /* for type inference: has this symbol been assigned a value with a known type yet? */
@@ -80,14 +80,14 @@ ASTNode_t *  TQruntime_fn_lookup(const char *name);
 void TQruntime_fn_clear(void);
 
 DataTypes_t TQsemantic_lookup(const char *name);
-DataTypes_t TQsemantic_lookup_ptr_to(const char *name);
+DataTypes_t TQsemantic_lookup_sub_type(const char *name);
 
 #ifdef __cplusplus
-bool TQsemantic_declare(const char *name, DataTypes_t type, DataTypes_t ptr_to, bool is_mutable, bool is_list = false);
+bool TQsemantic_declare(const char *name, DataTypes_t type, DataTypes_t sub_type, bool is_mutable);
 #endif
 
-exitcode_t TQsemantic_exists(const char *name, DataTypes_t type, DataTypes_t ptr_to);
-exitcode_t TQsemantic_assign_check(const char *name, DataTypes_t rhs_type, DataTypes_t rhs_ptr_to);
+exitcode_t TQsemantic_exists(const char *name, DataTypes_t type, DataTypes_t sub_type);
+exitcode_t TQsemantic_assign_check(const char *name, DataTypes_t rhs_type, DataTypes_t rhs_sub_type);
 bool TQsemantic_is_mutable(const char *name);
 void TQsemantic_scope_push(void);
 void TQsemantic_scope_pop(void);

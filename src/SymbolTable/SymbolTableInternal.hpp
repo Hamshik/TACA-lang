@@ -5,12 +5,11 @@
 
 struct SemanticSymbolRecord {
   DataTypes_t type = UNKNOWN;
-  DataTypes_t ptr_to = UNKNOWN;
+  DataTypes_t sub_type = UNKNOWN;
   DataTypes_t max_type = UNKNOWN;
   DataTypes_t last_maxed_type = UNKNOWN;
   bool is_mutable = false;
   bool is_used = false;
-  bool is_list = false;
 };
 
 struct SemanticScopeRecord {
@@ -42,10 +41,10 @@ void fn_clear();
 namespace  TQ::semantic_symbol_table {
 
 DataTypes_t lookup(const char *name);
-DataTypes_t lookup_ptr_to(const char *name);
-bool declare(const char *name, DataTypes_t type, DataTypes_t ptr_to, bool is_mutable, bool is_list = false);
-exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t ptr_to);
-exitcode_t assign_check(const char *name, DataTypes_t rhs_type, DataTypes_t rhs_ptr_to);
+DataTypes_t lookup_sub_type(const char *name);
+bool declare(const char *name, DataTypes_t type, DataTypes_t sub_type, bool is_mutable);
+exitcode_t exists(const char *name, DataTypes_t type, DataTypes_t sub_type);
+exitcode_t assign_check(const char *name, DataTypes_t rhs_type, DataTypes_t rhs_sub_type);
 bool is_mutable(const char *name);
 void scope_push();
 void scope_pop();

@@ -17,7 +17,7 @@ DataTypes_t handle_fn(ASTNode_t *n) {
   for (int i = 0; i < n->fn_def.param_count; i++) {
     // params are mutable locals
     if (!  TQsemantic_declare(n->fn_def.params[i].name, n->fn_def.params[i].type,
-                             n->fn_def.params[i].ptr_to, true))
+                             n->fn_def.params[i].sub_type, true))
       panic(&file, n->line, n->col, n->pos, SEM_DUP_PARAM,
             n->fn_def.params[i].name);
   }
@@ -63,14 +63,14 @@ DataTypes_t call(ASTNode_t *n) {
     ASTNode_t *cur = arg ? (arg->kind == AST_SEQ ? arg->seq.a : arg) : NULL;
 
     DataTypes_t want = f ? f->params[i].type : stds->params[i];
-    DataTypes_t want_ptr_to = f ? f->params[i].ptr_to : UNKNOWN;
+    DataTypes_t want_sub_type = f ? f->params[i].sub_type : UNKNOWN;
     if (is_numeric(want))
       force_numeric_type(cur, want);
     DataTypes_t at = check_expr(cur);
     if (want != UNKNOWN && at != want)
       panic(&file, n->line, n->col, n->pos, SEM_ARG_TYPE_MISMATCH,
             n->call.name);
-    if (want == PTR && cur && cur->ptr_to != want_ptr_to)
+    if (want == PTR && cur && cur->sub_type != want_sub_type)
       panic(&file, n->line, n->col, n->pos, SEM_ARG_TYPE_MISMATCH,
             n->call.name);
 

@@ -1,4 +1,5 @@
 #include "SymbolTableInternal.hpp"
+#include "ast/nodes.h"
 
 #include <string>
 #include <unordered_map>
@@ -21,7 +22,7 @@ void reset_runtime_value(TypedValue &value) {
 void store_runtime_value(TypedValue &slot, DataTypes_t datatype,
                          const  TQValue &value) {
   reset_runtime_value(slot);
- TQValue fresh{};
+  TQValue fresh{};
   assign_value(datatype, &fresh, value);
   slot.type = datatype;
   slot.val = fresh;

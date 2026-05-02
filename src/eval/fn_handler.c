@@ -1,5 +1,4 @@
 #include "taca.h"
-#include "SymbolTable/SymbolTable.hpp"
 
 TypedValue eval_call(ASTNode_t *node, bool g_returning, TypedValue g_return_value) {
   ASTNode_t *fn = TQruntime_fn_lookup(node->call.name);

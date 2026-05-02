@@ -1,4 +1,3 @@
-#include "eval.h"
 #include "taca.h"
 
 TypedValue eval_binop(ASTNode_t *node, TypedValue v) {

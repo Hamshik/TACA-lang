@@ -15,11 +15,11 @@ Function *get_exit(Module &mod, LLVMContext &ctx) {
   return exitFn;
 }
 
-llvm::Value *get_exit(Module *m,LLVMContext &ctx ,argvec args, IRBuilder<> &b){
+Value *get_exit(Module *m,LLVMContext &ctx ,argvec args, IRBuilder<> &b){
     Function *callee = m->getFunction("exit");
 
     // ensure exactly 1 argument
-    llvm::Value *exitCode =
+    Value *exitCode =
         args.empty() ? ConstantInt::get(Type::getInt32Ty(ctx), 0) : args[0];
 
     // cast to i32 if needed

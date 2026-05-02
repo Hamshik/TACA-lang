@@ -100,12 +100,14 @@ Type *ir_type(DataTypes_t t, LLVMContext &ctx) {
     return llvm::PointerType::getUnqual(llvm::Type::getInt32Ty(ctx));
   case CHARACTER:
     return Type::getInt32Ty(ctx);
+  case UNKNOWN:
   default:
-    return Type::getVoidTy(ctx); /* fallback */
+    printf("Warning Unsupported type for codegen in ir_type\n");
+    return NULL; /* fallback */
   }
 }
 
-llvm::Value *emit_number(ASTNode_t *n, LLVMContext &ctx) {
+Value *emit_number(ASTNode_t *n, LLVMContext &ctx) {
   switch (n->datatype) {
   case I8:
     return ConstantInt::get(Type::getInt8Ty(ctx),
@@ -199,11 +201,11 @@ bool blockTerminated(IRBuilder<> &b) {
   return b.GetInsertBlock()->getTerminator() != nullptr;
 }
 
-llvm::Value *emit_if(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+Value *emit_if(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                      IRBuilder<> &entryBuilder, LocalMap &locals) {
 
   // 1. Emit condition
-  llvm::Value *condV = emit_expr(n->ifnode.cond, ctx, b, entryBuilder, locals);
+  Value *condV = emit_expr(n->ifnode.cond, ctx, b, entryBuilder, locals);
   if (!condV)
     return nullptr;
 

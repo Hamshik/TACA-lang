@@ -4,11 +4,11 @@
 
 #ifdef __cplusplus
 
-#include <llvm-22/llvm/IR/DerivedTypes.h>
 #include <stdbool.h>
 #include "taca.hpp"
+
 extern "C" {
-#endif
+    #endif
 
 
 void semantic_check(ASTNode_t *root);

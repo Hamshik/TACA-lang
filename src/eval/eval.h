@@ -48,6 +48,7 @@
 #ifndef EVAL_H
 #define EVAL_H
 #include "taca.h"
+#include "SymbolTable/SymbolTable.hpp"
 
 #include <math.h>
 #include <stdbool.h>

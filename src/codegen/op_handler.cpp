@@ -1,9 +1,9 @@
 #include "taca.hpp"
 
-llvm::Value *emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+Value *emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                         IRBuilder<> &entryBuilder, LocalMap &locals) {
-  llvm::Value *L = emit_expr(n->bin.left, ctx, b, entryBuilder, locals);
-  llvm::Value *R = emit_expr(n->bin.right, ctx, b, entryBuilder, locals);
+  Value *L = emit_expr(n->bin.left, ctx, b, entryBuilder, locals);
+  Value *R = emit_expr(n->bin.right, ctx, b, entryBuilder, locals);
   if (!L || !R)
     return nullptr;
 
@@ -115,9 +115,9 @@ llvm::Value *emit_binop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
   }
 }
 
-llvm::Value *emit_unop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+Value *emit_unop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                        IRBuilder<> &entryBuilder, LocalMap &locals) {
-  llvm::Value *opnd = emit_expr(n->unop.operand, ctx, b, entryBuilder, locals);
+  Value *opnd = emit_expr(n->unop.operand, ctx, b, entryBuilder, locals);
   if (!opnd)
     return nullptr;
 
@@ -131,15 +131,63 @@ llvm::Value *emit_unop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
   }
 }
 
-llvm::Value *emit_assing(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+Value *emit_assing(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                          IRBuilder<> &entryBuilder, LocalMap &locals) {
-
-  std::string name =
-      n->assign.lhs && n->assign.lhs->var ? n->assign.lhs->var : "";
-
   DataTypes_t t = n->datatype != UNKNOWN
                       ? n->datatype
                       : (n->assign.lhs ? n->assign.lhs->datatype : UNKNOWN);
+
+  Value *rhs = emit_expr(n->assign.rhs, ctx, b, entryBuilder, locals);
+  if (!rhs)
+    return nullptr;
+
+  if (n->assign.lhs && n->assign.lhs->kind == AST_INDEX) {
+    Value *elementAddr =
+        generateListElementPtr(n->assign.lhs, ctx, b, entryBuilder, locals);
+    if (!elementAddr)
+      return nullptr;
+
+    Type *elemTy = ir_type(t, ctx);
+    if (!elemTy)
+      return nullptr;
+
+    Value *lhsVal = b.CreateLoad(elemTy, elementAddr, "list_elem");
+    Value *result = nullptr;
+
+    switch (n->assign.op) {
+    case OP_ASSIGN:
+      result = rhs;
+      break;
+    case OP_PLUS_ASSIGN:
+      result = is_float_dtype(t) ? b.CreateFAdd(lhsVal, rhs) : b.CreateAdd(lhsVal, rhs);
+      break;
+    case OP_MINUS_ASSIGN:
+      result = is_float_dtype(t) ? b.CreateFSub(lhsVal, rhs) : b.CreateSub(lhsVal, rhs);
+      break;
+    case OP_MUL_ASSIGN:
+      result = is_float_dtype(t) ? b.CreateFMul(lhsVal, rhs) : b.CreateMul(lhsVal, rhs);
+      break;
+    case OP_DIV_ASSIGN:
+      if (is_float_dtype(t))
+        result = b.CreateFDiv(lhsVal, rhs);
+      else
+        result = is_unsigned_dtype(t) ? b.CreateUDiv(lhsVal, rhs)
+                                      : b.CreateSDiv(lhsVal, rhs);
+      break;
+    default:
+      result = rhs;
+      break;
+    }
+
+    if (t == STRINGS)
+      result = to_i8_ptr(result, b);
+
+    b.CreateStore(result, elementAddr);
+    return result;
+  }
+
+  std::string name =
+      n->assign.lhs && n->assign.lhs->var ? n->assign.lhs->var : "";
 
   Module *m = b.GetInsertBlock()->getModule();
 
@@ -166,9 +214,6 @@ llvm::Value *emit_assing(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
   };
 
   Value *lhsVal = alloca ? loadVar(alloca) : loadVar(gv);
-
-  Value *rhs = emit_expr(n->assign.rhs, ctx, b, entryBuilder, locals);
-  if (!rhs) return nullptr;
 
   Value *result = nullptr;
 

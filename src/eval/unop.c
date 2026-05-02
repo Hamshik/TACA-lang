@@ -1,6 +1,4 @@
-#include "eval.h"
 #include "taca.h"
-#include "SymbolTable/SymbolTable.hpp"
 
 TypedValue eval_unop(ASTNode_t *node) {
   if (node->unop.op == OP_ADDR) {

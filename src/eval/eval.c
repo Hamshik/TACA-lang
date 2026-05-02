@@ -1,8 +1,4 @@
 #include "taca.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "SymbolTable/SymbolTable.hpp"
 
 extern file_t file;
 static int g_returning = 0;
@@ -86,7 +82,7 @@ TypedValue ast_eval(ASTNode_t *node) {
     return ast_eval(node->seq.b);
   }
 
-  case NODE_IF:
+  case NODE_IF:{
     if (ast_eval(node->ifnode.cond).val.bval) {
       TypedValue r = ast_eval(node->ifnode.then_branch);
       if (g_returning)
@@ -100,6 +96,7 @@ TypedValue ast_eval(ASTNode_t *node) {
       return r;
     }
     return (TypedValue){0};
+  }
 
   case NODE_FOR:
     return eval_for(node, g_returning, g_return_value);
@@ -148,9 +145,11 @@ TypedValue ast_eval(ASTNode_t *node) {
   }
 
   case AST_LIST: {
-    v.type = node->datatype;
-    v.val.raw = (void *)node->list.elements;
-    set_var_current(node->list.target->var, &v.val, node->datatype);
+    v = (TypedValue){
+      .val = (TQValue){ .raw = (node->list.elements) },
+      .type = node->datatype
+    };
+    set_var_current(node->list.target->var, &v.val, v.type);
     return v;
   }
 

@@ -50,7 +50,7 @@ void emit_function(ASTNode_t *fn_ast, Module &mod, LLVMContext &ctx) {
   }
 }
 
-llvm::Value *emit_call(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+Value *emit_call(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
                        IRBuilder<> &entryBuilder, LocalMap &locals) {
 
   argvec args;
@@ -60,7 +60,7 @@ llvm::Value *emit_call(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
     ASTNode_t *cur = (it->kind == AST_SEQ) ? it->seq.a : it;
 
     if (cur) {
-      llvm::Value *v = emit_expr(cur, ctx, b, entryBuilder, locals);
+      Value *v = emit_expr(cur, ctx, b, entryBuilder, locals);
       if (!v)
         v = ConstantInt::get(Type::getInt32Ty(ctx), 0);
       args.push_back(v);

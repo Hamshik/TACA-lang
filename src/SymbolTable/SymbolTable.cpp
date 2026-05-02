@@ -57,23 +57,23 @@ DataTypes_t TQsemantic_lookup(const char *name) {
   return  TQ::semantic_symbol_table::lookup(name);
 }
 
-DataTypes_t TQsemantic_lookup_ptr_to(const char *name) {
-  return  TQ::semantic_symbol_table::lookup_ptr_to(name);
+DataTypes_t TQsemantic_lookup_sub_type(const char *name) {
+  return  TQ::semantic_symbol_table::lookup_sub_type(name);
 }
 
 bool TQsemantic_declare(const char *name, DataTypes_t type,
-                         DataTypes_t ptr_to, bool is_mutable, bool is_list) {
-  return  TQ::semantic_symbol_table::declare(name, type, ptr_to, is_mutable, is_list);
+                         DataTypes_t sub_type, bool is_mutable) {
+  return  TQ::semantic_symbol_table::declare(name, type, sub_type, is_mutable);
 }
 
 exitcode_t TQsemantic_exists(const char *name, DataTypes_t type,
-                              DataTypes_t ptr_to) {
-  return  TQ::semantic_symbol_table::exists(name, type, ptr_to);
+                              DataTypes_t sub_type) {
+  return  TQ::semantic_symbol_table::exists(name, type, sub_type);
 }
 
 exitcode_t TQsemantic_assign_check(const char *name, DataTypes_t rhs_type,
-                                    DataTypes_t rhs_ptr_to) {
-  return  TQ::semantic_symbol_table::assign_check(name, rhs_type, rhs_ptr_to);
+                                    DataTypes_t rhs_sub_type) {
+  return  TQ::semantic_symbol_table::assign_check(name, rhs_type, rhs_sub_type);
 }
 
 bool TQsemantic_is_mutable(const char *name) {

@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 9 "src/parser/parser.y"
+#line 16 "src/parser/parser.y"
 
     #include <stdio.h>
     #include <stdlib.h>
@@ -152,13 +152,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 80 "src/parser/parser.y"
+#line 87 "src/parser/parser.y"
 
     ASTNode_t *node;
     DataTypes_t datatype;
     struct {
         DataTypes_t type;
-        DataTypes_t ptr_to;
+        DataTypes_t sub_type;
     } typespec;
     struct {
         Param_t *params;

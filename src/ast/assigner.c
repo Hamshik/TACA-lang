@@ -2,6 +2,73 @@
 
 extern file_t file;
 
+static char *dup_i128(__int128 value) {
+    char buf[64];
+    size_t idx = sizeof(buf) - 1;
+    unsigned __int128 mag;
+    bool neg = value < 0;
+    buf[idx] = '\0';
+    if (neg) {
+        mag = (unsigned __int128)(-(value + 1)) + 1;
+    } else {
+        mag = (unsigned __int128)value;
+    }
+    do {
+        buf[--idx] = (char)('0' + (mag % 10));
+        mag /= 10;
+    } while (mag > 0);
+    if (neg)
+        buf[--idx] = '-';
+    return strdup(&buf[idx]);
+}
+
+static char *dup_u128(unsigned __int128 value) {
+    char buf[64];
+    size_t idx = sizeof(buf) - 1;
+    buf[idx] = '\0';
+    do {
+        buf[--idx] = (char)('0' + (value % 10));
+        value /= 10;
+    } while (value > 0);
+    return strdup(&buf[idx]);
+}
+
+static char *dup_value_literal(DataTypes_t dt, TQValue value) {
+    char buf[128];
+
+    switch (dt) {
+        case I8:  snprintf(buf, sizeof(buf), "%d", (int)value.i8); return strdup(buf);
+        case I16: snprintf(buf, sizeof(buf), "%d", (int)value.i16); return strdup(buf);
+        case I32: snprintf(buf, sizeof(buf), "%d", value.i32); return strdup(buf);
+        case I64: snprintf(buf, sizeof(buf), "%ld", value.i64); return strdup(buf);
+        case I128: return dup_i128(value.i128);
+
+        case U8:  snprintf(buf, sizeof(buf), "%u", (unsigned)value.u8); return strdup(buf);
+        case U16: snprintf(buf, sizeof(buf), "%u", (unsigned)value.u16); return strdup(buf);
+        case U32: snprintf(buf, sizeof(buf), "%u", value.u32); return strdup(buf);
+        case U64: snprintf(buf, sizeof(buf), "%llu", (unsigned long long)value.u64); return strdup(buf);
+        case U128: return dup_u128(value.u128);
+
+        case F32:  snprintf(buf, sizeof(buf), "%.9g", value.f32); return strdup(buf);
+        case F64:  snprintf(buf, sizeof(buf), "%.17g", value.f64); return strdup(buf);
+        case F128: snprintf(buf, sizeof(buf), "%.21Lg", value.f128); return strdup(buf);
+        case UF32: snprintf(buf, sizeof(buf), "%.9g", value.f32); return strdup(buf);
+        case UF64: snprintf(buf, sizeof(buf), "%.17g", value.f64); return strdup(buf);
+        case UF128: snprintf(buf, sizeof(buf), "%.21Lg", value.f128); return strdup(buf);
+
+        case BOOL:
+            return strdup(value.bval ? "true" : "false");
+        case STRINGS:
+            return strdup(value.str ? value.str : "");
+        case CHARACTER:
+            if (!value.chars)
+                return strdup("");
+            return strdup(value.chars);
+        default:
+            return NULL;
+    }
+}
+
 void assign_value(DataTypes_t dt,  TQValue *dst,  TQValue src) {
     switch (dt) {
         case I8:     dst->i8 = src.i8; break;
@@ -9,20 +76,24 @@ void assign_value(DataTypes_t dt,  TQValue *dst,  TQValue src) {
         case I32:    dst->i32 = src.i32; break;
         case I64:    dst->i64 = src.i64; break;
         case I128:   dst->i128 = src.i128; break;
+
         case U8:     dst->u8 = src.u8; break;
         case U16:    dst->u16 = src.u16; break;
         case U32:    dst->u32 = src.u32; break;
         case U64:    dst->u64 = src.u64; break;
         case U128:   dst->u128 = src.u128; break;
+
         case F32:    dst->f32 = src.f32; break;
         case F64:    dst->f64 = src.f64; break;
         case F128:   dst->f128 = src.f128; break;
         case UF32:   dst->f32 = src.f32; break;
         case UF64:   dst->f64 = src.f64; break;
         case UF128:  dst->f128 = src.f128; break;
+
         case BOOL:   dst->bval = src.bval; break;
+
         case STRINGS:
-            if(dst != NULL && dst->str) free(dst->str);
+            free(dst->str);
             dst->str = strdup(src.str);
             break;
         case CHARACTER:
@@ -36,13 +107,19 @@ void assign_value(DataTypes_t dt,  TQValue *dst,  TQValue src) {
             if (src.ptr.name && !dst->ptr.name) { perror("strdup"); exit(1); }
             break;
         }
+
+        case LIST: {
+            dst->raw = src.raw;
+            break;
+        }
+
         default:
             fprintf(stderr, "Invalid assignment type\n");
             exit(1);
     }
 }
 
- TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
+TQValue eval_assign(ASTNode_t *lhs, ASTNode_t *rhs, OP_kind_t op, DataTypes_t datatypes , 
     int line, int col, int pos) {
     TypedValue rt0 = ast_eval(rhs);
     TypedValue rt = TQcast_typed(rt0, datatypes, line, col, pos);
@@ -129,18 +206,50 @@ void assign_value(DataTypes_t dt,  TQValue *dst,  TQValue src) {
     }
 
     if (lhs->kind == AST_INDEX) {
-        // Evaluate the list
+        // 1. Evaluate the list container to get the base pointer
         TypedValue target = ast_eval(lhs->index.target);
+        // 2. Evaluate the index (e.g., list[2] -> 2)
         int idx = ast_eval(lhs->index.index).val.i32;
 
+        // 3. Navigate the linked list/sequence to the correct index
         ASTNode_t *curr = (ASTNode_t*)target.val.raw;
         for(int i = 0; i < idx && curr; i++) {
-            curr = curr->seq.b; // Or however your list nodes are linked
+            if (curr->kind == AST_SEQ) {
+                curr = curr->seq.b;
+            } else {
+                // If we reach a non-sequence node before finishing indices, it's out of bounds
+                curr = NULL; 
+            }
         }
-        
-        return ast_eval(curr).val;
 
+        if (!curr) {
+            panic(&file, line, col, pos, RT_INDEX_OUT_OF_BOUNDS, NULL);
+            return (TQValue){0};
+        }
+
+        // 4. Get the actual node to modify
+        // If curr is a SEQ, the value is in seq.a. If not, it's the node itself.
+        ASTNode_t *target_node = (curr->kind == AST_SEQ) ? curr->seq.a : curr;
+
+        // 5. UPDATE the value (The "Store" part)
+        // This assumes target_node is a literal/data node like AST_NUM
+        if (target_node->kind == AST_NUM || target_node->kind == AST_STR ||
+            target_node->kind == AST_CHAR || target_node->kind == AST_BOOL) {
+            char *new_raw = dup_value_literal(datatypes, r);
+            if (!new_raw) {
+                panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "unsupported list element update type");
+                return (TQValue){0};
+            }
+            free(target_node->literal.raw);
+            target_node->literal.raw = new_raw;
+            target_node->datatype = datatypes;
+        } else {
+            panic(&file, line, col, pos, RT_ASSIGN_UNSUPPORTED, "Complex list element update not supported");
+        }
+
+        return r; // Return the assigned value
     }
+
 
 
     panic(&file, line, col, pos, RT_ASSIGN_TARGET_NOT_VAR, NULL);

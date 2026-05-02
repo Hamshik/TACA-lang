@@ -1,7 +1,4 @@
 #include "taca.h"
-#include <math.h>
-#include <stdio.h>
-#include "SymbolTable/SymbolTable.hpp"
 
 TQValue default_step(DataTypes_t type) {
   TQValue step = {0};

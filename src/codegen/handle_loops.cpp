@@ -1,7 +1,7 @@
 #include "taca.hpp"
 
 
-llvm::Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals)
+Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals)
 {
     emit_expr(n->fornode.init, ctx, b, entryBuilder, locals);
     ASTNode_t *initAssign = n->fornode.init;
@@ -11,11 +11,11 @@ llvm::Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBui
     DataTypes_t loopT = initAssign ? initAssign->datatype : I32;
     AllocaInst *varAlloca = get_or_create_alloca(varName, loopT, ctx, entryBuilder, locals);
 
-    llvm::Value *endV = emit_expr(n->fornode.end, ctx, b, entryBuilder, locals);
+    Value *endV = emit_expr(n->fornode.end, ctx, b, entryBuilder, locals);
     if (!endV)
         endV = ConstantInt::get(ir_type(loopT, ctx), 0);
 
-    llvm::Value *stepV = nullptr;
+    Value *stepV = nullptr;
     if (n->fornode.step)
         stepV = emit_expr(n->fornode.step, ctx, b, entryBuilder, locals);
     else
@@ -30,8 +30,8 @@ llvm::Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBui
 
     // cond
     b.SetInsertPoint(condBB);
-    llvm::Value *curV = b.CreateLoad(ir_type(loopT, ctx), varAlloca, varName);
-    llvm::Value *cmp = nullptr;
+    Value *curV = b.CreateLoad(ir_type(loopT, ctx), varAlloca, varName);
+    Value *cmp = nullptr;
     bool unsignedLoop = is_unsigned_dtype(loopT);
     // Heuristic: if step is constant and negative (for signed), use >=, else use <=
     bool stepNeg = false;
@@ -61,7 +61,7 @@ llvm::Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBui
     // step
     b.SetInsertPoint(stepBB);
     curV = b.CreateLoad(ir_type(loopT, ctx), varAlloca, varName + ".step");
-    llvm::Value *nextV = b.CreateAdd(curV, stepV);
+    Value *nextV = b.CreateAdd(curV, stepV);
     b.CreateStore(nextV, varAlloca);
     b.CreateBr(condBB);
 
@@ -70,7 +70,7 @@ llvm::Value *emit_forloops(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBui
     return nullptr;
 }
 
-llvm::Value* emit_whileloop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals){
+Value* emit_whileloop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals){
     Function *fn = b.GetInsertBlock()->getParent();
     BasicBlock *condBB = BasicBlock::Create(ctx, "while.cond", fn);
     BasicBlock *bodyBB = BasicBlock::Create(ctx, "while.body", fn);
@@ -78,7 +78,7 @@ llvm::Value* emit_whileloop(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBu
     b.CreateBr(condBB);
 
     b.SetInsertPoint(condBB);
-    llvm::Value *condV = emit_expr(n->whilenode.cond, ctx, b, entryBuilder, locals);
+    Value *condV = emit_expr(n->whilenode.cond, ctx, b, entryBuilder, locals);
     if (!condV)
         condV = ConstantInt::getTrue(ctx);
     b.CreateCondBr(condV, bodyBB, afterBB);

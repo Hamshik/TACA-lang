@@ -1,71 +1,97 @@
 #include "taca.hpp"
-#include "codegen/codegen.h"
-#include <llvm-22/llvm/IR/Value.h>
+#include <cstdio>
+#include <string>
 
 static size_t idx = 0;
+static size_t list = 0;
 
-llvm::Value* generateList(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals) {
-    // 1. Determine Type and Size
-    // For i32[] n->list.num is the count we calculated in the semantic pass
-    Type* elemType = ir_type(n->datatype, ctx);
-    ArrayType* arrayType = ArrayType::get(elemType, n->list.num);
+Value *generateList(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+                    IRBuilder<> &entryBuilder, LocalMap &locals) {
+  Type *elemType = ir_type(n->sub_type, ctx);
 
-    // 2. Allocate the array on the stack
-    AllocaInst* arrayPtr = entryBuilder.CreateAlloca(arrayType, nullptr, "list_tmp");
+  if (!elemType) {
+    printf("Warning: invalid element type for list codegen at line %d, col %d\n",
+           n->line, n->col);
+    return nullptr;
+  }
+  
+  ArrayType *arrayType = ArrayType::get(elemType, n->list.num);
 
-    // 3. Iterate through the AST_SEQ chain
-    ASTNode_t* curr = n->list.elements;
-    uint32_t index = 0;
+  // Allocate using entryBuilder (Top of function)
+  AllocaInst *arrayPtr =
+      entryBuilder.CreateAlloca(arrayType, nullptr, n->list.target->var);
 
-    while (curr) {
-        // Get the current expression (handle Seq or single element)
-        ASTNode_t* exprNode = (curr->kind == AST_SEQ) ? curr->seq.a : curr;
+  ASTNode_t *curr = n->list.elements;
+  uint32_t index = 0;
 
-        // Generate IR for the element (this handles things like 4+5 automatically)
-        llvm::Value* elementVal = emit_expr(exprNode, ctx, b, entryBuilder, locals);
+  while (curr) {
+    ASTNode_t *exprNode = (curr->kind == AST_SEQ) ? curr->seq.a : curr;
+    Value *elementVal = emit_expr(exprNode, ctx, b, entryBuilder, locals);
 
-        // 4. Calculate address: &array[index]
-        // Indices are {0, index} - 0 to dereference the pointer, index for the offset
-        std::vector<llvm::Value*> indices = {
-            entryBuilder.getInt32(0),
-            entryBuilder.getInt32(index++)
-        };
+    // Use "b" (Current Block), NOT entryBuilder for logic!
+    std::vector<Value *> indices = {b.getInt32(0), b.getInt32(index++)};
+    Value *elementAddr = b.CreateGEP(arrayType, arrayPtr, indices);
 
-        llvm::Value* elementAddr = entryBuilder.CreateGEP(arrayType, arrayPtr, indices);
+    b.CreateStore(elementVal, elementAddr);
 
-        // 5. Store the value
-        entryBuilder.CreateStore(elementVal, elementAddr);
+    if (curr->kind != AST_SEQ)
+      break;
+    curr = curr->seq.b;
+  }
 
-        // Move to next in chain
-        if (curr->kind != AST_SEQ) break;
-        curr = curr->seq.b;
-    }
+  // Map the variable name to our actual filled array
+  locals[n->list.target->var] = arrayPtr;
 
-    return arrayPtr; // Returns the pointer to the start of the array
+  return arrayPtr;
 }
 
-llvm::Value* generateListAccess(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b, IRBuilder<> &entryBuilder, LocalMap &locals) {
-    // 1. Get the base address of the array
-    llvm::Value* arrayPtr = emit_expr(n->index.target, ctx, b, entryBuilder, locals);
+Value *generateListElementPtr(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+                              IRBuilder<> &entryBuilder, LocalMap &locals) {
+  auto it = locals.find(n->index.target->var ? n->index.target->var : "");
 
-    // 2. Get the index value (e.g., the 'i' in list[i])
-    llvm::Value* indexVal = emit_expr(n->index.index, ctx, b, entryBuilder, locals);
+  if (it == locals.end()) {
+    printf("Warning: semaintic failed to catch 'the variable is not fond' "
+           "error for list access at line %d, col %d\n",
+           n->line, n->col);
+    return nullptr;
+  }
 
-    // 3. Determine the Element Type
-    // You need to pass the actual type of the data inside the array (e.g., i32)
-    llvm::Type* elementType = ir_type(n->index.target->ptr_to, ctx);
+  llvm::AllocaInst *arrayPtr = llvm::dyn_cast<llvm::AllocaInst>(it->second);
 
-    // 4. Create the GEP
-    // If arrayPtr is an Alloca of [N x i32], use {0, indexVal}
-    // If arrayPtr is a raw i32*, use just {indexVal}
-    std::vector<llvm::Value*> indices = {
-        b.getInt32(0), 
-        indexVal      
-    };
+  if (!arrayPtr) {
+    printf("Warning: semaintic failed to catch 'the variable is not an array: "
+           "arrayPtr' "
+           "error for list access at line %d, col %d\n",
+           n->line, n->col);
+    return nullptr;
+  }
 
-    // Explicitly pass elementType to CreateGEP
-    llvm::Value* elementAddr = b.CreateGEP(arrayPtr->getType()->getScalarType(), arrayPtr, indices);
-    
-    // 5. Load and return the value
-    return b.CreateLoad(elementType, elementAddr, "load_tmp" + idx++);
+  Value *indexVal = emit_expr(n->index.index, ctx, b, entryBuilder, locals);
+  if (!indexVal)
+    return nullptr;
+
+  llvm::Type *elementType = ir_type(n->index.target->sub_type, ctx);
+  if (!elementType) {
+    printf("Warning: invalid element type for list access at line %d, col %d\n",
+           n->line, n->col);
+    return nullptr;
+  }
+
+  std::vector<Value *> indices = {b.getInt32(0), indexVal};
+  (void)elementType;
+  return b.CreateGEP(arrayPtr->getAllocatedType(), arrayPtr, indices);
+}
+
+Value *generateListAccess(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b,
+                          IRBuilder<> &entryBuilder, LocalMap &locals) {
+  Value *elementAddr = generateListElementPtr(n, ctx, b, entryBuilder, locals);
+  if (!elementAddr)
+    return nullptr;
+
+  llvm::Type *elementType = ir_type(n->index.target->sub_type, ctx);
+  if (!elementType)
+    return nullptr;
+
+  return b.CreateLoad(elementType, elementAddr,
+                      "load_tmp" + std::to_string(idx++));
 }
