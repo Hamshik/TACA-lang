@@ -1,8 +1,9 @@
-#ifndef NUMERIC_TYPE_SPECIFIER_H
-#define NUMERIC_TYPE_SPECIFIER_H
+#pragma once
 
 #include <stdbool.h>
-#include "taca.h"
+#include "ast/ast_enum.h"
+
+struct ASTNode_t;
 
 bool is_i8(const char* raw_num);
 bool is_i16(const char* raw_num);
@@ -22,5 +23,3 @@ bool is_f128(const char* raw_num);
 
 DataTypes_t infer_smallest_numeric(const char *raw_num);
 bool has_max_numeric_type(const ASTNode_t *n);
-
-#endif

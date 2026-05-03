@@ -1,4 +1,7 @@
-#include "taca.hpp"
+#include "ast/nodes.h"
+#include "ast/ast_declarator.h"
+#include "semantic/semantic.hpp"
+#include "utils/error_handler/error.h"
 
 // 1. RESPONSIBILITY: Determine the memory location's type (LHS)
 static void resolve_target_type(ASTNode_t *n, DataTypes_t *lhs_t,
@@ -17,22 +20,22 @@ static void resolve_target_type(ASTNode_t *n, DataTypes_t *lhs_t,
   
   else if (lhs->kind == AST_UNOP && lhs->unop.op == OP_DEREF) {
     if (n->assign.is_declaration)
-      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR,
+      panic(&file, n->loc, SEM_ASSIGN_TARGET_NOT_VAR,
             "cannot declare through deref");
     *lhs_t = check_expr(lhs);
   }
   
   else if (lhs->kind == AST_INDEX) {
     if (n->assign.is_declaration)
-      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR,
+      panic(&file, n->loc, SEM_ASSIGN_TARGET_NOT_VAR,
             "cannot declare via index");
 
     if (check_expr(lhs->index.target) != LIST)
-      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->loc, SEM_ASSIGN_TYPE_MISMATCH,
             "indexing target is not a list");
 
     if (check_expr(lhs->index.index, I32) != I32)
-      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->loc, SEM_ASSIGN_TYPE_MISMATCH,
             "list index must be i32");
 
     lhs->index.islhs = true;
@@ -41,7 +44,7 @@ static void resolve_target_type(ASTNode_t *n, DataTypes_t *lhs_t,
   }
   
   else {
-    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
+    panic(&file, n->loc, SEM_ASSIGN_TARGET_NOT_VAR, NULL);
   }
 }
 
@@ -69,14 +72,14 @@ static void process_declaration(ASTNode_t *n, DataTypes_t *lhs_t,
   if (*lhs_t != UNKNOWN && rhs && rhs->kind == AST_NUM) {
     if (!literal_fits_type(rhs, *lhs_t) ||
         (is_signed_numeric(*rhs_t) && is_unsigned_numeric(*lhs_t)))
-      panic(&file, n->line, n->col, n->pos, SEM_NUMERIC_LITERAL_OVERFLOW,
+      panic(&file, n->loc, SEM_NUMERIC_LITERAL_OVERFLOW,
             n->assign.lhs->var);
     *rhs_t = rhs->datatype = *lhs_t;
   }
 
   if (!TQsemantic_declare(n->assign.lhs->var, *lhs_t, *lhs_sub,
                           n->assign.is_mutable))
-    panic(&file, n->line, n->col, n->pos, SEM_VAR_REDECL, n->assign.lhs->var);
+    panic(&file, n->loc, SEM_VAR_REDECL, n->assign.lhs->var);
 }
 
 // 3. RESPONSIBILITY: Final Type & Pointer Consistency
@@ -85,18 +88,18 @@ static void validate_assignment(ASTNode_t *n, DataTypes_t lhs_t,
   // Basic type mismatch (excluding numerics which have their own widening
   // logic)
   if (lhs_t != rhs_t && !is_numeric(lhs_t) && !is_numeric(rhs_t))
-    panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+    panic(&file, n->loc, SEM_ASSIGN_TYPE_MISMATCH,
           n->assign.lhs->var);
 
   // Pointer specific validation (sub-type matching)
   if (lhs_t == PTR) {
     if (rhs_t != PTR)
-      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->loc, SEM_ASSIGN_TYPE_MISMATCH,
             n->assign.lhs->var);
 
     DataTypes_t rhs_sub = n->assign.rhs->sub_type;
     if (lhs_sub != rhs_sub && !(is_numeric(lhs_sub) && is_numeric(rhs_sub)))
-      panic(&file, n->line, n->col, n->pos, SEM_ASSIGN_TYPE_MISMATCH,
+      panic(&file, n->loc, SEM_ASSIGN_TYPE_MISMATCH,
             n->assign.lhs->var);
   }
 }
@@ -117,7 +120,7 @@ DataTypes_t assign(ASTNode_t *n, DataTypes_t type) {
     process_declaration(n, &lhs_t, &rhs_t, &lhs_sub);
   } else {
     if (lhs_t == UNKNOWN)
-      panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->assign.lhs->var);
+      panic(&file, n->loc, SEM_VAR_UNDECL, n->assign.lhs->var);
 
     if (n->assign.lhs->kind == AST_VAR) {
       exitcode_t ac = TQsemantic_assign_check(n->assign.lhs->var, rhs_t,
@@ -126,7 +129,7 @@ DataTypes_t assign(ASTNode_t *n, DataTypes_t type) {
         errc err = (ac == NOT_DECLARED)    ? SEM_VAR_UNDECL
                    : (ac == TYPE_MISMATCH) ? SEM_ASSIGN_TYPE_MISMATCH
                                            : SEM_ASSIGN_IMMUTABLE;
-        panic(&file, n->line, n->col, n->pos, err, n->assign.lhs->var);
+        panic(&file, n->loc, err, n->assign.lhs->var);
       }
     }
   }

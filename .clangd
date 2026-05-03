@@ -2,7 +2,7 @@ If:
   PathMatch: .*\.c
   
 CompileFlags:
-  Add: [-Isrc]
+  Add: [-Iinclude, -Isrc]
 
 
   Remove:

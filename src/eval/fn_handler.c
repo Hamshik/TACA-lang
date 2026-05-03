@@ -1,4 +1,3 @@
-#include "taca.h"
 
 TypedValue eval_call(ASTNode_t *node, bool g_returning, TypedValue g_return_value) {
   ASTNode_t *fn = TQruntime_fn_lookup(node->call.name);
@@ -31,15 +30,15 @@ TypedValue eval_call(ASTNode_t *node, bool g_returning, TypedValue g_return_valu
 
   if (!fn) {
     bool ok = 0;
-    TypedValue out = TQstd_call(node->call.name, argv, argc, node->line, node->col, node->pos, &ok);
+    TypedValue out = TQstd_call(node->call.name, argv, argc, node->loc, &ok);
     free(argv);
     if (!ok)
-      panic(&file, node->line, node->col, node->pos, RT_CALL_UNDEF_FN, node->call.name);
+      panic(&file, node->loc, RT_CALL_UNDEF_FN, node->call.name);
     return out;
   }
 
   if (argc != fn->fn_def.param_count) {
-    panic(&file, node->line, node->col, node->pos, RT_ARGC_MISMATCH, node->call.name);
+    panic(&file, node->loc, RT_ARGC_MISMATCH, node->call.name);
     free(argv);
     return (TypedValue){0};
   }
@@ -47,7 +46,7 @@ TypedValue eval_call(ASTNode_t *node, bool g_returning, TypedValue g_return_valu
   // New call frame.
   TQruntime_env_push();
   for (int i = 0; i < fn->fn_def.param_count; i++) {
-    TypedValue casted = TQcast_typed(argv[i], fn->fn_def.params[i].type, node->line, node->col, node->pos);
+    TypedValue casted = TQcast_typed(argv[i], fn->fn_def.params[i].type, node->loc);
     TQValue vv = casted.val;
     TQruntime_env_set_current(fn->fn_def.params[i].name, &vv, fn->fn_def.params[i].type);
   }

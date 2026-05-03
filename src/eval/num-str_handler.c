@@ -1,4 +1,3 @@
-#include "taca.h"
 
 TypedValue handle_num(ASTNode_t *node, TypedValue v) {
   switch (node->datatype) {
@@ -18,8 +17,7 @@ TypedValue handle_num(ASTNode_t *node, TypedValue v) {
     int ok = 0;
     v.val.i128 = TQparse_i128(node->literal.raw, &ok);
     if (!ok) {
-      panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED,
-            NULL);
+      panic(&file, node->loc, RT_NUM_LITERAL_UNSUPPORTED, NULL);
       return (TypedValue){0};
     }
     break;
@@ -40,8 +38,7 @@ TypedValue handle_num(ASTNode_t *node, TypedValue v) {
     int ok = 0;
     v.val.u128 = TQparse_u128(node->literal.raw, &ok);
     if (!ok) {
-      panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED,
-            NULL);
+      panic(&file, node->loc, RT_NUM_LITERAL_UNSUPPORTED, NULL);
       return (TypedValue){0};
     }
     break;
@@ -65,8 +62,7 @@ TypedValue handle_num(ASTNode_t *node, TypedValue v) {
     v.val.f128 = strtold(node->literal.raw, NULL);
     break;
   default:
-    panic(&file, node->line, node->col, node->pos, RT_NUM_LITERAL_UNSUPPORTED,
-          NULL);
+    panic(&file, node->loc, RT_NUM_LITERAL_UNSUPPORTED, NULL);
     return (TypedValue){0};
   }
   v.type = node->datatype;

@@ -1,6 +1,10 @@
 #pragma once
-#include "taca.h"
-#include "ast_enum.h"
+
+#include <stdint.h>
+#include <stddef.h>
+#include "parser/location.h"
+#include "ast/ast_enum.h"
+#include "utils/uhash.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,7 +66,17 @@ typedef struct ASTNode {
     DataTypes_t datatype;
     DataTypes_t sub_type; /* Used as datatype of container(variable) if datatype is LIST/PTR */
     bool ismut;
-    size_t line,col, pos, end_pos; /* 0-based byte offset (start) */ /* 0-based byte offset (end) */ 
+    union {
+        TQLocation loc; /* canonical source span */
+        struct {
+            int line;
+            int col;
+            int last_line;
+            int last_column;
+            int pos;
+            int end_pos;
+        };
+    };
 
     union {
         // variables

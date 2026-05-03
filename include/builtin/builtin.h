@@ -21,11 +21,8 @@ TypedValue  TQstd_call(
     const char *name,
     const TypedValue *argv,
     int argc,
-    int call_line,
-    int call_col,
-    int call_pos,
+    TQLocation loc,
     bool *ok
 );
 
 #endif
-

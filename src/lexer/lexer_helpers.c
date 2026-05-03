@@ -1,4 +1,3 @@
-#include "taca.h"
 
 /* Bison %locations: Flex does not maintain columns for you.
    Track (line, column) ourselves and update it for every match,
@@ -20,7 +19,7 @@ void TQlexer_reset_loc(void) {
     TQlex_pos = 0;
 }
 
-void TQlexer_update_loc(YYLTYPE *loc, const char *text, int len) {
+void TQlexer_update_loc(TQLocation *loc, const char *text, int len) {
     if (!loc) return;
 
     loc->first_line = TQlex_line;

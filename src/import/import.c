@@ -1,4 +1,3 @@
-#include "taca.h"
 
 extern ASTNode_t *root;
 

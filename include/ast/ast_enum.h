@@ -1,11 +1,8 @@
-#ifndef AST_ENUM_H
-#define AST_ENUM_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "taca.h"
 
 typedef enum ASTKind {
     AST_NUM,
@@ -73,8 +70,6 @@ typedef enum OP_kind {
     OP_INC, OP_DEC,
     OP_ADDR, OP_DEREF
 } OP_kind_t;
-
-#endif
 
 #ifdef __cplusplus
 }

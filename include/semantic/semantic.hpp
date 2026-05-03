@@ -1,14 +1,15 @@
-#ifndef SEMANTIC_H
-#define SEMANTIC_H
-
-
-#ifdef __cplusplus
+#pragma once
 
 #include <stdbool.h>
-#include "taca.hpp"
+#include "ast/ast_enum.h"
+#include "utils/uhash.h"
 
+struct ASTNode_t;
+struct module;
+
+#ifdef __cplusplus
 extern "C" {
-    #endif
+#endif
 
 
 void semantic_check(ASTNode_t *root);

@@ -146,55 +146,53 @@ void env_set_current(const char *name,  TQValue *val, DataTypes_t datatype) {
   store_runtime_value(it->second.typed_value, datatype, *val);
 }
 
- TQValue env_get(const char *name, DataTypes_t datatype, int line, int col,
-                int pos) {
+ TQValue env_get(const char *name, DataTypes_t datatype, TQLocation loc) {
   RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
   if (!binding) {
-    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    panic(&file, loc, RT_VAR_NOT_DEFINED, name);
     return  TQValue{};
   }
 
   if (binding->typed_value.type != datatype &&
       !is_numeric(binding->typed_value.type) && !is_numeric(datatype)) {
-    panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+    panic(&file, loc, RT_VAR_TYPE_MISMATCH, name);
     return  TQValue{};
   }
 
   return binding->typed_value.val;
 }
 
-TypedValue *env_get_ref(const char *name, int line, int col, int pos) {
+TypedValue *env_get_ref(const char *name, TQLocation loc) {
   RuntimeBinding *binding = runtime_find_binding(runtime_env_top(), name);
   if (binding) {
     return &binding->typed_value;
   }
 
-  panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+  panic(&file, loc, RT_VAR_NOT_DEFINED, name);
   return nullptr;
 }
 
-int env_frame_id_of(const char *name, int line, int col, int pos) {
+int env_frame_id_of(const char *name, TQLocation loc) {
   for (RuntimeFrame *it = runtime_env_top(); it; it = it->parent) {
     if (it->vars.find(name) != it->vars.end()) {
       return it->id;
     }
   }
 
-  panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+  panic(&file, loc, RT_VAR_NOT_DEFINED, name);
   return -1;
 }
 
-TypedValue *env_get_ref_at(int frame_id, const char *name, int line, int col,
-                           int pos) {
+TypedValue *env_get_ref_at(int frame_id, const char *name, TQLocation loc) {
   RuntimeFrame *frame = runtime_find_frame(frame_id);
   if (!frame) {
-    panic(&file, line, col, pos, RT_DANGLING_PTR, name);
+    panic(&file, loc, RT_DANGLING_PTR, name);
     return nullptr;
   }
 
   auto found = frame->vars.find(name);
   if (found == frame->vars.end()) {
-    panic(&file, line, col, pos, RT_VAR_NOT_DEFINED, name);
+    panic(&file, loc, RT_VAR_NOT_DEFINED, name);
     return nullptr;
   }
 
@@ -202,14 +200,14 @@ TypedValue *env_get_ref_at(int frame_id, const char *name, int line, int col,
 }
 
 void env_set_at(int frame_id, const char *name,  TQValue *val,
-                DataTypes_t datatype, int line, int col, int pos) {
-  TypedValue *target = env_get_ref_at(frame_id, name, line, col, pos);
+                DataTypes_t datatype, TQLocation loc) {
+  TypedValue *target = env_get_ref_at(frame_id, name, loc);
   if (!target) {
     return;
   }
 
   if (target->type != datatype) {
-    panic(&file, line, col, pos, RT_VAR_TYPE_MISMATCH, name);
+    panic(&file, loc, RT_VAR_TYPE_MISMATCH, name);
     return;
   }
 

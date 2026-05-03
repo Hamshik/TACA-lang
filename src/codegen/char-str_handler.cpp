@@ -1,4 +1,12 @@
-#include "taca.hpp"
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h" 
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include <cstddef>
+#include "utils/utf-8_lib/utf8.h"
+
 
 uint32_t decode_utf8(const char *raw, size_t raw_len, size_t *byte_len,
                      Utf8Error *error) {
@@ -95,7 +103,7 @@ Value *emit_char_to_string(Value *ch, LLVMContext &ctx, IRBuilder<> &b) {
 
 Value *emit_char(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b) {
   if (!n->literal.raw) {
-    panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR, nullptr);
+    panic(&file, n->loc, INVAILD_UTF8_CHAR, nullptr);
     return nullptr;
   }
 
@@ -115,7 +123,7 @@ Value *emit_char(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b) {
     else if (err == Utf8Error::InvalidUtf8)
       msg = n->literal.raw;
 
-    panic(&file, n->line, n->col, n->pos, INVAILD_UTF8_CHAR,
+    panic(&file, n->loc, INVAILD_UTF8_CHAR,
           msg ? msg : "unknown");
     return nullptr;
   }

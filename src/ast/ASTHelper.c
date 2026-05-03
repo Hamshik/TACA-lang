@@ -1,4 +1,3 @@
-#include "taca.h"
 
 ASTNode_t *ast_alloc(void) {
     ASTNode_t *n = calloc(1, sizeof(ASTNode_t));

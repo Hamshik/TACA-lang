@@ -1,4 +1,7 @@
-#include "taca.hpp"
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "stdlibs/stdlibs.h" 
 
 
 Function *get_or_create_prototype(ASTNode_t *fn_ast, Module &mod,

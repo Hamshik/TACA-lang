@@ -45,32 +45,10 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 16 "src/parser/parser.y"
+#line 14 "src/parser/parser.y"
 
-    #include <stdio.h>
-    #include <stdlib.h>
 
-    #include "taca.h"
-
-    typedef struct ASTNode ASTNode_t;
-    typedef enum DataTypes DataTypes_t;
-    typedef struct Param Param_t;
-    typedef struct file_t file_t;
-
-    extern ASTNode_t *root;
-    extern file_t file;
-
-    /* Extended source location that includes absolute byte offsets. */
-    typedef struct  TQLocation {
-        int first_line;
-        int first_column;
-        int last_line;
-        int last_column;
-        int first_pos;   /* 0-based byte offset */
-        int last_pos;    /* 0-based byte offset */
-    }  TQLocation;
-
-#line 74 "src/parser/parser.h"
+#line 52 "src/parser/parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -152,7 +130,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 87 "src/parser/parser.y"
+#line 20 "src/parser/parser.y"
 
     ASTNode_t *node;
     DataTypes_t datatype;
@@ -165,7 +143,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 169 "src/parser/parser.h"
+#line 147 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -1,5 +1,4 @@
-#ifndef LIBS_H
-#define LIBS_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,9 +7,8 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#ifdef __cplusplus
-#include "taca.hpp"
 
+#ifdef __cplusplus
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>   // ✅ REQUIRED
@@ -31,6 +29,4 @@ Value *get_exit(Module *m,LLVMContext &ctx ,argvec args, IRBuilder<> &b);
 Value* get_type(ASTNode_t* n, IRBuilder<> &b);
 
 Function *emit_TQconcat(Module &m, LLVMContext &ctx);
-#endif
-
 #endif

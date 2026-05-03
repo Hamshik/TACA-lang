@@ -5,23 +5,6 @@
 %option nounput
 
 %{
-    #include <stddef.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <string.h>
-
-    #include "taca.h"
-
-    #define YY_DECL int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param)
-
-    extern file_t file;
-    static int TQbrace_depth = 0;
-    static int TQcomment_start_line = 1;
-    static int TQcomment_start_col = 1;
-    static int TQcomment_start_pos = 0;
-
-    #define YY_USER_INIT  TQlexer_reset_loc();
-    #define YY_USER_ACTION  TQlexer_update_loc(yylloc, yytext, (int)yyleng);
 %}
 
 %x COMMENT3
@@ -41,9 +24,7 @@
 <COMMENT3>.                   { /* skip */ }
 <COMMENT3><<EOF>>             {
     panic(&file,
-          TQcomment_start_line,
-          TQcomment_start_col,
-          TQcomment_start_pos,
+          TQLOC_POINT(TQcomment_start_line, TQcomment_start_col, TQcomment_start_pos),
           LEX_UNCLOSED_COMMENT,
           NULL);
     return 0;
@@ -62,17 +43,13 @@
     if (!s) {
         int off = (err_i >= 0) ? err_i : 0;
         panic(&file,
-              yylloc->first_line,
-              yylloc->first_column + 1 + off,
-              yylloc->first_pos + 1 + off,
+              TQLOC_POINT(yylloc->first_line, yylloc->first_column + 1 + off, yylloc->first_pos + 1 + off),
               LEX_INVALID_ESCAPE,
               err_msg);
         return 0;
     }
 
-    yylval->node = new_str(s, yylloc->first_line, yylloc->first_column);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
+    yylval->node = new_str(s, *yylloc);
     free(s);
     return STRING_LITERAL;
 }
@@ -88,9 +65,7 @@
     if (!s || out_len == 0) {
         int off = (err_i >= 0) ? err_i : 0;
         panic(&file,
-              yylloc->first_line,
-              yylloc->first_column + 1 + off,
-              yylloc->first_pos + 1 + off,
+              TQLOC_POINT(yylloc->first_line, yylloc->first_column + 1 + off, yylloc->first_pos + 1 + off),
               LEX_INVALID_ESCAPE,
               err_msg ? err_msg : "invalid character literal");
         free(s);
@@ -99,15 +74,13 @@
 
     /* enforce exactly one UTF-8 codepoint */
     if (!TQutf8_single(s, out_len)) {
-        panic(&file, yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1, INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
+        panic(&file, TQLOC_POINT(yylloc->first_line, yylloc->first_column + 1, yylloc->first_pos + 1), INVAILD_UTF8_CHAR, "character literal must be exactly one UTF-8 codepoint");
         free(s);
         return 0;
     }
 
-    yylval->node = new_char_bytes(s, out_len, yylloc->first_line, yylloc->first_column);
+    yylval->node = new_char_bytes(s, out_len, *yylloc);
     free(s);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
     return CHAR_LITERAL;
 }
 
@@ -142,16 +115,12 @@ void                         { yylval->datatype = VOID; return DATATYPES;}
 while                        { return WHILE; }
 
 true                         {
-    yylval->node = new_bool(1, yylloc->first_line, yylloc->first_column);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
+    yylval->node = new_bool(1, *yylloc);
     return BOOL_LITERAL;
 }
 
 false               {
-    yylval->node = new_bool(0, yylloc->first_line, yylloc->first_column);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
+    yylval->node = new_bool(0, *yylloc);
     return BOOL_LITERAL;
 }
 
@@ -160,18 +129,14 @@ fn                  { return FN; }
 (ret|return)        { return RETURN; }
 
 [0-9]+(\.[0-9]+)? {
-    yylval->node = new_num(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
+    yylval->node = new_num(yytext, UNKNOWN, *yylloc);
     return NUMBER;
 }
 
 \.[0-9]+ {
     char* buffer = (char*)malloc(strlen(yytext) + 2);
     snprintf(buffer, strlen(yytext) + 2, "0%s", yytext);
-    yylval->node = new_num(buffer, UNKNOWN, yylloc->first_line, yylloc->first_column);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
+    yylval->node = new_num(buffer, UNKNOWN, *yylloc);
     free(buffer);
     return NUMBER;
 }
@@ -220,9 +185,7 @@ fn                  { return FN; }
 
 
 [a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_] {
-    yylval->node = new_var(yytext, UNKNOWN, yylloc->first_line, yylloc->first_column);
-    yylval->node->pos = yylloc->first_pos;
-    yylval->node->end_pos = yylloc->last_pos;
+    yylval->node = new_var(yytext, UNKNOWN, *yylloc);
     return IDENTIFIER;
 }
 
@@ -238,14 +201,14 @@ fn                  { return FN; }
     } else {
         TQlexer_get_cursor(&line, &col, &pos);
     }
-    panic(&file, line, col, pos, LEX_UNKNOWN_CHAR, detail);
+    panic(&file, TQLOC_POINT(line, col, pos), LEX_UNKNOWN_CHAR, detail);
 }
 
 <<EOF>>             {
     if (  TQbrace_depth > 0) {
         int line = 0, col = 0, pos = 0;
         TQlexer_get_cursor(&line, &col, &pos);
-        panic(&file, line, col, pos, PARSE_UNCLOSED_BRACE, NULL);
+        panic(&file, TQLOC_POINT(line, col, pos), PARSE_UNCLOSED_BRACE, NULL);
     }
     return 0;
 }

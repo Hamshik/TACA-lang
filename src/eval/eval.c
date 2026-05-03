@@ -1,4 +1,4 @@
-#include "taca.h"
+#include "parser/location.h"
 
 extern file_t file;
 static int g_returning = 0;
@@ -11,10 +11,10 @@ TypedValue ast_eval_main(ASTNode_t *root) {
     ast_eval(root); /* ast_eval registers functions on AST_FN */
   ASTNode_t *main_fn = TQruntime_fn_lookup("main");
   if (!main_fn) {
-    panic(&file, 1, 1, 0, SEM_CALL_UNDEF_FN, "main");
+    panic(&file, TQLOC_POINT(1, 1, 0), SEM_CALL_UNDEF_FN, "main");
     return (TypedValue){0};
   }
-  ASTNode_t *call = new_fn_call("main", NULL, 0, 0);
+  ASTNode_t *call = new_fn_call("main", 0, (TQLocation){0});
   TypedValue ret = ast_eval(call);
   ast_free(call);
   return ret;
@@ -24,7 +24,7 @@ static void fn_register_runtime(ASTNode_t *fn) {
   if (!fn || fn->kind != AST_FN)
     return;
   if (!TQruntime_fn_register(fn)) {
-    panic(&file, fn->line, fn->col, fn->pos, SEM_FN_REDECL, fn->fn_def.name);
+    panic(&file, fn->loc, SEM_FN_REDECL, fn->fn_def.name);
   }
 }
 
@@ -50,9 +50,7 @@ TypedValue ast_eval(ASTNode_t *node) {
 
   case AST_VAR:
     return (TypedValue){.type = node->datatype,
-                        .val = TQruntime_env_get(node->var, node->datatype,
-                                                 node->line, node->col,
-                                                 node->pos)};
+                        .val = TQruntime_env_get(node->var, node->datatype, node->loc)};
 
   case AST_BINOP:
     return eval_binop(node, v);
@@ -64,14 +62,14 @@ TypedValue ast_eval(ASTNode_t *node) {
     if (node->assign.op == OP_ASSIGN && node->assign.is_declaration) {
       TypedValue rt0 = ast_eval(node->assign.rhs);
       TypedValue rt =
-          TQcast_typed(rt0, node->datatype, node->line, node->col, node->pos);
+          TQcast_typed(rt0, node->datatype, node->loc);
       TQruntime_env_set_current(node->assign.lhs->var, &rt.val, node->datatype);
       return (TypedValue){.val = rt.val, .type = node->datatype};
     }
 
     TQValue val =
         eval_assign(node->assign.lhs, node->assign.rhs, node->assign.op,
-                    node->datatype, node->line, node->col, node->pos);
+                    node->datatype, node->loc);
     return (TypedValue){.val = val, .type = node->datatype};
   }
 
@@ -192,8 +190,7 @@ TypedValue ast_eval(ASTNode_t *node) {
   }
 
   default:
-    panic(&file, node ? node->line : 0, node ? node->col : 0,
-          node ? node->pos : 0, RT_UNKNOWN_AST, NULL);
+    panic(&file, node ? node->loc : (TQLocation){0}, RT_UNKNOWN_AST, NULL);
     return (TypedValue){0};
   }
 }

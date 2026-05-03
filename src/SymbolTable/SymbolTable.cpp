@@ -17,30 +17,25 @@ void TQruntime_env_set_current(const char *name,  TQValue *val,
  TQ::runtime_symbol_table::env_set_current(name, val, datatype);
 }
 
- TQValue TQruntime_env_get(const char *name, DataTypes_t datatype, int line,
-                          int col, int pos) {
-  return  TQ::runtime_symbol_table::env_get(name, datatype, line, col, pos);
+ TQValue TQruntime_env_get(const char *name, DataTypes_t datatype, TQLocation loc) {
+  return  TQ::runtime_symbol_table::env_get(name, datatype, loc);
 }
 
-TypedValue *  TQruntime_env_get_ref(const char *name, int line, int col,
-                                   int pos) {
-  return  TQ::runtime_symbol_table::env_get_ref(name, line, col, pos);
+TypedValue *  TQruntime_env_get_ref(const char *name, TQLocation loc) {
+  return  TQ::runtime_symbol_table::env_get_ref(name, loc);
 }
 
-int TQruntime_env_frame_id_of(const char *name, int line, int col, int pos) {
-  return  TQ::runtime_symbol_table::env_frame_id_of(name, line, col, pos);
+int TQruntime_env_frame_id_of(const char *name, TQLocation loc) {
+  return  TQ::runtime_symbol_table::env_frame_id_of(name, loc);
 }
 
-TypedValue *  TQruntime_env_get_ref_at(int frame_id, const char *name, int line,
-                                      int col, int pos) {
-  return  TQ::runtime_symbol_table::env_get_ref_at(frame_id, name, line, col,
-                                                  pos);
+TypedValue *  TQruntime_env_get_ref_at(int frame_id, const char *name, TQLocation loc) {
+  return  TQ::runtime_symbol_table::env_get_ref_at(frame_id, name, loc);
 }
 
 void TQruntime_env_set_at(int frame_id, const char *name,  TQValue *val,
-                           DataTypes_t datatype, int line, int col, int pos) {
- TQ::runtime_symbol_table::env_set_at(frame_id, name, val, datatype, line,
-                                       col, pos);
+                           DataTypes_t datatype, TQLocation loc) {
+ TQ::runtime_symbol_table::env_set_at(frame_id, name, val, datatype, loc);
 }
 
 bool TQruntime_fn_register(ASTNode_t *fn) {

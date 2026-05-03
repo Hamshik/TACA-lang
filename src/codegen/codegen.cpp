@@ -1,4 +1,12 @@
-#include "taca.hpp"
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h" 
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "SymbolTable/SymbolTable.hpp"
+#include "utils/colors.h"
+#include "stdlibs/stdlibs.h"
 
 using namespace llvm;
 

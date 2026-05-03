@@ -1,6 +1,5 @@
 #pragma once
 
-#include "taca.h"
 #include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>
@@ -10,6 +9,9 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+struct file_t;
+struct ASTNode_t;
 
 
 /* Program options structure */

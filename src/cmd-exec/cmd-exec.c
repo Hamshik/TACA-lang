@@ -94,6 +94,7 @@ bool parse_arguments(int argc, char **argv, Options *opts) {
 /* Set up input file and file_t structure */
 bool setup_input_file(const Options *opts, file_t *file) {
     if (!opts->input_filename) {
+        printf("Warning: file is not provied falling back to <stdin>\n");
         file->filename = "<stdin>";
         file->source = stdin;
         return true;

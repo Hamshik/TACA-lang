@@ -209,7 +209,7 @@ Module_t *load_module(const char *path, bool &already_imported) {
 
   FILE *source = fopen(path, "r");
   if (!source) {
-    panic(&file, 0, 0, 0, SEM_IMPORT_FILE_NOT_FOUND, path);
+    panic(&file, TQLOC_ZERO, SEM_IMPORT_FILE_NOT_FOUND, path);
     return nullptr;
   }
 

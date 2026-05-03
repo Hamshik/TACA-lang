@@ -1,4 +1,5 @@
-#include "taca.hpp"
+#include "codegen/codegen.h"\n#include "ast/nodes.h"\n#include "ast/ast_enum.h" 
+#include "codegen/codegen.h"\n#include "ast/nodes.h"\n#include "ast/ast_enum.h" 
 
 
 __int128 parse_i128(const char *s, int *ok) {
@@ -125,7 +126,7 @@ Value *emit_number(ASTNode_t *n, LLVMContext &ctx) {
     int ok = 0;
     __int128 v = parse_i128(n->literal.raw, &ok);
     if (!ok) {
-      panic(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+      panic(&file, n->loc, RT_NUM_LITERAL_UNSUPPORTED, NULL);
       return nullptr;
     }
     uint64_t words[2];
@@ -154,7 +155,7 @@ Value *emit_number(ASTNode_t *n, LLVMContext &ctx) {
     int ok = 0;
     unsigned __int128 v = parse_u128(n->literal.raw, &ok);
     if (!ok) {
-      panic(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+      panic(&file, n->loc, RT_NUM_LITERAL_UNSUPPORTED, NULL);
       return nullptr;
     }
     uint64_t words[2];
@@ -180,7 +181,7 @@ Value *emit_number(ASTNode_t *n, LLVMContext &ctx) {
     return ConstantFP::get(Type::getFP128Ty(ctx),
                            strtold(n->literal.raw, NULL));
   default:
-    panic(&file, n->line, n->col, n->pos, RT_NUM_LITERAL_UNSUPPORTED, NULL);
+    panic(&file, n->loc, RT_NUM_LITERAL_UNSUPPORTED, NULL);
     return nullptr;
   }
 }

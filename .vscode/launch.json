@@ -20,13 +20,17 @@
 	            "stopAtEntry": false,
 	            "externalConsole": false,
 	            "MIMode": "gdb",
-	            "setupCommands": [
-	                
+	            "setupCommands": [             
 	                {
-	                        "description": "Enable pretty-printing for gdb",
-	                        "text": "-enable-pretty-printing",
-	                        "ignoreFailures": true
-	                    }
+	                    "description": "Enable pretty-printing for gdb",
+	    	            "text": "-enable-pretty-printing",
+	                    "ignoreFailures": false
+	                },
+					{
+						"description": "Disable debuginfod",
+						"text": "set debuginfod enabled off",
+						"ignoreFailures": false
+					}
 	            ],
 	            "preLaunchTask": "build the Complier",
 	            "internalConsoleOptions": "neverOpen"

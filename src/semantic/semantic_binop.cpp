@@ -1,4 +1,3 @@
-#include "taca.hpp"
 
 DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
   DataTypes_t lt = check_expr(n->bin.left, type);
@@ -21,13 +20,13 @@ DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
   }
 
   if (lt == PTR || rt == PTR) {
-    panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,
+    panic(&file, n->loc, SEM_NUMOP_NEEDS_NUM,
           "pointer arithmetic not supported");
   }
   /* string ops */
   if (lt == STRINGS || rt == STRINGS) {
     if (n->bin.op != OP_ADD || lt != STRINGS || rt != STRINGS) {
-      panic(&file, n->line, n->col, n->pos, SEM_STRING_OP_INVALID, NULL);
+      panic(&file, n->loc, SEM_STRING_OP_INVALID, NULL);
     }
 
     n->datatype = STRINGS;
@@ -43,7 +42,7 @@ DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
   case OP_EQ:
   case OP_NEQ:
     if (!is_numeric(lt) || !is_numeric(rt)) {
-      panic(&file, n->line, n->col, n->pos, SEM_CMP_NEEDS_NUM, NULL);
+      panic(&file, n->loc, SEM_CMP_NEEDS_NUM, NULL);
     }
     n->datatype = BOOL;
     return BOOL;
@@ -51,7 +50,7 @@ DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
   case OP_AND:
   case OP_OR:
     if (lt != BOOL || rt != BOOL)
-      panic(&file, n->line, n->col, n->pos, SEM_LOGIC_NEEDS_BOOL, NULL);
+      panic(&file, n->loc, SEM_LOGIC_NEEDS_BOOL, NULL);
 
     n->datatype = BOOL;
     return BOOL;
@@ -59,13 +58,13 @@ DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
   default:
     // arithmetic/bitwise path
     if (!is_numeric(lt) || !is_numeric(rt))
-      panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM, NULL);
+      panic(&file, n->loc, SEM_NUMOP_NEEDS_NUM, NULL);
 
     if (n->bin.op == OP_LSHIFT || n->bin.op == OP_RSHIFT ||
         n->bin.op == OP_BITAND || n->bin.op == OP_BITOR ||
         n->bin.op == OP_BITXOR) {
       if (!is_integer(lt) || !is_integer(rt)) {
-        panic(&file, n->line, n->col, n->pos, SEM_NUMOP_NEEDS_NUM,
+        panic(&file, n->loc, SEM_NUMOP_NEEDS_NUM,
               "bitwise ops require integer types");
       }
     }
@@ -75,7 +74,7 @@ DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
   }
   /* numeric ops */
   if (!is_numeric(lt) || !is_numeric(rt))
-    panic(&file, n->line, n->col, n->pos, SEM_BINOP_INVALID, NULL);
+    panic(&file, n->loc, SEM_BINOP_INVALID, NULL);
 
   n->datatype = promote(lt, rt);
   return n->datatype;

@@ -1,4 +1,3 @@
-#include "taca.hpp"
 #include "utils/error_handler/error.h"
 
 DataTypes_t unop(ASTNode_t *n, DataTypes_t type) {
@@ -41,10 +40,10 @@ DataTypes_t unop(ASTNode_t *n, DataTypes_t type) {
   }
 
   if (!is_numeric(t))
-    panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM, NULL);
+    panic(&file, n->loc, SEM_UNARY_NEEDS_NUM, NULL);
 
   if (n->unop.op == OP_BITNOT && !is_integer(t)) {
-    panic(&file, n->line, n->col, n->pos, SEM_UNARY_NEEDS_NUM,
+    panic(&file, n->loc, SEM_UNARY_NEEDS_NUM,
           "bitwise not requires integer type");
   }
 

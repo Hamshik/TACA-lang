@@ -5,6 +5,7 @@ set -euo pipefail
 PARSER_DIR=$(find src/**/* -iname "*.y" -exec dirname {} +;)
 LEXER_DIR=$(find src/**/* -iname "*.l" -exec dirname {} +;)
 BIN_DIR="bin"
+BUILD_DIR="build"
 
 LLVM_CONFIG=${LLVM_CONFIG:-llvm-config-22}
 
@@ -28,20 +29,17 @@ mkdir -p "$BIN_DIR"
 echo "Compiling [1/3] C++ Files"
 
 for src in $(find src -type f -iname "*.cpp"); do
-    obj="$BIN_DIR/$(basename "${src%.*}").o"
-    clang++ -fcxx-exceptions -w -Wall -Wextra -g -O0 $LLVM_CXXFLAGS -Isrc -c "$src" -o "$obj"
+    obj="$BUILD_DIR/$(basename "${src%.*}").o"
+clang++ -fcxx-exceptions -w -Wall -Wextra -g -O0 $LLVM_CXXFLAGS -Iinclude -Isrc -c "$src" -o "$obj"
 done
 
 # C sources
 echo "Compiling [2/3] C Files"
 
 for src in $(find src -type f -iname "*.c"); do
-    obj="$BIN_DIR/$(basename "${src%.*}").o"
-    clang -Wall -Wextra -g -O0 -Isrc -c "$src" -o "$obj"
+    obj="$BUILD_DIR/$(basename "${src%.*}").o"
+clang -Wall -Wextra -g -O0 -Iinclude -Isrc -c "$src" -o "$obj"
 done
 
 echo "Linking [3/3] Files..."
-clang++ -o "$BIN_DIR/taca" "$BIN_DIR"/*.o -lm $LLVM_LDFLAGS
-
-echo "Cleaning up object files..."
-rm -f "$BIN_DIR"/*.o
+clang++ -o "$BIN_DIR/taca" "$BUILD_DIR"/*.o -lm $LLVM_LDFLAGS

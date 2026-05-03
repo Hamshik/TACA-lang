@@ -1,23 +1,14 @@
-#ifndef CODEGEN_H
-#define CODEGEN_H
+#pragma once
 
-#ifdef __cplusplus
-#include "taca.hpp"
-
-extern "C" {
-#endif
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
 #include "utils/error_handler/error.h"
 
-extern file_t file;
 /* If ll_path is non-NULL, writes IR there. If ir_out is non-NULL, allocates a
  * NUL-terminated copy of the textual IR (caller free). Returns 0 on success. */
-int codegen(ASTNode_t *root, const char *ll_path, char **ir_out);
+extern "C" int codegen(ASTNode_t *root, const char *ll_path, char **ir_out);
 unsigned __int128  TQparse_u128(const char *s, int *ok);
 __int128  TQparse_i128(const char *s, int *ok);
-void panic(file_t *file, int line, int col, int pos, errc_t code,
-           const char *detail);
-#ifdef __cplusplus
-}
 
 enum class Utf8Error {
   None = 0,
@@ -105,5 +96,3 @@ Value *to_i8_ptr(Value *v, IRBuilder<> &b) ;
 Value *emit_char_to_string(Value *ch, LLVMContext &ctx, IRBuilder<> &b);
 Value *emit_char(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b);
 Value *emit_strs(ASTNode_t *n, LLVMContext &ctx, IRBuilder<> &b);
-#endif
-#endif

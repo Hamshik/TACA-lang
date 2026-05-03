@@ -1,4 +1,3 @@
-#include "../../taca.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +11,11 @@ bool isWarning = false;
 bool error_fatal = true;
 
 
-void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, const char *detail)
+void panic(file_t *file, TQLocation loc, errc_t code, const char *detail)
 {
+    int err_line = loc.first_line;
+    int err_col = loc.first_column;
+    int ini_pos = loc.first_pos;
     const char *filename = (file && file->filename) ? file->filename : "<input>";
     const char *base = errc_msg(code);
     isError = true;
@@ -67,8 +69,11 @@ void panic(file_t *file, int err_line, int err_col, int ini_pos, errc_t code, co
     if (error_fatal) exit(EXIT_FAILURE);
 }
 
-void warn(file_t *file, int warn_line, int warn_col, int ini_pos, warnc_t code, const char *detail)
+void warn(file_t *file, TQLocation loc, warnc_t code, const char *detail)
 {
+    int warn_line = loc.first_line;
+    int warn_col = loc.first_column;
+    int ini_pos = loc.first_pos;
     const char *filename = (file && file->filename) ? file->filename : "<input>";
     const char *base = warnc_msg(code);
     isWarning = true;

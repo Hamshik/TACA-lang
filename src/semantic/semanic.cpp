@@ -1,6 +1,4 @@
 #include "semantic/semantic.hpp"
-#include "taca.hpp"
-
 
 #include <float.h>
 #include <limits.h>
@@ -66,11 +64,11 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
     exitcode_t exit_code = TQsemantic_exists(n->var, n->datatype, n->sub_type);
     switch (exit_code) {
     case NOT_DECLARED:
-      panic(&file, n->line, n->col, n->pos, SEM_VAR_UNDECL, n->var);
+      panic(&file, n->loc, SEM_VAR_UNDECL, n->var);
       return UNKNOWN;
 
     case TYPE_MISMATCH:
-      panic(&file, n->line, n->col, n->pos, SEM_VAR_TYPE_MISMATCH, n->var);
+      panic(&file, n->loc, SEM_VAR_TYPE_MISMATCH, n->var);
       return UNKNOWN;
 
     case SUCCESS:
@@ -97,7 +95,7 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
   case NODE_IF: {
     DataTypes_t ct = check_expr(n->ifnode.cond);
     if (ct != BOOL)
-      panic(&file, n->line, n->col, n->pos, SEM_IF_COND_NOT_BOOL, NULL);
+      panic(&file, n->loc, SEM_IF_COND_NOT_BOOL, NULL);
 
     check_expr(n->ifnode.then_branch);
     if (n->ifnode.else_branch)
@@ -110,22 +108,22 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
     if (!n->fornode.init || n->fornode.init->kind != AST_ASSIGN ||
         n->fornode.init->assign.lhs->kind != AST_VAR ||
         n->fornode.init->assign.op != OP_ASSIGN)
-      panic(&file, n->line, n->col, n->pos, SEM_FOR_INIT_INVALID, NULL);
+      panic(&file, n->loc, SEM_FOR_INIT_INVALID, NULL);
 
     DataTypes_t init_t = check_expr(n->fornode.init);
     if (!is_numeric(init_t))
-      panic(&file, n->line, n->col, n->pos, SEM_FOR_INIT_NOT_NUM, NULL);
+      panic(&file, n->loc, SEM_FOR_INIT_NOT_NUM, NULL);
 
     force_numeric_type(n->fornode.end, init_t);
     DataTypes_t end_t = check_expr(n->fornode.end);
     if (end_t != init_t)
-      panic(&file, n->line, n->col, n->pos, SEM_FOR_END_TYPE_MISMATCH, NULL);
+      panic(&file, n->loc, SEM_FOR_END_TYPE_MISMATCH, NULL);
 
     if (n->fornode.step) {
       force_numeric_type(n->fornode.step, init_t);
       DataTypes_t step_t = check_expr(n->fornode.step);
       if (step_t != init_t) {
-        panic(&file, n->line, n->col, n->pos, SEM_FOR_STEP_TYPE_MISMATCH, NULL);
+        panic(&file, n->loc, SEM_FOR_STEP_TYPE_MISMATCH, NULL);
       }
     }
 
@@ -136,7 +134,7 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
   case AST_WHILE: {
     DataTypes_t ct = check_expr(n->whilenode.cond);
     if (ct != BOOL)
-      panic(&file, n->line, n->col, n->pos, SEM_WHILE_COND_NOT_BOOL, NULL);
+      panic(&file, n->loc, SEM_WHILE_COND_NOT_BOOL, NULL);
 
     check_expr(n->whilenode.body);
     return UNKNOWN;
@@ -155,7 +153,7 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
     char *path = n->importNode.path;
     bool already_imported = false;
     Module_t *mod = TQsemantic_load_module(path, &already_imported);
-    if (!mod) panic(&file, n->line, n->col, n->pos, SEM_IMPORT_FILE_NOT_FOUND, path);
+    if (!mod) panic(&file, n->loc, SEM_IMPORT_FILE_NOT_FOUND, path);
 
     if(already_imported) return UNKNOWN;
     
@@ -176,7 +174,7 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
     return semantic_index_handle(n);
 
   default:
-    panic(&file, n->line, n->col, n->pos, SEM_UNKNOWN_AST, NULL);
+    panic(&file, n->loc, SEM_UNKNOWN_AST, NULL);
     return UNKNOWN;
   }
 }
