@@ -1,5 +1,13 @@
 
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
+#include "utils/error_handler/error.h"
+#include "SymbolTable/SymbolTable.hpp"
+#include "semantic/semantic.hpp" // for check_expr, is_numeric, promote, etc.
+
 DataTypes_t binop(ASTNode_t *n, DataTypes_t type) {
+
   DataTypes_t lt = check_expr(n->bin.left, type);
   DataTypes_t rt = check_expr(n->bin.right, type);
 

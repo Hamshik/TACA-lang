@@ -1,6 +1,13 @@
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "semantic/semantic.hpp"
+#include "utils/error_handler/error.h"
+#include "parser/location.h"
+#include "SymbolTable/SymbolTable.hpp"
 #include "SymbolTable/SymbolTableInternal.hpp"
 
 extern "C" DataTypes_t list_handle(ASTNode_t *n, DataTypes_t type) {
+
   ASTNode_t *curr = n->list.elements;
   size_t count = 0;
 

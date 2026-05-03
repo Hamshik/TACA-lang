@@ -3,8 +3,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    #include "taca.h"
     #include "nodes.h"
 
     /* Constructors */

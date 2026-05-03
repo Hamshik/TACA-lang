@@ -12,7 +12,11 @@
 %expect 0
 
 %code requires {
+    #include "ast/nodes.h"
+    #include "ast/ast_enum.h"
+    #include "parser/location.h"
 }
+
 
 %{
 %}
@@ -31,9 +35,18 @@
 }
 
 %code {
+#include "utils/error_handler/error.h"
+    #include "ast/ast_declarator.h"
+    #include "eval/eval.h"
+    extern ASTNode_t *root;
+    extern struct file_t file;
+    char *g_last_parse_err_msg;
+    int g_last_parse_err_line, g_last_parse_err_col, g_last_parse_err_pos;
     int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param);
     void yyerror(YYLTYPE *loc, const char *s);
+
 }
+
 
 %token <node> IDENTIFIER NUMBER STRING_LITERAL BOOL_LITERAL CHAR_LITERAL
 

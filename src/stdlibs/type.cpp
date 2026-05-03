@@ -1,6 +1,8 @@
-#include <llvm-22/llvm/IR/BasicBlock.h>
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
 
-Value* get_type(ASTNode_t* n, IRBuilder<> &b) {
+llvm::Value* get_type(ASTNode_t* n, llvm::IRBuilder<> &b) {
     DataTypes_t t = n->call.args->datatype;
 
     const char *name = nullptr;
@@ -30,35 +32,36 @@ Value* get_type(ASTNode_t* n, IRBuilder<> &b) {
         default: name = "unknown"; break;
     }
 
-    Module *m = b.GetInsertBlock()->getModule();
-    LLVMContext &ctx = b.getContext();
+    llvm::Module *m = b.GetInsertBlock()->getModule();
+    llvm::LLVMContext &ctx = b.getContext();
 
-    auto *i8Ty = Type::getInt8Ty(ctx);
+    auto *i8Ty = llvm::Type::getInt8Ty(ctx);
 
     std::string str(name);
     str += '\0';
 
-    auto *arrTy = ArrayType::get(i8Ty, str.size());
+    auto *arrTy = llvm::ArrayType::get(i8Ty, str.size());
 
-    std::vector<Constant*> chars;
+    std::vector<llvm::Constant*> chars;
     for (char c : str) {
-        chars.push_back(ConstantInt::get(i8Ty, (uint8_t)c));
+        chars.push_back(llvm::ConstantInt::get(i8Ty, (uint8_t)c));
     }
 
     static int id = 0;
     std::string gname = "type.str." + std::to_string(id++);
 
-    auto *gv = new GlobalVariable(
+    auto *gv = new llvm::GlobalVariable(
         *m,
         arrTy,
         true,
-        GlobalValue::PrivateLinkage,
-        ConstantArray::get(arrTy, chars),
+        llvm::GlobalValue::PrivateLinkage,
+        llvm::ConstantArray::get(arrTy, chars),
         gname
     );
 
     // return i8*
-    auto zero = ConstantInt::get(Type::getInt32Ty(ctx), 0);
+    auto zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx), 0);
 
     return b.CreateInBoundsGEP(arrTy, gv, {zero, zero});
 }
+

@@ -1,6 +1,10 @@
-#include "SymbolTableInternal.hpp"
+#include "SymbolTable/SymbolTableInternal.hpp"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
 
 extern "C" {
+
 
 void TQruntime_env_push(void) {  TQ::runtime_symbol_table::env_push(); }
 

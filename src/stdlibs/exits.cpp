@@ -1,44 +1,43 @@
-#include <llvm-22/llvm/IR/IRBuilder.h>
-#include <llvm-22/llvm/IR/LLVMContext.h>
-#include <llvm-22/llvm/IR/Module.h>
+#include "codegen/codegen.h"
 
-Function *get_exit(Module &mod, LLVMContext &ctx) {
-  Function *exitFn = mod.getFunction("exit");
+llvm::Function *get_exit(llvm::Module &mod, llvm::LLVMContext &ctx) {
+  llvm::Function *exitFn = mod.getFunction("exit");
   if (!exitFn) {
-    FunctionType *ft = FunctionType::get(Type::getVoidTy(ctx),    // return void
-                                         {Type::getInt32Ty(ctx)}, // takes int
+    llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getVoidTy(ctx),
+                                         {llvm::Type::getInt32Ty(ctx)},
                                          false);
 
-    exitFn = Function::Create(ft, Function::ExternalLinkage, "exit", mod);
+    exitFn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "exit", mod);
   }
   return exitFn;
 }
 
-Value *get_exit(Module *m,LLVMContext &ctx ,argvec args, IRBuilder<> &b){
-    Function *callee = m->getFunction("exit");
+llvm::Value *get_exit(llvm::Module *m, llvm::LLVMContext &ctx , std::vector<llvm::Value *> args, llvm::IRBuilder<> &b){
+    llvm::Function *callee = m->getFunction("exit");
 
     // ensure exactly 1 argument
-    Value *exitCode =
-        args.empty() ? ConstantInt::get(Type::getInt32Ty(ctx), 0) : args[0];
+    llvm::Value *exitCode =
+        args.empty() ? llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx), 0) : args[0];
 
     // cast to i32 if needed
-    if (exitCode->getType() != Type::getInt32Ty(ctx)) {
-      exitCode = b.CreateIntCast(exitCode, Type::getInt32Ty(ctx), true);
+    if (exitCode->getType() != llvm::Type::getInt32Ty(ctx)) {
+      exitCode = b.CreateIntCast(exitCode, llvm::Type::getInt32Ty(ctx), true);
     }
 
     // create prototype if not exists
     if (!callee) {
-      FunctionType *ft = FunctionType::get(Type::getVoidTy(ctx),    // void
-                                           {Type::getInt32Ty(ctx)}, // (i32)
+      llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getVoidTy(ctx),
+                                           {llvm::Type::getInt32Ty(ctx)},
                                            false);
-      callee = Function::Create(ft, Function::ExternalLinkage, "exit", m);
+      callee = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "exit", *m);
     }
 
     // emit call
     b.CreateCall(callee, {exitCode});
 
-    // 🚨 terminate block
+    // terminate block
     b.CreateUnreachable();
 
     return nullptr;
-  }
+}
+

@@ -3,9 +3,7 @@
 #include <stdbool.h>
 #include "ast/ast_enum.h"
 #include "utils/uhash.h"
-
-struct ASTNode_t;
-struct module;
+#include "ast/nodes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +67,7 @@ bool is_numeric(DataTypes_t t);
 bool is_integer(DataTypes_t t);
 int numeric_bits(DataTypes_t t);
 
+
 void ensure_semantic(Module_t *m);
-#endif
+
 #endif

@@ -2,6 +2,9 @@
 #define TACA_SYMBOL_TABLE_INTERNAL_HPP
 
 #include "SymbolTable.hpp"
+#include <string>
+#include <unordered_map>
+#include <string>
 
 struct SemanticSymbolRecord {
   DataTypes_t type = UNKNOWN;

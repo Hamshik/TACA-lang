@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include "ast/ast_enum.h"
 
-struct ASTNode_t;
-
 bool is_i8(const char* raw_num);
 bool is_i16(const char* raw_num);
 bool is_i32(const char* raw_num);
@@ -22,4 +20,5 @@ bool is_f64(const char* raw_num);
 bool is_f128(const char* raw_num);
 
 DataTypes_t infer_smallest_numeric(const char *raw_num);
-bool has_max_numeric_type(const ASTNode_t *n);
+bool has_max_numeric_type(ASTNode_t *n);
+

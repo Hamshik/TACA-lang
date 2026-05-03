@@ -1,3 +1,7 @@
+#include "ast/nodes.h"
+#include <stdio.h>
+#include <stdlib.h>
+
 
 ASTNode_t *ast_alloc(void) {
     ASTNode_t *n = calloc(1, sizeof(ASTNode_t));

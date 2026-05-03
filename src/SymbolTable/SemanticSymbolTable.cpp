@@ -1,10 +1,22 @@
-#include "SymbolTableInternal.hpp"
+#include "SymbolTable/SymbolTableInternal.hpp"
+#include "utils/error_handler/error.h"
+#include "semantic/semantic.hpp"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
+#include "utils/error_handler/error.h"
 
+#include "import/import.h"
+
+#include <memory>
+#include <unordered_map>
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
 extern file_t file;
+
 
 namespace {
 

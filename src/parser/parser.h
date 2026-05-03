@@ -47,8 +47,11 @@ extern int yydebug;
 /* "%code requires" blocks.  */
 #line 14 "src/parser/parser.y"
 
+    #include "ast/nodes.h"
+    #include "ast/ast_enum.h"
+    #include "parser/location.h"
 
-#line 52 "src/parser/parser.h"
+#line 55 "src/parser/parser.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -130,7 +133,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 20 "src/parser/parser.y"
+#line 24 "src/parser/parser.y"
 
     ASTNode_t *node;
     DataTypes_t datatype;
@@ -143,7 +146,7 @@ union YYSTYPE
         int count;
     } paramlist;
 
-#line 147 "src/parser/parser.h"
+#line 150 "src/parser/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

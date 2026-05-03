@@ -30,7 +30,7 @@ echo "Compiling [1/3] C++ Files"
 
 for src in $(find src -type f -iname "*.cpp"); do
     obj="$BUILD_DIR/$(basename "${src%.*}").o"
-clang++ -fcxx-exceptions -w -Wall -Wextra -g -O0 $LLVM_CXXFLAGS -Iinclude -Isrc -c "$src" -o "$obj"
+    clang++ -fcxx-exceptions -w -Wall -Wextra -g -O0 $LLVM_CXXFLAGS -Iinclude -Isrc -c "$src" -o "$obj"
 done
 
 # C sources

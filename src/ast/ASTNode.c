@@ -1,7 +1,13 @@
+#include "ast/nodes.h"
+#include "ast/ast_declarator.h"
+#include "ast/ast_enum.h"
+#include <string.h>
+#include <stdlib.h>
 #include "parser/location.h"
 #include <stdbool.h>
 
 ASTNode_t* new_num(char *rawval, DataTypes_t datatype, TQLocation TQloc) {
+
     ASTNode_t *node = ast_alloc();
     node->kind = AST_NUM;
     node->datatype = datatype;

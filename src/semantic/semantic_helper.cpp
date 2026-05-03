@@ -1,6 +1,39 @@
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
+#include "utils/colors.h"
+#include "utils/error_handler/error.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include <errno.h>
+#include <stdint.h>
+#include "typechecker/typecheck.h"  // fix if path wrong later
 
-extern file_t file;
+
+
+static bool is_numeric_literal(const char* s, DataTypes_t t) {
+  if (!s) return false;
+  errno = 0;
+  char *end;
+  long v = strtol(s, &end, 10);
+  if (errno || *end != '\0') return false;
+  switch (t) {
+    case I8: return v >= INT8_MIN && v <= INT8_MAX;
+    case I16: return v >= INT16_MIN && v <= INT16_MAX;
+    case I32: return v >= INT32_MIN && v <= INT32_MAX;
+    // stub others
+    default: return true;
+  }
+}
+
+static bool is_float_literal(const char* s) {
+  char *end;
+  strtod(s, &end);
+  return *end == '\0';
+}
+
 
 /* Helpers */
 void type_error(ASTNode_t *n, const char *msg) {
@@ -103,13 +136,14 @@ bool literal_fits_type(const ASTNode_t *lit, DataTypes_t t) {
     /* Allow widening signed->unsigned; actual sign is checked at runtime
      * elsewhere. */
     return true;
-  case AST_NUM: {
+case AST_NUM: {
     const char *raw = lit->literal.raw;
     if (!raw)
       return false;
     switch (t) {
     case I8:
-      return is_i8(raw);
+      return is_numeric_literal(raw, t);
+
     case I16:
       return is_i16(raw);
     case I32:
@@ -127,15 +161,14 @@ bool literal_fits_type(const ASTNode_t *lit, DataTypes_t t) {
     case U128:
       return is_u128(raw);
     case F32:
-      return is_f32(raw);
     case F64:
-      return is_f64(raw) || is_f32(raw);
     case F128:
-      return is_f128(raw) || is_f64(raw) || is_f32(raw);
+      return is_float_literal(raw);
     default:
       return false;
     }
   }
+
   default:
     return false;
   }

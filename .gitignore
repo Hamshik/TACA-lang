@@ -10,3 +10,4 @@ src/parser/parser.c
 include/parser/parser.h
 TODO.md
 .agents
+build

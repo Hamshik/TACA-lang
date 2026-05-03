@@ -1,6 +1,16 @@
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
 #include "utils/error_handler/error.h"
+#include "SymbolTable/SymbolTable.hpp"
+#include "semantic/semantic.hpp" // for check_expr, type_error, is_numeric, is_integer
+
+extern file_t file; // global file
 
 DataTypes_t unop(ASTNode_t *n, DataTypes_t type) {
+
+
+
   DataTypes_t t = check_expr(n->unop.operand, type);
 
   switch (n->unop.op) {

@@ -1,13 +1,13 @@
-#include <llvm-22/llvm/IR/DerivedTypes.h>
-#include <llvm-22/llvm/IR/Type.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
+#include "codegen/codegen.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
 #include <string>
 
 using namespace llvm;
 
-Value *to_i64(Value *v, IRBuilder<> &b) {
+llvm::Value *to_i64(llvm::Value *v, llvm::IRBuilder<> &b) {
+
+
   auto *i64 = llvm::Type::getInt64Ty(b.getContext());
 
   if (v->getType()->isIntegerTy())
@@ -58,7 +58,8 @@ Value *emit_println(ASTNode_t *argNode, Value *argV,
   // ---------------- CHARACTER → STRING ----------------
   case CHARACTER: {
     // create stack buffer: char[2] = {c, 0}
-    printf("char");
+    // printf("char"); // debug
+
     Value *c = b.CreateTrunc(argV, Type::getInt8Ty(ctx));
 
     AllocaInst *buf = b.CreateAlloca(Type::getInt8Ty(ctx), nullptr, "charbuf");

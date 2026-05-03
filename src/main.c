@@ -1,18 +1,16 @@
 #include <stdio.h>
 #include "ast/nodes.h"
 
-struct file_t {
-  FILE *source;
-  char *filename;
-};
+#include "import/import.h"
+#include "cmd-exec/cmd-exec.h"
 
-struct Options;
+#include "parser/parser.h" 
 
 extern FILE *yyin;
-extern void yyrestart(FILE *new_file);
-extern int yyparse(void);
+
+void yyrestart(FILE *input_file);
+
 extern ASTNode_t *root;
-extern int compile_and_execute(ASTNode_t *root, struct Options *opts);
 
 int main(int argc, char **argv) {
     Options opts;

@@ -4,6 +4,8 @@
 #include "error.h"
 #include <stdbool.h>
 
+#include "utils/error_handler/error.h"
+
 const char *errc_msg(errc_t code) {
     switch (code) {
         case LEX_UNKNOWN_CHAR: return "unknown character";

@@ -1,3 +1,10 @@
+#include "ast/nodes.h"
+#include "ast/ast_declarator.h"
+#include "ast/ast_enum.h"
+#include <string.h>
+#include <stdlib.h>
+#include "parser/location.h"
+#include <stdbool.h>
 
 ASTNode_t *root = NULL;
 int g_last_parse_err_line = 1;

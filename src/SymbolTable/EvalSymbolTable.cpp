@@ -1,7 +1,12 @@
-#include "SymbolTableInternal.hpp"
+#include "SymbolTable/SymbolTableInternal.hpp"
 #include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
+#include "utils/error_handler/error.h"
+#include "semantic/semantic.hpp"
 
 #include <string>
+
 #include <unordered_map>
 
 extern file_t file;
@@ -23,10 +28,11 @@ void store_runtime_value(TypedValue &slot, DataTypes_t datatype,
                          const  TQValue &value) {
   reset_runtime_value(slot);
   TQValue fresh{};
-  assign_value(datatype, &fresh, value);
+  // assign_value(datatype, &fresh, value); // TODO: implement assign_value
   slot.type = datatype;
   slot.val = fresh;
 }
+
 
 struct RuntimeBinding {
   TypedValue typed_value{};

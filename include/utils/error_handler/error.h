@@ -5,13 +5,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "parser/location.h"
+#include "utils/error_handler/error.h"
 
 typedef struct file_t {
-    char* filename;
-    FILE* source;
+  FILE *source;
+  char *filename;
 } file_t;
 
-typedef enum errc {
+extern file_t file;
+ typedef enum errc {
+
     /* Lexer */
     LEX_UNKNOWN_CHAR = 1,
     LEX_INVALID_ESCAPE = 2,

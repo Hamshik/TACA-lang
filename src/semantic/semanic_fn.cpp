@@ -1,9 +1,23 @@
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
+#include "utils/error_handler/error.h"
+#include "semantic/semantic.hpp"
+#include "SymbolTable/SymbolTable.hpp"
+#include "builtin/builtin.h"
+
+#include "typechecker/typecheck.h"
+
+#include "builtin/builtin.h"
+
 #include <float.h>
+
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
 DataTypes_t handle_fn(ASTNode_t *n) {
+
   if (n->fn_def.name && strcmp(n->fn_def.name, "main") == 0)
     n->fn_def.ret = I32;
 

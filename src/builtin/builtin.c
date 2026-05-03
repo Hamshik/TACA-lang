@@ -1,7 +1,20 @@
+#include "utils/error_handler/error.h"
+#include "utils/error_handler/error.h"
+#include "builtin/builtin.h"
+#include "semantic/semantic.hpp"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 
 extern file_t file;
+
+
 extern bool isWarning;
 extern size_t warn_no;
+
 
 static void TQwrite_u128(FILE *out, unsigned __int128 x) {
     char buf[64];

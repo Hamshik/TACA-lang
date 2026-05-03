@@ -4,6 +4,9 @@
 #include <errno.h>
 #include <string.h>
 
+#include "utils/error_handler/error.h"
+#include "utils/colors.h"
+
 size_t err_no = 0;
 size_t warn_no = 0;
 bool isError = false;

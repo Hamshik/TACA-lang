@@ -1,8 +1,11 @@
 #ifndef  TQSTDLIB_H
 #define  TQSTDLIB_H
 
-#include "taca.h"
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
 #include <inttypes.h>
+#include "utils/error_handler/error.h" // for TQLocation, errc?
 
 typedef struct  TQstd_sig {
     const char *name;

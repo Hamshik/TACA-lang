@@ -9,11 +9,10 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "utils/error_handler/error.h"
+#include "ast/nodes.h"
 
-struct file_t;
-struct ASTNode_t;
-
-
+extern file_t file;
 /* Program options structure */
 typedef struct {
     const char *input_filename;

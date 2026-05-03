@@ -1,6 +1,12 @@
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "parser/location.h"
+#include "utils/error_handler/error.h"
+#include "SymbolTable/SymbolTable.hpp"
 #include "semantic/semantic.hpp"
 
 #include <float.h>
+
 #include <limits.h>
 #include <linux/limits.h>
 #include <stdio.h>
@@ -159,10 +165,11 @@ extern "C" DataTypes_t check_expr(ASTNode_t *n, DataTypes_t type) {
     
     ensure_semantic(mod);
 
-    // merge AST
-    root = new_seq(mod->ast, root);
+    // merge AST handled elsewhere
+    // root = new_seq(mod->ast, root);
     
     check_expr(mod->ast);
+
     
     return UNKNOWN;
   }

@@ -1,12 +1,23 @@
 #include "cmd-exec/cmd-exec.h"
-
+#include "ast/nodes.h"
+#include "ast/ast_enum.h"
+#include "ast/ast_declarator.h"
+#include <errno.h>
+#include <linux/limits.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include "utils/error_handler/error.h"
 
 /* Helper function to execute external commands */
 int run_exec(const char *prog, char *const argv[]) {
     pid_t pid = fork();
     if (pid == 0) {
         execvp(prog, argv);
-        _exit(127);
+        exit(127);
     }
     if (pid < 0) {
         perror("fork");

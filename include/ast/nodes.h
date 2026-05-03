@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
+
 #include <stddef.h>
 #include "parser/location.h"
 #include "ast/ast_enum.h"

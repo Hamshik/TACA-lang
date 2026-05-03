@@ -2,6 +2,15 @@
 #include "ast/ast_declarator.h"
 #include "semantic/semantic.hpp"
 #include "utils/error_handler/error.h"
+#include "SymbolTable/SymbolTable.hpp"
+
+#include <string.h>
+
+static bool is_f32(const char* s) {
+  return s && strchr(s, '.') != NULL;
+}
+
+
 
 // 1. RESPONSIBILITY: Determine the memory location's type (LHS)
 static void resolve_target_type(ASTNode_t *n, DataTypes_t *lhs_t,

@@ -1,5 +1,13 @@
 
+#include <stdio.h>
+#include <stdlib.h>
+#include "ast/nodes.h"
+
+extern FILE *yyin;
+extern int yyparse(void);
+extern void yyrestart(FILE *);
 extern ASTNode_t *root;
+
 
 ASTNode_t* parse_file(FILE *f) {
     ASTNode_t *old_root = root;   // save current AST
